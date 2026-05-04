@@ -3,7 +3,10 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/StaticMeshComponent.h"
+#include "NavModifierComponent.h"
 #include "TGBaseTower.generated.h"
+
+class UStaticMeshComponent;
 
 UCLASS()
 class TOWERGAME_API ABaseTower : public AActor
@@ -17,6 +20,10 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "Tower|Base")
 	UStaticMeshComponent* BaseMesh;
 
+	// 내비게이션 차단 영역 컴포넌트
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Navigation")
+	UNavModifierComponent* NavModifier;
+
 	// 무기를 부착할 포인트
 	UPROPERTY(VisibleAnywhere, Category = "Tower|Base")
 	USceneComponent* MountPoint;
@@ -25,10 +32,10 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Tower|Base")
 	AActor* AttachedWeapon;
 
-	/** 마우스로 배치하는 동안의 미리보기 모드 (반투명, 충돌 없음) */
+	// 마우스로 배치하는 동안의 미리보기 모드 (반투명, 충돌 없음)
 	void SetPreviewMode();
 
-	/** 클릭 후 최종 배치 완료 처리 (활성화, 바디 활성화) */
+	// 클릭 후 최종 배치 완료 처리 (활성화, 바디 활성화)
 	void FinalizeInstallation();
 
 protected:

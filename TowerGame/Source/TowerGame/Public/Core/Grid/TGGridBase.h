@@ -25,6 +25,7 @@ public:
 	ATGSingleGrid* GetSingleGridFromPoint(const FIntPoint Point);
 
 	//	월드 좌표에서 2차원 배열 인덱스 가져오기
+	//	위치를 벗어날 경우에도 안전한 인덱스를 반환합니다.
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="TowerGame|Grid")
 	FIntPoint GetPointFromPosition(const FVector Position) const;
 	FIntPoint GetPointFromPosition(const FVector2D Position) const;
