@@ -38,13 +38,13 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Status")
-	const int32 GetMaxEvadeCount() { return EvadeCount; }
+	const int32 GetMaxEvadeCount() { return EvadeCount; }	// 최대 Evade가능 횟수
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Status")
-	const int32 GetCurrentEvadeCount() { return CurrentEvadeCount; }
+	const int32 GetCurrentEvadeCount() { return CurrentEvadeCount; }	// 현재 Evade 가능 횟수
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Status")
-	const float GetMaxEvadeCooldown() { return EvadeCooldown; }
+	const float GetMaxEvadeCooldown() { return EvadeCooldown; }	// 최대 Evade 쿨타임
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Status")
-	const float GetCurrentEvadeCooldown() { return CurrentEvadeCooldown; }
+	const float GetCurrentEvadeCooldown() { return CurrentEvadeCooldown; }	// 현재 남은 Evade 쿨타임
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
 	TObjectPtr<class UCameraComponent> Camera;
