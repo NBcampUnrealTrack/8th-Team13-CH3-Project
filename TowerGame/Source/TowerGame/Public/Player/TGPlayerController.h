@@ -27,6 +27,8 @@ public:
 	TObjectPtr<UInputAction> Action_Look;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	TObjectPtr<UInputAction> Action_Jump;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	TObjectPtr<UInputAction> Action_Evade;
 protected:
 	virtual void BeginPlay() override;
 };

@@ -26,6 +26,11 @@ ATGPlayerController::ATGPlayerController()
 		TEXT("/Game/Player/Input/Actions/IA_Jump.IA_Jump");
 	if (IA_Jump_Asset.Succeeded())
 		Action_Jump = IA_Jump_Asset.Object;
+
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_Evade_Asset =
+		TEXT("/Game/Player/Input/Actions/IA_Evade.IA_Evade");
+	if (IA_Evade_Asset.Succeeded())
+		Action_Evade = IA_Evade_Asset.Object;
 }
 
 void ATGPlayerController::BeginPlay()
