@@ -42,6 +42,13 @@ void ATGPlayer::Look(const FInputActionValue& value)
 	AddControllerPitchInput(LookInput.Y);
 }
 
+void ATGPlayer::JumpAction(const struct FInputActionValue& value)
+{
+	if (!Controller) return;
+	if(!bWasJumping)
+		Jump();
+}
+
 // Called every frame
 void ATGPlayer::Tick(float DeltaTime)
 {
@@ -62,6 +69,8 @@ void ATGPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 				EnhancedInputComponent->BindAction(PlayerController->Action_Move, ETriggerEvent::Triggered, this, &ATGPlayer::Move);
 			if (PlayerController->Action_Look)
 				EnhancedInputComponent->BindAction(PlayerController->Action_Look, ETriggerEvent::Triggered, this, &ATGPlayer::Look);
+			if (PlayerController->Action_Jump)
+				EnhancedInputComponent->BindAction(PlayerController->Action_Jump, ETriggerEvent::Triggered, this, &ATGPlayer::JumpAction);
 		}
 	}
 }

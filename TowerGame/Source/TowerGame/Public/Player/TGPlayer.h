@@ -23,6 +23,8 @@ protected:
 	void Move(const struct FInputActionValue& value);
 	UFUNCTION()
 	void Look(const struct FInputActionValue& value);
+	UFUNCTION()
+	void JumpAction(const struct FInputActionValue& value);
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

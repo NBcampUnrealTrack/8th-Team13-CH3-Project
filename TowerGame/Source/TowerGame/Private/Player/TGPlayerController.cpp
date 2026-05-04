@@ -21,6 +21,11 @@ ATGPlayerController::ATGPlayerController()
 		TEXT("/Game/Player/Input/Actions/IA_Look.IA_Look");
 	if (IA_Look_Asset.Succeeded())
 		Action_Look = IA_Look_Asset.Object;
+
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_Jump_Asset =
+		TEXT("/Game/Player/Input/Actions/IA_Jump.IA_Jump");
+	if (IA_Jump_Asset.Succeeded())
+		Action_Jump = IA_Jump_Asset.Object;
 }
 
 void ATGPlayerController::BeginPlay()
