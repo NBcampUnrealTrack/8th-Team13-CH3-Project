@@ -60,14 +60,14 @@ protected:
 	void PlacingGrid();
 
 	//	그리드 맵의 X축 칸 수입니다.
-	UPROPERTY(BlueprintReadWrite, Category="TowerGame|Grid")
+	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite, Category="TowerGame|Grid")
 	int GridX;
 	//	그리드 맵의 Y축 칸 수입니다.
-	UPROPERTY(BlueprintReadWrite, Category="TowerGame|Grid")
+	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite, Category="TowerGame|Grid")
 	int GridY;
 
 	//	각 그리드의 크기입니다
-	UPROPERTY(BlueprintReadWrite, Category="TowerGame|Grid")
+	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite, Category="TowerGame|Grid")
 	float GridSize;
 
 private:
