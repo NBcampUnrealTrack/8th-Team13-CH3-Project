@@ -58,6 +58,8 @@ protected:
 	//	각 그리드 크기에 맞게 싱글그리드들을 배치합니다
 	//	원점을 전체 그리드 맵의 모서리로 합니다.
 	void PlacingGrid();
+	void FindSpawnPoints();
+	void FindCorePoints();
 
 	//	그리드 맵의 X축 칸 수입니다.
 	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite, Category="TowerGame|Grid")

@@ -2,7 +2,12 @@
 
 
 #include "Core/Grid/TGGridBase.h"
+
+#include "EngineUtils.h"
 #include "Core/Grid/TGSingleGrid.h"
+#include "Enemies/TGEnemySpawner.h"
+#include "Enemies/TGNavigationManager.h"
+#include "Enemies/TGCoreBase.h"
 
 
 ATGGridBase::ATGGridBase()
@@ -86,6 +91,8 @@ void ATGGridBase::PlacingBuilding(FIntPoint Point)
 	{
 		ExitPoints.Remove(Point);
 	}
+
+	ATGNavigationManager::Get(this)->NotifyBuildingPlaced();
 }
 
 void ATGGridBase::RemoveBuilding(FIntPoint Point)
@@ -99,6 +106,8 @@ void ATGGridBase::RemoveBuilding(FIntPoint Point)
 	{
 		ExitPoints.Add(Point);
 	}
+
+	ATGNavigationManager::Get(this)->NotifyBuildingPlaced();
 }
 
 void ATGGridBase::AddEntryPoint(FIntPoint Point)
@@ -157,6 +166,38 @@ void ATGGridBase::PlacingGrid()
 			GridPos.Y += (GridSize * i) + (GridSize / 2);
 			SingleGrid->SetActorLocation(GridPos);
 		}
+	}
+}
+
+//	월드에 배치된 스폰 포인트를 모두 찾아서 엔트리 포인트로 등록합니다
+void ATGGridBase::FindSpawnPoints()
+{
+	for (TActorIterator<ATGEnemySpawner> It(GetWorld()); It; ++It)
+	{
+		FVector pos = It->GetActorLocation();
+		FIntPoint point = GetPointFromPosition(pos);
+		AddEntryPoint(point);
+	}
+
+	if (EntryPoints.IsEmpty())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ATGGridBase: 월드에서 ATGEnemySpawner를 찾지 못했습니다."));
+	}
+}
+
+//	월드에 배치된 코어를 모두 찾아서 엑싯 포인트로 등록합니다
+void ATGGridBase::FindCorePoints()
+{
+	for (TActorIterator<ATGCoreBase> It(GetWorld()); It; ++It)
+	{
+		FVector pos = It->GetActorLocation();
+		FIntPoint point = GetPointFromPosition(pos);
+		AddExitPoint(point);
+	}
+
+	if (ExitPoints.IsEmpty())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ATGGridBase: 월드에서 ATGCoreBase를 찾지 못했습니다."));
 	}
 }
 
