@@ -15,6 +15,13 @@ public:
 	// Sets default values for this actor's properties
 	ATGCoreBase();
 
+	virtual float TakeDamage(
+		float DamageAmount,
+		const FDamageEvent& DamageEvent,
+		AController* EventInstigator,
+		AActor* DamageCauser
+	) override;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

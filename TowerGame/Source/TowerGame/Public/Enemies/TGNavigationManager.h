@@ -25,6 +25,7 @@ protected:
 public:
 	static ATGNavigationManager* Get(const UObject* WorldContextObject);
 
+	// CoreBase 등록
 	void AddCoreActor(ATGCoreBase* InCoreActor);
 	void RemoveCoreActor(ATGCoreBase* InCoreActor);
 
@@ -33,6 +34,7 @@ public:
 	void UnRegisterEnemy(ATGEnemyBase* Enemy);
 
 	FVector GetCoreLocation() const;
+	ATGCoreBase* GetCurrentCoreActor() const;
 
 	// 그리드 연동 전 임시 사용 함수
 	void NotifyBuildingPlaced();

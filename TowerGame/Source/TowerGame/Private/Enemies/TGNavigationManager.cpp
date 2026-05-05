@@ -62,9 +62,10 @@ void ATGNavigationManager::AddCoreActor(ATGCoreBase* InCoreActor)
 {
 	if (!InCoreActor) return;
 
+	// CoreBase을 추가하고 현재 CoreBase가 없다면 새로 지정
 	CoreActors.AddUnique(InCoreActor);
 	if (!CurrentCoreActor){
-		CurrentCoreActor = InCoreActor;
+		CurrentCoreActor = CoreActors[0];
 		RepathAllEnemies();
 	}
 }
@@ -75,6 +76,7 @@ void ATGNavigationManager::RemoveCoreActor(ATGCoreBase* InCoreActor)
 
 	const bool bWasCurrentCore = (CurrentCoreActor == InCoreActor);
 
+	// CoreBase을 지정하고 CurrentCoreBase가 없어졌다면 새로 지정
 	CoreActors.Remove(InCoreActor);
 	if (bWasCurrentCore){
 		CurrentCoreActor = CoreActors.Num() > 0 ? CoreActors[0] : nullptr;
@@ -104,6 +106,11 @@ FVector ATGNavigationManager::GetCoreLocation() const
 	}
 
 	return CurrentCoreActor->GetActorLocation();
+}
+
+ATGCoreBase* ATGNavigationManager::GetCurrentCoreActor() const
+{
+	return CurrentCoreActor;
 }
 
 void ATGNavigationManager::NotifyBuildingPlaced()

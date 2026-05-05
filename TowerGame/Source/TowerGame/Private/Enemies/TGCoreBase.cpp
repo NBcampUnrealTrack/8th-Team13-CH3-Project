@@ -15,6 +15,19 @@ ATGCoreBase::ATGCoreBase()
 	SetRootComponent(SceneRoot);
 }
 
+float ATGCoreBase::TakeDamage(float DamageAmount, const FDamageEvent& DamageEvent, AController* EventInstigator,
+	AActor* DamageCauser)
+{
+	const float AppliedDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+	UE_LOG(LogTemp, Warning, TEXT("CoreBase 피격 - Damage: %.1f"), AppliedDamage);
+
+	// TODO
+	// 상위 Manager에 Core 피격 이벤트 전달
+
+	return AppliedDamage;
+}
+
 // Called when the game starts or when spawned
 void ATGCoreBase::BeginPlay()
 {

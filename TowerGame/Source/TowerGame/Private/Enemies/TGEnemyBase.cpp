@@ -2,9 +2,14 @@
 
 
 #include "Enemies/TGEnemyBase.h"
+
+#include "EngineUtils.h"
+#include "BaseTower/TGBaseTower.h"
+#include "Enemies/TGCoreBase.h"
 #include "Enemies/TGEnemyAIController.h"
 
 #include "Enemies/TGNavigationManager.h"
+#include "Kismet/GameplayStatics.h"
 
 #include "Navigation/PathFollowingComponent.h"
 
@@ -65,12 +70,15 @@ void ATGEnemyBase::RequestRepath()
 
 	if (MoveResult == EPathFollowingRequestResult::Failed){
 		UE_LOG(LogTemp, Warning, TEXT("Enemy MoveToLocation 실패 - 건물 공격 분기로 연결"));
+
+		AActor* BlockingBuilding = FindBlockingBuilding();
+		StartAttack(BlockingBuilding);
 		return;
 	}
 
 	// 이미 목적지에 도착한 상태
 	if (MoveResult == EPathFollowingRequestResult::AlreadyAtGoal){
-		StartCoreAttack();
+		StartAttack(NavigationManager->GetCurrentCoreActor());
 	}
 }
 
@@ -79,10 +87,16 @@ void ATGEnemyBase::SetNavigationManager(ATGNavigationManager* InNavigationManage
 	NavigationManager = InNavigationManager;
 }
 
-void ATGEnemyBase::StartCoreAttack()
+void ATGEnemyBase::StartAttack(AActor* TargetActor)
 {
+	if (!TargetActor) return;
+
 	UWorld* World = GetWorld();
 	if (!World) return;
+
+	StopAttack();
+
+	CurrentAttackTarget = TargetActor;
 
 	if (World->GetTimerManager().IsTimerActive(AttackTimerHandle)) return;
 
@@ -90,7 +104,7 @@ void ATGEnemyBase::StartCoreAttack()
 	World->GetTimerManager().SetTimer(
 		AttackTimerHandle,
 		this,
-		&ATGEnemyBase::AttackCore,
+		&ATGEnemyBase::AttackTarget,
 		AttackInterVal,
 		true
 	);
@@ -102,22 +116,69 @@ void ATGEnemyBase::StopAttack()
 	if (!World) return;
 
 	World->GetTimerManager().ClearTimer(AttackTimerHandle);
+	CurrentAttackTarget = nullptr;
 }
 
-void ATGEnemyBase::AttackCore()
+void ATGEnemyBase::AttackTarget()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Enemy Core 공격 - Damage: %f"), AttackDamage);
+	if (!CurrentAttackTarget){
+		StopAttack();
+		return;
+	}
 
-	// TODO
-	// 상위 Manager에 Core 공격 이벤트 전달
+	UE_LOG(LogTemp, Warning,
+		TEXT("Enemy 공격 - Target: %s /  Damage: %f"), *CurrentAttackTarget->GetName(),AttackDamage);
+
+	// Target(CoreBase / BaseTower) 공격
+	UGameplayStatics::ApplyDamage(
+		CurrentAttackTarget,
+		AttackDamage,
+		GetController(),
+		this,
+		nullptr
+	);
 }
 
 void ATGEnemyBase::HandleMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result)
 {
+	// 이동 성공 시 Core 공격 시작
 	if (Result == EPathFollowingResult::Success){
-		StartCoreAttack();
+		StartAttack(NavigationManager->GetCurrentCoreActor());
 		return;
 	}
 }
 
+AActor* ATGEnemyBase::FindBlockingBuilding() const
+{
+	UWorld* World = GetWorld();
+	if (!World) return nullptr;
 
+	AAIController* AIController = Cast<AAIController>(GetController());
+	if (!AIController) return nullptr;
+
+	TArray<ABaseTower*> Buildings;
+
+	// 모든 BaseTower을 탐색
+	for (TActorIterator<ABaseTower> It(World); It; ++It){
+		if (*It) Buildings.Add(*It);
+	}
+
+	// 거리 순으로 정렬
+	Buildings.Sort([this](const ABaseTower& A, const ABaseTower& B)
+	{
+		return FVector::DistSquared(GetActorLocation(), A.GetActorLocation())
+			< FVector::DistSquared(GetActorLocation(), B.GetActorLocation());
+	});
+
+	// Tower 배열을 순회하며 이동 가능한 Building을 탐색
+	for (ABaseTower* Building : Buildings){
+		if (!Building) continue;
+
+		const EPathFollowingRequestResult::Type MoveResult =
+			AIController->MoveToLocation(Building->GetActorLocation());
+
+		if (MoveResult != EPathFollowingRequestResult::Failed) return Building;
+	}
+
+	return nullptr;
+}
