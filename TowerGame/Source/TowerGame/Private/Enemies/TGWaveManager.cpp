@@ -23,7 +23,8 @@ ATGWaveManager::ATGWaveManager()
 	ActiveWaveIndex(0),
 	bIsSpawning(false),
 	CurrentSpawnInfoIndex(0),
-	SpawnedCountInCurrentInfo(0)
+	SpawnedCountInCurrentInfo(0),
+	NextSpawnerIndex(0)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
@@ -82,9 +83,11 @@ void ATGWaveManager::RemoveEnemySpawner(ATGEnemySpawner* InEnemySpawner)
 {
 	if (!InEnemySpawner) return;
 
+	// EnemySpawner 제거
 	const int32 RemovedIndex = EnemySpawners.IndexOfByKey(InEnemySpawner);
 	EnemySpawners.RemoveAt(RemovedIndex);
 
+	// 남아있는 EnemySpawner가 없을 경우
 	if (EnemySpawners.Num() == 0){
 		NextWaveIndex = 0;
 		return;
@@ -166,8 +169,8 @@ void ATGWaveManager::SpawnNextEnemy()
 			return;
 		}
 
+		// Spawner을 순회하며 Enemy Spawn
 		NextSpawnerIndex %= EnemySpawners.Num();
-
 		ATGEnemySpawner* Spawner = EnemySpawners[NextSpawnerIndex];
 		NextSpawnerIndex = NextSpawnerIndex + 1;
 
