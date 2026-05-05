@@ -14,7 +14,7 @@
 #include "Navigation/PathFollowingComponent.h"
 
 // Sets default values
-ATGEnemyBase::ATGEnemyBase() : AttackDamage(1), AttackInterVal(0.5f)
+ATGEnemyBase::ATGEnemyBase() : AttackDamage(1), AttackInterVal(0.5f), HP(10)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
@@ -117,6 +117,22 @@ void ATGEnemyBase::StopAttack()
 
 	World->GetTimerManager().ClearTimer(AttackTimerHandle);
 	CurrentAttackTarget = nullptr;
+}
+
+float ATGEnemyBase::TakeDamage(float DamageAmount, const FDamageEvent& DamageEvent, AController* EventInstigator,
+	AActor* DamageCauser)
+{
+	float AppliedDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+	HP -= AppliedDamage;
+
+	UE_LOG(LogTemp, Warning, TEXT("Enemy 피격 - Damage: %.1f / HP: %.1f"), AppliedDamage, HP);
+
+	if (HP <= 0){
+		Destroy();
+	}
+
+	return AppliedDamage;
 }
 
 void ATGEnemyBase::AttackTarget()

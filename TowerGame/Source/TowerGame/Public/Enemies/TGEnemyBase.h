@@ -37,6 +37,17 @@ public:
 
 	void StopAttack();
 
+	virtual float TakeDamage(
+		float DamageAmount,
+		const FDamageEvent& DamageEvent,
+		AController* EventInstigator,
+		AActor* DamageCauser
+	) override;
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
+	float HP;
+
 protected:
 	// Enemy 공격 관련 변수
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Attack")
