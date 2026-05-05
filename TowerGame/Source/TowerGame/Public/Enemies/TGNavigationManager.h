@@ -25,8 +25,8 @@ protected:
 public:
 	static ATGNavigationManager* Get(const UObject* WorldContextObject);
 
-	void SetCoreActor(ATGCoreBase* InCoreActor);
-	void ClearCoreActor(ATGCoreBase* InCoreActor);
+	void AddCoreActor(ATGCoreBase* InCoreActor);
+	void RemoveCoreActor(ATGCoreBase* InCoreActor);
 
 	// 몬스터 등록
 	void RegisterEnemy(ATGEnemyBase* Enemy);
@@ -39,8 +39,11 @@ public:
 
 protected:
 	// 목적지
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Navigation")
-	TObjectPtr<ATGCoreBase> CoreActor;
+	UPROPERTY(BlueprintReadOnly, Category = "Navigation")
+	TArray<TObjectPtr<ATGCoreBase>> CoreActors;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Navigation")
+	TObjectPtr<ATGCoreBase> CurrentCoreActor;
 
 private:
 	// 경로 재 탐색

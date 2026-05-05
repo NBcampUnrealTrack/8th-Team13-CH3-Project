@@ -53,7 +53,7 @@ class TOWERGAME_API ATGWaveManager : public AActor
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wave")
-	TObjectPtr<ATGEnemySpawner> EnemySpawner;
+	TArray<TObjectPtr<ATGEnemySpawner>> EnemySpawners;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wave")
 	TArray<FTGWaveInfo> WaveInfos;
@@ -71,6 +71,7 @@ private:
 	bool bIsSpawning;
 	int32 CurrentSpawnInfoIndex;
 	int32 SpawnedCountInCurrentInfo;
+	int32 NextSpawnerIndex;
 
 public:
 	ATGWaveManager();
@@ -88,8 +89,8 @@ private:
 	static TWeakObjectPtr<ATGWaveManager> Instance;
 
 public:
-	void SetEnemySpawner(ATGEnemySpawner* InEnemySpawner);
-	void ClearEnemySpawner(ATGEnemySpawner* InEnemySpawner);
+	void AddEnemySpawner(ATGEnemySpawner* InEnemySpawner);
+	void RemoveEnemySpawner(ATGEnemySpawner* InEnemySpawner);
 
 public:
 	// Wave 시작

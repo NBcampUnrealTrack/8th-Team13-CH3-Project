@@ -58,14 +58,28 @@ ATGNavigationManager* ATGNavigationManager::Get(const UObject* WorldContextObjec
 	return nullptr;
 }
 
-void ATGNavigationManager::SetCoreActor(ATGCoreBase* InCoreActor)
+void ATGNavigationManager::AddCoreActor(ATGCoreBase* InCoreActor)
 {
-	CoreActor = InCoreActor;
+	if (!InCoreActor) return;
+
+	CoreActors.AddUnique(InCoreActor);
+	if (!CurrentCoreActor){
+		CurrentCoreActor = InCoreActor;
+		RepathAllEnemies();
+	}
 }
 
-void ATGNavigationManager::ClearCoreActor(ATGCoreBase* InCoreActor)
+void ATGNavigationManager::RemoveCoreActor(ATGCoreBase* InCoreActor)
 {
-	if (CoreActor == InCoreActor) CoreActor = nullptr;
+	if (!InCoreActor) return;
+
+	const bool bWasCurrentCore = (CurrentCoreActor == InCoreActor);
+
+	CoreActors.Remove(InCoreActor);
+	if (bWasCurrentCore){
+		CurrentCoreActor = CoreActors.Num() > 0 ? CoreActors[0] : nullptr;
+		RepathAllEnemies();
+	}
 }
 
 void ATGNavigationManager::RegisterEnemy(ATGEnemyBase* Enemy)
@@ -84,12 +98,12 @@ void ATGNavigationManager::UnRegisterEnemy(ATGEnemyBase* Enemy)
 
 FVector ATGNavigationManager::GetCoreLocation() const
 {
-	if (!CoreActor)
+	if (!CurrentCoreActor)
 	{
 		return FVector::ZeroVector;
 	}
 
-	return CoreActor->GetActorLocation();
+	return CurrentCoreActor->GetActorLocation();
 }
 
 void ATGNavigationManager::NotifyBuildingPlaced()

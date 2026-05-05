@@ -71,14 +71,26 @@ ATGWaveManager* ATGWaveManager::Get(const UObject* WorldContextObject)
 	return nullptr;
 }
 
-void ATGWaveManager::SetEnemySpawner(ATGEnemySpawner* InEnemySpawner)
+void ATGWaveManager::AddEnemySpawner(ATGEnemySpawner* InEnemySpawner)
 {
-	EnemySpawner = InEnemySpawner;
+	if (!InEnemySpawner) return;
+
+	EnemySpawners.AddUnique(InEnemySpawner);
 }
 
-void ATGWaveManager::ClearEnemySpawner(ATGEnemySpawner* InEnemySpawner)
+void ATGWaveManager::RemoveEnemySpawner(ATGEnemySpawner* InEnemySpawner)
 {
-	if (EnemySpawner == InEnemySpawner) EnemySpawner =	nullptr;
+	if (!InEnemySpawner) return;
+
+	const int32 RemovedIndex = EnemySpawners.IndexOfByKey(InEnemySpawner);
+	EnemySpawners.RemoveAt(RemovedIndex);
+
+	if (EnemySpawners.Num() == 0){
+		NextWaveIndex = 0;
+		return;
+	}
+
+	if (RemovedIndex != INDEX_NONE && NextSpawnerIndex >= EnemySpawners.Num()) NextSpawnerIndex = 0;
 }
 
 bool ATGWaveManager::StartNextWave()
@@ -89,7 +101,7 @@ bool ATGWaveManager::StartNextWave()
 		GetWorldTimerManager().ClearTimer(NextWaveDelayTimerHandle);
 	}
 
-	if (!EnemySpawner) return  false;
+	if (EnemySpawners.Num() == 0) return  false;
 	if (!HasNextWave()) return  false;
 
 	// 현재 / 다음 웨이브 정보 갱신
@@ -149,8 +161,18 @@ void ATGWaveManager::SpawnNextEnemy()
 			continue;
 		}
 
+		if (EnemySpawners.Num() == 0){
+			FinishCurrentWaveSpawn();
+			return;
+		}
+
+		NextSpawnerIndex %= EnemySpawners.Num();
+
+		ATGEnemySpawner* Spawner = EnemySpawners[NextSpawnerIndex];
+		NextSpawnerIndex = NextSpawnerIndex + 1;
+
 		// Enemy 생성
-		if (EnemySpawner->SpawnEnemy(SpawnInfo.EnemyClass)) SpawnedCountInCurrentInfo++;
+		if (Spawner && Spawner->SpawnEnemy(SpawnInfo.EnemyClass)) SpawnedCountInCurrentInfo++;
 		return;
 	}
 }

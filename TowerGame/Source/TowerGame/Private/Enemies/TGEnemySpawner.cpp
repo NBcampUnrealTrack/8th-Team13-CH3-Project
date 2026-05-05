@@ -24,14 +24,14 @@ void ATGEnemySpawner::BeginPlay()
 
 	if (ATGWaveManager* WaveManager = ATGWaveManager::Get(this))
 	{
-		WaveManager->SetEnemySpawner(this);
+		WaveManager->AddEnemySpawner(this);
 	}
 }
 
 void ATGEnemySpawner::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	if (ATGWaveManager* WaveManager = ATGWaveManager::Get(this)){
-		WaveManager->ClearEnemySpawner(this);
+		WaveManager->RemoveEnemySpawner(this);
 	}
 
 	Super::EndPlay(EndPlayReason);

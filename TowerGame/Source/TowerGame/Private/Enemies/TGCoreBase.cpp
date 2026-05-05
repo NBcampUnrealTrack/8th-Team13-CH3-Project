@@ -21,14 +21,14 @@ void ATGCoreBase::BeginPlay()
 	Super::BeginPlay();
 
 	if (ATGNavigationManager* NavigationManager = ATGNavigationManager::Get(this)){
-		NavigationManager->SetCoreActor(this);
+		NavigationManager->AddCoreActor(this);
 	}
 }
 
 void ATGCoreBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	if (ATGNavigationManager* NavigationManager = ATGNavigationManager::Get(this)){
-		NavigationManager->ClearCoreActor(this);
+		NavigationManager->RemoveCoreActor(this);
 	}
 
 	Super::EndPlay(EndPlayReason);
