@@ -5,6 +5,7 @@
 
 #include "Enemies/TGEnemyBase.h"
 #include "Enemies/TGNavigationManager.h"
+#include "Enemies/TGWaveManager.h"
 
 // Sets default values
 ATGEnemySpawner::ATGEnemySpawner() : SpawnLocationOffset(0,0,88)
@@ -15,6 +16,25 @@ ATGEnemySpawner::ATGEnemySpawner() : SpawnLocationOffset(0,0,88)
 	SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
 	SetRootComponent(SceneRoot);
 
+}
+
+void ATGEnemySpawner::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (ATGWaveManager* WaveManager = ATGWaveManager::Get(this))
+	{
+		WaveManager->SetEnemySpawner(this);
+	}
+}
+
+void ATGEnemySpawner::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (ATGWaveManager* WaveManager = ATGWaveManager::Get(this)){
+		WaveManager->ClearEnemySpawner(this);
+	}
+
+	Super::EndPlay(EndPlayReason);
 }
 
 ATGEnemyBase* ATGEnemySpawner::SpawnEnemy(TSubclassOf<ATGEnemyBase> EnemyClass)

@@ -3,11 +3,13 @@
 
 #include "Enemies/TGCoreBase.h"
 
+#include "Enemies/TGNavigationManager.h"
+
 // Sets default values
 ATGCoreBase::ATGCoreBase()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("Scene"));
 	SetRootComponent(SceneRoot);
@@ -18,12 +20,18 @@ void ATGCoreBase::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (ATGNavigationManager* NavigationManager = ATGNavigationManager::Get(this)){
+		NavigationManager->SetCoreActor(this);
+	}
 }
 
-// Called every frame
-void ATGCoreBase::Tick(float DeltaTime)
+void ATGCoreBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	Super::Tick(DeltaTime);
+	if (ATGNavigationManager* NavigationManager = ATGNavigationManager::Get(this)){
+		NavigationManager->ClearCoreActor(this);
+	}
 
+	Super::EndPlay(EndPlayReason);
 }
+
 

@@ -88,6 +88,10 @@ private:
 	static TWeakObjectPtr<ATGWaveManager> Instance;
 
 public:
+	void SetEnemySpawner(ATGEnemySpawner* InEnemySpawner);
+	void ClearEnemySpawner(ATGEnemySpawner* InEnemySpawner);
+
+public:
 	// Wave 시작
 	UFUNCTION(BlueprintCallable, Category = "Wave")
 	bool StartNextWave();

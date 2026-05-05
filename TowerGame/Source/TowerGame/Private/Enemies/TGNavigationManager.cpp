@@ -58,6 +58,16 @@ ATGNavigationManager* ATGNavigationManager::Get(const UObject* WorldContextObjec
 	return nullptr;
 }
 
+void ATGNavigationManager::SetCoreActor(ATGCoreBase* InCoreActor)
+{
+	CoreActor = InCoreActor;
+}
+
+void ATGNavigationManager::ClearCoreActor(ATGCoreBase* InCoreActor)
+{
+	if (CoreActor == InCoreActor) CoreActor = nullptr;
+}
+
 void ATGNavigationManager::RegisterEnemy(ATGEnemyBase* Enemy)
 {
 	if (!Enemy) return;
@@ -82,9 +92,8 @@ FVector ATGNavigationManager::GetCoreLocation() const
 	return CoreActor->GetActorLocation();
 }
 
-void ATGNavigationManager::NotifyBuildingPlaced(const FVector& BuildLocation)
+void ATGNavigationManager::NotifyBuildingPlaced()
 {
-	// todo 그리드 맵 건물이 배치, 제거 되었을 때의 정보를 인자로 받아 경로 재설정할 객체를 판단 예정
 	RepathAllEnemies();
 }
 

@@ -71,6 +71,16 @@ ATGWaveManager* ATGWaveManager::Get(const UObject* WorldContextObject)
 	return nullptr;
 }
 
+void ATGWaveManager::SetEnemySpawner(ATGEnemySpawner* InEnemySpawner)
+{
+	EnemySpawner = InEnemySpawner;
+}
+
+void ATGWaveManager::ClearEnemySpawner(ATGEnemySpawner* InEnemySpawner)
+{
+	if (EnemySpawner == InEnemySpawner) EnemySpawner =	nullptr;
+}
+
 bool ATGWaveManager::StartNextWave()
 {
 	if (bIsSpawning) return false;
