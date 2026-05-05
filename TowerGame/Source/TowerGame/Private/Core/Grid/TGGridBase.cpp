@@ -150,6 +150,8 @@ void ATGGridBase::BeginPlay()
 		}
 	}
 	PlacingGrid();
+	FindSpawnPoints();
+	FindCorePoints();
 }
 
 void ATGGridBase::PlacingGrid()
