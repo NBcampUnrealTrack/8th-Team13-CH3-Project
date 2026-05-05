@@ -6,6 +6,8 @@
 #include "TGActorBase.h"
 #include "TGGridBase.generated.h"
 
+class ATGCoreBase;
+class ATGEnemySpawner;
 class ATGSingleGrid;
 
 UCLASS()
@@ -43,6 +45,8 @@ public:
 	void RemoveBuilding(FIntPoint Point);
 
 	//	진입점과 진출점 관리 함수
+	//	스포너와 코어를 직접 생성하고 삭제합니다.
+	//	게임 시작 전, 최소 한개의 시작점과 도착점을 생성하도록 하세요.
 	UFUNCTION(BlueprintCallable, Category="TowerGame|Grid")
 	void AddEntryPoint(FIntPoint Point);
 	UFUNCTION(BlueprintCallable, Category="TowerGame|Grid")
@@ -52,14 +56,18 @@ public:
 	UFUNCTION(BlueprintCallable, Category="TowerGame|Grid")
 	void RemoveExitPoint(FIntPoint Point);
 
+	//	인덱스에서 월드 위치를 반환합니다
+	UFUNCTION(BlueprintCallable, Category="TowerGame|Grid")
+	FVector ConvertIndexToVector(FIntPoint Point);
+
 protected:
 	virtual void BeginPlay() override;
 
 	//	각 그리드 크기에 맞게 싱글그리드들을 배치합니다
 	//	원점을 전체 그리드 맵의 모서리로 합니다.
 	void PlacingGrid();
-	void FindSpawnPoints();
-	void FindCorePoints();
+	/*void FindSpawnPoints();
+	void FindCorePoints();*/
 
 	//	그리드 맵의 X축 칸 수입니다.
 	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite, Category="TowerGame|Grid")
@@ -72,6 +80,11 @@ protected:
 	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite, Category="TowerGame|Grid")
 	float GridSize;
 
+	UPROPERTY(EditDefaultsOnly, Category="TowerGame|Spawner")
+	TSubclassOf<ATGEnemySpawner> EnemySpawnerClass;
+	UPROPERTY(EditDefaultsOnly, Category="TowerGame|Spawner")
+	TSubclassOf<ATGCoreBase> CoreClass;
+
 private:
 
 	bool PathFinding();
@@ -80,7 +93,9 @@ private:
 	TArray<TArray<ATGSingleGrid*>> GridActors;
 	//	진입점 목록
 	TSet<FIntPoint> EntryPoints;
+	TMap<FIntPoint, TObjectPtr<ATGEnemySpawner>> EnemySpawners;
 	//	진출점 목록
 	TSet<FIntPoint> ExitPoints;
+	TMap<FIntPoint, TObjectPtr<ATGCoreBase>> Cores;
 
 };
