@@ -22,6 +22,9 @@ public:
 		AActor* DamageCauser
 	) override;
 
+	UFUNCTION(BlueprintCallable, Category="TowerGame|Status")
+	float GetCurrentHP();
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -30,5 +33,9 @@ protected:
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<USceneComponent> SceneRoot;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TowerGame|Status")
+	float MaxHP = 100.f;
+	float CurrentHP;
 
 };

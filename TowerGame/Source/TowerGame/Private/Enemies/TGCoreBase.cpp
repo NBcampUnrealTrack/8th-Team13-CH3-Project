@@ -3,6 +3,7 @@
 
 #include "Enemies/TGCoreBase.h"
 
+#include "Core/GameFlow/TGGameMode.h"
 #include "Enemies/TGNavigationManager.h"
 
 // Sets default values
@@ -22,10 +23,26 @@ float ATGCoreBase::TakeDamage(float DamageAmount, const FDamageEvent& DamageEven
 
 	UE_LOG(LogTemp, Warning, TEXT("CoreBase 피격 - Damage: %.1f"), AppliedDamage);
 
+	CurrentHP -= AppliedDamage;
+
 	// TODO
 	// 상위 Manager에 Core 피격 이벤트 전달
 
+	if (CurrentHP < 0)
+	{
+		if (ATGGameMode* GM = Cast<ATGGameMode>(GetWorld()->GetAuthGameMode()))
+		{
+			//	TODO : 게임 오버 처리
+		}
+		Destroy();
+	}
+
 	return AppliedDamage;
+}
+
+float ATGCoreBase::GetCurrentHP()
+{
+	return CurrentHP;
 }
 
 // Called when the game starts or when spawned
@@ -36,6 +53,8 @@ void ATGCoreBase::BeginPlay()
 	if (ATGNavigationManager* NavigationManager = ATGNavigationManager::Get(this)){
 		NavigationManager->AddCoreActor(this);
 	}
+
+	CurrentHP = MaxHP;
 }
 
 void ATGCoreBase::EndPlay(const EEndPlayReason::Type EndPlayReason)

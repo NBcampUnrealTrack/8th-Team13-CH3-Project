@@ -5,7 +5,7 @@
 #include "Core/GameFlow/TGGameFlowState.h"
 #include "TGHUD.generated.h"
 
-class UUserWidget;
+class UTGMainMenuWidget;
 class ATGGameMode;
 
 UCLASS()
@@ -16,22 +16,19 @@ class TOWERGAME_API ATGHUD : public AHUD
 protected:
 	virtual void BeginPlay() override;
 
-public:
 	UFUNCTION()
 	void HandleFlowStateChanged(ETGGameFlowState NewState);
 
-	UFUNCTION(BlueprintCallable)
+	void HideAllWidgets();
 	void UpdateUIByState(ETGGameFlowState NewState);
 
 protected:
-	void HideAllWidgets();
+	UPROPERTY()
+	ATGGameMode* CachedGameMode = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UTGMainMenuWidget> MainMenuWidgetClass;
 
 	UPROPERTY()
-	TObjectPtr<ATGGameMode> CachedGameMode;
-
-	UPROPERTY(EditAnywhere, Category = "UI")
-	TSubclassOf<UUserWidget> MainMenuWidgetClass;
-
-	UPROPERTY()
-	TObjectPtr<UUserWidget> MainMenuWidget;
+	UTGMainMenuWidget* MainMenuWidget = nullptr;
 };

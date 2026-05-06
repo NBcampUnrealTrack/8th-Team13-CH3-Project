@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "TGActorBase.h"
+#include "TGInteractiveActor.h"
 #include "TGSingleGrid.generated.h"
 
 class ABaseTower;
 class ATGGridBase;
 
 UCLASS()
-class TOWERGAME_API ATGSingleGrid : public ATGActorBase
+class TOWERGAME_API ATGSingleGrid : public ATGInteractiveActor
 {
 	GENERATED_BODY()
 	//	그리드 위에 배치되는 최소 단위 클래스입니다.
@@ -22,16 +22,20 @@ public:
 	void SetParent(TObjectPtr<ATGGridBase> Parent);
 
 	void SetBoxSize(float Size) const;
-	void PlaceTower(TObjectPtr<ABaseTower> Tower);
-	void RemoveTower(TObjectPtr<ABaseTower> Tower);
+	// void PlaceTower(TObjectPtr<ABaseTower> Tower);
+	// void RemoveTower(TObjectPtr<ABaseTower> Tower);
 
+	virtual void OnFocused_Implementation(ATGPlayer* Player) override;
+	virtual void OnUnfocused_Implementation(ATGPlayer* Player) override;
+	virtual void OnInteract_Implementation(ATGPlayer* Player) override;
 protected:
+
+	virtual void BeginPlay() override;
 
 	//	월드에 위치를 표시하기 위한 임시 컴포넌트입니다.
 	//	ToDo : 디버깅용 표시 방법이 없어도 될 때 삭제하세요.
 	UPROPERTY(EditDefaultsOnly, Category = "TowerGame|Grid")
 	TObjectPtr<UStaticMeshComponent> Visualizer;
-
 
 private:
 	//	그리드 매니저
