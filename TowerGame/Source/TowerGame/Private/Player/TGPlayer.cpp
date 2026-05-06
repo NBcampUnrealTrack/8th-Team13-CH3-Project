@@ -6,6 +6,9 @@
 #include "Player/TGPlayerController.h"
 #include "Camera/CameraComponent.h"
 #include "InputActionValue.h"
+#include "Core/Grid/TGGridBase.h"
+
+#include "Kismet/KismetSystemLibrary.h"
 
 // Sets default values
 ATGPlayer::ATGPlayer()
@@ -93,6 +96,9 @@ void ATGPlayer::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	RestoreEvadeCooldown(DeltaTime);	// 회피기동 쿨타임 회복
+	FVector LookingPoint;
+	GetLookingPointDebug(LookingPoint);
+	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Looking Point: %s"), *LookingPoint.ToString()));
 	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Current Evade Cooldown: %f / %f"), CurrentEvadeCooldown, EvadeCooldown));
 	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Current Evade Count(LSHIFT): %d / %d"), CurrentEvadeCount, EvadeCount));
 
@@ -101,6 +107,8 @@ void ATGPlayer::Tick(float DeltaTime)
 		bMoving = false;
 	else
 		MoveDir = FVector2D::ZeroVector;
+
+	
 }
 
 void ATGPlayer::RestoreEvadeCooldown(float DeltaTime)
@@ -139,5 +147,57 @@ void ATGPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 				EnhancedInputComponent->BindAction(PlayerController->Action_Evade, ETriggerEvent::Triggered, this, &ATGPlayer::Evade);
 		}
 	}
+}
+
+const bool ATGPlayer::GetLookingPoint(FVector& result, float MaxDistance)
+{
+	FHitResult TraceHit;
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);
+	QueryParams.bTraceComplex = false;
+
+	
+	GetWorld()->LineTraceSingleByChannel(
+		TraceHit,
+		Camera->GetComponentLocation(),
+		Camera->GetComponentLocation() + Camera->GetForwardVector() * MaxDistance,
+		ECC_WorldStatic,
+		QueryParams
+	);
+
+	if (TraceHit.GetActor())
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("TraceHit Object: %s"), *TraceHit.GetActor()->GetName()));
+		result = TraceHit.Location;
+		return true;
+	}
+	return false;
+}
+
+const bool ATGPlayer::GetLookingPointDebug(FVector& result, float MaxDistance)
+{
+	FHitResult TraceHit;
+
+	UKismetSystemLibrary::LineTraceSingle(
+		GetWorld(), //어느 월드의 소속인가? (this)를 넣어줘도 됨
+		Camera->GetComponentLocation(),
+		Camera->GetComponentLocation() + Camera->GetForwardVector() * MaxDistance,
+		UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_WorldStatic),	// 사용할 트레이스채널
+		false,	// 복합콜리전 사용
+		{ this },	// 해당 액터는 이 트레이스를 무시
+		EDrawDebugTrace::ForOneFrame,	//디버그(그리기 타입 적용),
+		TraceHit,
+		true,	// 자기자신을 Ignore
+		FLinearColor::Red,	//디버그 색깔
+		FLinearColor::Green	//트레이스 히트 시 색깔
+	);
+
+	if (TraceHit.GetActor())
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("TraceHit Object: %s"), *TraceHit.GetActor()->GetName()));
+		result = TraceHit.Location;
+		return true;
+	}
+	return false;
 }
 

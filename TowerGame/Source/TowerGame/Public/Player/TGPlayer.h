@@ -45,6 +45,10 @@ public:
 	const float GetMaxEvadeCooldown() { return EvadeCooldown; }	// 최대 Evade 쿨타임
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Status")
 	const float GetCurrentEvadeCooldown() { return CurrentEvadeCooldown; }	// 현재 남은 Evade 쿨타임
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Skill")
+	const bool GetLookingPoint(FVector& result, float MaxDistance = 5000.0f);	// 카메라가 바라보는 위치 가져오기
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Skill")
+	const bool GetLookingPointDebug(FVector& result, float MaxDistance = 5000.0f);	// 카메라가 바라보는 위치 가져오기(시각화)
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
 	TObjectPtr<class UCameraComponent> Camera;
