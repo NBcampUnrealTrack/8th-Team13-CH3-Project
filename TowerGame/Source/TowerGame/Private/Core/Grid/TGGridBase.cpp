@@ -14,18 +14,12 @@ ATGGridBase::ATGGridBase()
 	PrimaryActorTick.bCanEverTick = false;
 }
 
-ATGSingleGrid* ATGGridBase::GetSingleGridFromPosition(const FVector Position)
+ATGSingleGrid* ATGGridBase::GetSingleGridFromPosition( FVector Position)
 {
-	FVector2D Pos = FVector2D(Position.X, Position.Y);
-	return GetSingleGridFromPosition(Pos);
-}
-
-ATGSingleGrid* ATGGridBase::GetSingleGridFromPosition(const FVector2D Position)
-{
-	int X = Position.X / GridSize;
-	int Y = Position.Y / GridSize;
+	FVector RelativePosition = Position - GetActorLocation();
+	int X = RelativePosition.X / GridSize;
+	int Y = RelativePosition.Y / GridSize;
 	if (X < 0 || X >= GridX || Y < 0 || Y >= GridY)	return nullptr;
-
 	return GridActors[Y][X];
 }
 
@@ -36,16 +30,11 @@ ATGSingleGrid* ATGGridBase::GetSingleGridFromPoint(const FIntPoint Point)
 	return GridActors[Point.Y][Point.X];
 }
 
-FIntPoint ATGGridBase::GetPointFromPosition(const FVector Position) const
+FIntPoint ATGGridBase::GetPointFromPosition(FVector Position) const
 {
-	FVector2D Pos = FVector2D(Position.X, Position.Y);
-	return GetPointFromPosition(Pos);
-}
-
-FIntPoint ATGGridBase::GetPointFromPosition(const FVector2D Position) const
-{
-	int X = Position.X / GridSize;
-	int Y = Position.Y / GridSize;
+	FVector RelativePosition = Position - GetActorLocation();
+	int X = RelativePosition.X / GridSize;
+	int Y = RelativePosition.Y / GridSize;
 	if (X < 0) X = 0;
 	else if (X >= GridX) X = GridX - 1;
 	if (Y < 0) Y = 0;
