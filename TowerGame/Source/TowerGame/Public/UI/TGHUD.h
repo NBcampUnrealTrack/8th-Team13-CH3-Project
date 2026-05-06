@@ -6,6 +6,7 @@
 #include "TGHUD.generated.h"
 
 class UTGMainMenuWidget;
+class UTGGameOverWidget;
 class ATGGameMode;
 
 UCLASS()
@@ -14,6 +15,7 @@ class TOWERGAME_API ATGHUD : public AHUD
 	GENERATED_BODY()
 
 protected:
+	ATGHUD();
 	virtual void BeginPlay() override;
 
 	UFUNCTION()
@@ -24,11 +26,14 @@ protected:
 
 protected:
 	UPROPERTY()
-	ATGGameMode* CachedGameMode = nullptr;
+	ATGGameMode* CachedGameMode;
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UTGMainMenuWidget> MainMenuWidgetClass;
-
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UTGGameOverWidget> GameOverWidgetClass;
 	UPROPERTY()
-	UTGMainMenuWidget* MainMenuWidget = nullptr;
+	UTGMainMenuWidget* MainMenuWidget;
+	UPROPERTY()
+	UTGGameOverWidget* GameOverWidget;
 };
