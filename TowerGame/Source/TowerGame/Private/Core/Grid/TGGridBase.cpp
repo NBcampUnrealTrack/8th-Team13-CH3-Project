@@ -82,15 +82,6 @@ void ATGGridBase::PlacingBuilding(FIntPoint Point)
 {
 	bBuildingPlaced[Point.Y][Point.X] = true;
 
-	if (Point.Y == 0)
-	{
-		EntryPoints.Remove(Point);
-	}
-	if (Point.Y == GridY - 1)
-	{
-		ExitPoints.Remove(Point);
-	}
-
 	ATGNavigationManager::Get(this)->NotifyBuildingPlaced();
 }
 
