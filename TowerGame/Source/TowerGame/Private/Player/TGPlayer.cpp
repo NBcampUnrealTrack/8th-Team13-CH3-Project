@@ -217,7 +217,6 @@ void ATGPlayer::InteractiveTrace(bool debug)
 
 		if (CurrentFocusedActor)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Red, FString::Printf(TEXT("Build Target: %s"), *CurrentFocusedActor->GetName()));
 			CurrentFocusedActor->OnFocused(this);
 		}
 	}
