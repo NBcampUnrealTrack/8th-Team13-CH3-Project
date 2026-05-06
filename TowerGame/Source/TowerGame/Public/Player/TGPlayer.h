@@ -48,10 +48,10 @@ public:
 	const float GetMaxEvadeCooldown() { return EvadeCooldown; }	// 최대 Evade 쿨타임
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Status")
 	const float GetCurrentEvadeCooldown() { return CurrentEvadeCooldown; }	// 현재 남은 Evade 쿨타임
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Skill")
-	const bool GetLookingPoint(FVector& result, float MaxDistance = 5000.0f);	// 카메라가 바라보는 위치 가져오기
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Skill")
-	const bool GetLookingPointDebug(FVector& result, float MaxDistance = 5000.0f);	// 카메라가 바라보는 위치 가져오기(시각화)
+	//UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Skill")
+	//const bool GetLookingPoint(FVector& result, float MaxDistance = 5000.0f);	// 카메라가 바라보는 위치 가져오기
+	//UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Skill")
+	//const bool GetLookingPointDebug(FVector& result, float MaxDistance = 5000.0f);	// 카메라가 바라보는 위치 가져오기(시각화)
 
 	// 현재 시선에 잡힌 Interactive 액터 반환 (없으면 nullptr)
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "TowerGame|Interaction")
@@ -76,9 +76,11 @@ protected:
 	float CurrentEvadeCooldown;	// 현재 남은 회피기동 회복시간
 	bool bMoving;
 	FVector2D MoveDir;	// 현재 이동중인 방향, 정규화벡터
+	bool bBuildMode;	// 빌드모드
 
 private:
-	void InteractiveTrace();
+	void InteractiveTrace(bool debug = false);
+	bool CameraLineTrace(FHitResult& TraceHit, ECollisionChannel Channel, float MaxDistance, bool debug = false);
 
 	//	포커싱된 액터
 	UPROPERTY()

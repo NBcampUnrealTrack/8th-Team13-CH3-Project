@@ -30,6 +30,7 @@ void ATGPlayer::BeginPlay()
 {
 	Super::BeginPlay();
 	bMoving = false;
+	bBuildMode = false;
 	CurrentEvadeCount = EvadeCount;
 	CurrentEvadeCooldown = 0.0f;
 }
@@ -106,10 +107,11 @@ void ATGPlayer::Tick(float DeltaTime)
 
 	RestoreEvadeCooldown(DeltaTime);	// 회피기동 쿨타임 회복
 	FVector LookingPoint;
-	GetLookingPointDebug(LookingPoint);
 	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Looking Point: %s"), *LookingPoint.ToString()));
 	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Current Evade Cooldown: %f / %f"), CurrentEvadeCooldown, EvadeCooldown));
 	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Current Evade Count(LSHIFT): %d / %d"), CurrentEvadeCount, EvadeCount));
+
+	InteractiveTrace();
 
 	// 현재 이동조작중인가?
 	if (bMoving)
@@ -117,7 +119,6 @@ void ATGPlayer::Tick(float DeltaTime)
 	else
 		MoveDir = FVector2D::ZeroVector;
 
-	InteractiveTrace();
 }
 
 void ATGPlayer::RestoreEvadeCooldown(float DeltaTime)
@@ -160,22 +161,10 @@ void ATGPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	}
 }
 
-void ATGPlayer::InteractiveTrace()
+void ATGPlayer::InteractiveTrace(bool debug)
 {
 	FHitResult HitResult;
-	FCollisionQueryParams QueryParams;
-	QueryParams.AddIgnoredActor(this);
-
-	const FVector Start = Camera->GetComponentLocation();
-	const FVector End = Start + Camera->GetForwardVector() * InteractDistance;
-
-	const bool bHit = GetWorld()->LineTraceSingleByChannel(
-		HitResult,
-		Start,
-		End,
-		ECC_GameTraceChannel1,	//	InteractiveActor 전용 채널
-		QueryParams
-	);
+	const bool bHit = CameraLineTrace(HitResult, ECC_GameTraceChannel1, InteractDistance);
 
 	ATGInteractiveActor* HitActor = nullptr;
 	if (bHit)
@@ -195,61 +184,47 @@ void ATGPlayer::InteractiveTrace()
 	}
 }
 
+bool ATGPlayer::CameraLineTrace(FHitResult& TraceHit, ECollisionChannel Channel, float MaxDistance, bool debug)
+{
+	FCollisionQueryParams QueryParams;
+	TArray<AActor*> IgnoredActors = { this };
+	QueryParams.AddIgnoredActors(IgnoredActors);
+
+	const FVector Start = Camera->GetComponentLocation();
+	const FVector End = Start + Camera->GetForwardVector() * MaxDistance;
+
+	if (debug)
+	{
+		return UKismetSystemLibrary::LineTraceSingle(
+			GetWorld(), //어느 월드의 소속인가? (this)를 넣어줘도 됨
+			Start,
+			End,
+			UEngineTypes::ConvertToTraceType(Channel),	// 사용할 트레이스채널
+			QueryParams.bTraceComplex,	// 복합콜리전 사용
+			IgnoredActors,	// 해당 액터는 이 트레이스를 무시
+			EDrawDebugTrace::ForOneFrame,	//디버그(그리기 타입 적용),
+			TraceHit,
+			true,	// 자기자신을 Ignore
+			FLinearColor::Red,	//디버그 색깔
+			FLinearColor::Green	//트레이스 히트 시 색깔
+		);
+	}
+	else
+	{
+		return GetWorld()->LineTraceSingleByChannel(
+			TraceHit,
+			Start,
+			End,
+			Channel,
+			QueryParams
+		);
+	}
+
+}
+
 void ATGPlayer::Interact()
 {
 	if (CurrentFocusedActor)
 		CurrentFocusedActor->OnInteract(this);
-}
-
-const bool ATGPlayer::GetLookingPoint(FVector& result, float MaxDistance)
-{
-	FHitResult TraceHit;
-	FCollisionQueryParams QueryParams;
-	QueryParams.AddIgnoredActor(this);
-	QueryParams.bTraceComplex = false;
-
-
-	GetWorld()->LineTraceSingleByChannel(
-		TraceHit,
-		Camera->GetComponentLocation(),
-		Camera->GetComponentLocation() + Camera->GetForwardVector() * MaxDistance,
-		ECC_WorldStatic,
-		QueryParams
-	);
-
-	if (TraceHit.GetActor())
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("TraceHit Object: %s"), *TraceHit.GetActor()->GetName()));
-		result = TraceHit.Location;
-		return true;
-	}
-	return false;
-}
-
-const bool ATGPlayer::GetLookingPointDebug(FVector& result, float MaxDistance)
-{
-	FHitResult TraceHit;
-
-	UKismetSystemLibrary::LineTraceSingle(
-		GetWorld(), //어느 월드의 소속인가? (this)를 넣어줘도 됨
-		Camera->GetComponentLocation(),
-		Camera->GetComponentLocation() + Camera->GetForwardVector() * MaxDistance,
-		UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_WorldStatic),	// 사용할 트레이스채널
-		false,	// 복합콜리전 사용
-		{ this },	// 해당 액터는 이 트레이스를 무시
-		EDrawDebugTrace::ForOneFrame,	//디버그(그리기 타입 적용),
-		TraceHit,
-		true,	// 자기자신을 Ignore
-		FLinearColor::Red,	//디버그 색깔
-		FLinearColor::Green	//트레이스 히트 시 색깔
-	);
-
-	if (TraceHit.GetActor())
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("TraceHit Object: %s"), *TraceHit.GetActor()->GetName()));
-		result = TraceHit.Location;
-		return true;
-	}
-	return false;
 }
 
