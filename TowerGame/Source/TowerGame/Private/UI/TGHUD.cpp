@@ -1,5 +1,5 @@
 #include "UI/TGHUD.h"
-#include "Blueprint/UserWidget.h"
+#include "UI/TGMainMenuWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "Core/GameFlow/TGGameMode.h"
 
@@ -18,6 +18,7 @@ void ATGHUD::BeginPlay()
 
 void ATGHUD::HandleFlowStateChanged(ETGGameFlowState NewState)
 {
+	UE_LOG(LogTemp, Warning, TEXT("HUD State Changed: %s"), *UEnum::GetValueAsString(NewState));
 	UpdateUIByState(NewState);
 }
 
@@ -45,13 +46,17 @@ void ATGHUD::UpdateUIByState(ETGGameFlowState NewState)
 	case ETGGameFlowState::MainMenu:
 		if (!MainMenuWidget && MainMenuWidgetClass)
 		{
-			MainMenuWidget = CreateWidget<UUserWidget>(PC, MainMenuWidgetClass);
+			MainMenuWidget = CreateWidget<UTGMainMenuWidget>(PC, MainMenuWidgetClass);
 		}
 
 		if (MainMenuWidget)
 		{
 			MainMenuWidget->AddToViewport();
 		}
+		break;
+
+	case ETGGameFlowState::Playing:
+		UE_LOG(LogTemp, Warning, TEXT("Now Playing"));
 		break;
 
 	default:
