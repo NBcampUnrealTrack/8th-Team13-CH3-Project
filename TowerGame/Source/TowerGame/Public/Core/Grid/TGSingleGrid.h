@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "TGActorBase.h"
+#include "TGInteractiveActor.h"
 #include "TGSingleGrid.generated.h"
 
 class ABaseTower;
 class ATGGridBase;
 
 UCLASS()
-class TOWERGAME_API ATGSingleGrid : public ATGActorBase
+class TOWERGAME_API ATGSingleGrid : public ATGInteractiveActor
 {
 	GENERATED_BODY()
 	//	그리드 위에 배치되는 최소 단위 클래스입니다.

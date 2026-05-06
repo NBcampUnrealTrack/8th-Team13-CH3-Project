@@ -7,6 +7,7 @@
 #include "Camera/CameraComponent.h"
 #include "InputActionValue.h"
 #include "Core/Grid/TGGridBase.h"
+#include "TGInteractiveActor.h"
 
 #include "Kismet/KismetSystemLibrary.h"
 
@@ -20,6 +21,8 @@ ATGPlayer::ATGPlayer()
 	Camera->bUsePawnControlRotation = true;
 	EvadeCount = 2;
 	EvadeCooldown = 3.0f;
+	InteractDistance = 300.f;
+	CurrentFocusedActor = nullptr;
 }
 
 // Called when the game starts or when spawned
@@ -93,7 +96,7 @@ void ATGPlayer::Evade(const FInputActionValue& value)
 void ATGPlayer::Build_Implementation(const FInputActionValue& InputValue)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Called BuildAction"));
-	
+
 }
 
 // Called every frame
@@ -114,7 +117,7 @@ void ATGPlayer::Tick(float DeltaTime)
 	else
 		MoveDir = FVector2D::ZeroVector;
 
-	
+	InteractiveTrace();
 }
 
 void ATGPlayer::RestoreEvadeCooldown(float DeltaTime)
@@ -157,6 +160,47 @@ void ATGPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	}
 }
 
+void ATGPlayer::InteractiveTrace()
+{
+	FHitResult HitResult;
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);
+
+	const FVector Start = Camera->GetComponentLocation();
+	const FVector End = Start + Camera->GetForwardVector() * InteractDistance;
+
+	const bool bHit = GetWorld()->LineTraceSingleByChannel(
+		HitResult,
+		Start,
+		End,
+		ECC_GameTraceChannel1,	//	InteractiveActor 전용 채널
+		QueryParams
+	);
+
+	ATGInteractiveActor* HitActor = nullptr;
+	if (bHit)
+	{
+		HitActor = Cast<ATGInteractiveActor>(HitResult.GetActor());
+	}
+
+	if (HitActor != CurrentFocusedActor)
+	{
+		if (CurrentFocusedActor)
+			CurrentFocusedActor->OnUnfocused(this);
+
+		CurrentFocusedActor = HitActor;
+
+		if (CurrentFocusedActor)
+			CurrentFocusedActor->OnFocused(this);
+	}
+}
+
+void ATGPlayer::Interact()
+{
+	if (CurrentFocusedActor)
+		CurrentFocusedActor->OnInteract(this);
+}
+
 const bool ATGPlayer::GetLookingPoint(FVector& result, float MaxDistance)
 {
 	FHitResult TraceHit;
@@ -164,7 +208,7 @@ const bool ATGPlayer::GetLookingPoint(FVector& result, float MaxDistance)
 	QueryParams.AddIgnoredActor(this);
 	QueryParams.bTraceComplex = false;
 
-	
+
 	GetWorld()->LineTraceSingleByChannel(
 		TraceHit,
 		Camera->GetComponentLocation(),

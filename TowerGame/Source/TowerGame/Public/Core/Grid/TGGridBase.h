@@ -20,8 +20,7 @@ public:
 
 	//	월드 좌표에서 그리드 가져오기
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="TowerGame|Grid")
-	ATGSingleGrid* GetSingleGridFromPosition(const FVector Position);
-	ATGSingleGrid* GetSingleGridFromPosition(const FVector2D Position);
+	ATGSingleGrid* GetSingleGridFromPosition(FVector Position);
 	//	2차원 배열 인덱스에서 그리드 가져오기
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="TowerGame|Grid")
 	ATGSingleGrid* GetSingleGridFromPoint(const FIntPoint Point);
@@ -29,8 +28,7 @@ public:
 	//	월드 좌표에서 2차원 배열 인덱스 가져오기
 	//	위치를 벗어날 경우에도 안전한 인덱스를 반환합니다.
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="TowerGame|Grid")
-	FIntPoint GetPointFromPosition(const FVector Position) const;
-	FIntPoint GetPointFromPosition(const FVector2D Position) const;
+	FIntPoint GetPointFromPosition(FVector Position) const;
 
 	//	건설 가능한 위치인지 확인
 	UFUNCTION(BlueprintCallable, Category="TowerGame|Grid")
