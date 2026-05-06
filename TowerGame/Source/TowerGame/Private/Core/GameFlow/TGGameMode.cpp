@@ -1,4 +1,5 @@
 #include "Core/GameFlow/TGGameMode.h"
+#include "Enemies/TGWaveManager.h"
 #include "Kismet/GameplayStatics.h"
 
 ATGGameMode::ATGGameMode()
@@ -43,6 +44,14 @@ void ATGGameMode::ChangeFlowState(ETGGameFlowState NewState)
 void ATGGameMode::StartGameFlow()
 {
 	ChangeFlowState(ETGGameFlowState::Playing);
+
+	GetWorldTimerManager().SetTimer(
+		WaveStartTimerHandle,
+		this,
+		&ATGGameMode::StartWave,
+		3.0f,
+		false
+	);
 }
 
 void ATGGameMode::EnterBuildMode()
@@ -90,4 +99,16 @@ void ATGGameMode::HandleGameOver()
 void ATGGameMode::HandleGameClear()
 {
 	ChangeFlowState(ETGGameFlowState::Result);
+}
+
+void ATGGameMode::StartWave()
+{
+	ATGWaveManager* WaveManager = ATGWaveManager::Get(this);
+	if (!WaveManager)
+	{
+		UE_LOG(LogTemp, Error, TEXT("WaveManager is nullptr"));
+		return;
+	}
+
+	WaveManager->StartNextWave();
 }

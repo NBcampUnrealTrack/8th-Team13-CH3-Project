@@ -18,6 +18,8 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	FTimerHandle WaveStartTimerHandle;
+
 public:
 	UPROPERTY(BlueprintReadOnly, Category = "Game Flow")
 	ETGGameFlowState CurrentState;
@@ -51,4 +53,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Game Flow")
 	void HandleGameClear();
+
+	UFUNCTION(BlueprintCallable, Category = "Game Flow")
+	void StartWave();
 };
