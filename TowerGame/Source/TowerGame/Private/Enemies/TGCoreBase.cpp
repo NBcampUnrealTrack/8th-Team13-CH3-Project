@@ -28,12 +28,16 @@ float ATGCoreBase::TakeDamage(float DamageAmount, const FDamageEvent& DamageEven
 	// TODO
 	// 상위 Manager에 Core 피격 이벤트 전달
 
-	if (CurrentHP < 0)
+	if (CurrentHP <= 0)
 	{
 		if (ATGGameMode* GM = Cast<ATGGameMode>(GetWorld()->GetAuthGameMode()))
 		{
 			//	TODO : 게임 오버 처리
+			GM->HandleGameOver();
 		}
+		//UE_LOG(LogTemp, Warning, TEXT("CoreBase 파괴"));
+		//OnCoreDestroyed.Broadcast(); //델리게이트 이벤트 발생
+		//UE_LOG(LogTemp, Warning, TEXT("델리게이트 발생 완료"));
 		Destroy();
 	}
 

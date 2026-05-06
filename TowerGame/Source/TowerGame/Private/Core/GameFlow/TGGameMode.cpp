@@ -1,4 +1,5 @@
 #include "Core/GameFlow/TGGameMode.h"
+#include "Enemies/TGCoreBase.h"
 #include "Enemies/TGWaveManager.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -13,7 +14,19 @@ void ATGGameMode::BeginPlay()
 
 	UE_LOG(LogTemp, Warning, TEXT("TGGameMode BeginPlay"));
 	ChangeFlowState(ETGGameFlowState::MainMenu);
+
+	//CachedCore = Cast<ATGCoreBase>(UGameplayStatics::GetActorOfClass(this, ATGCoreBase::StaticClass()));
+	//if (CachedCore)
+	//{
+	//	CachedCore->OnCoreDestroyed.AddDynamic(this, &ATGGameMode::OnCoreDestroyedFromDelegate);
+	//}
 }
+
+//void ATGGameMode::OnCoreDestroyedFromDelegate()
+//{
+//	UE_LOG(LogTemp, Warning, TEXT("GameMode: Core Destroyed Event Received"));
+//	HandleGameOver();
+//}
 
 void ATGGameMode::ChangeFlowState(ETGGameFlowState NewState)
 {
@@ -93,6 +106,7 @@ void ATGGameMode::HandleWaveClear()
 
 void ATGGameMode::HandleGameOver()
 {
+	GetWorldTimerManager().ClearTimer(WaveStartTimerHandle);
 	ChangeFlowState(ETGGameFlowState::GameOver);
 }
 

@@ -5,6 +5,8 @@
 #include "TGGameFlowState.h"
 #include "TGGameMode.generated.h"
 
+//class ATGCoreBase;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTGFlowStateChanged, ETGGameFlowState, NewState);
 
 UCLASS()
@@ -19,6 +21,12 @@ protected:
 	virtual void BeginPlay() override;
 
 	FTimerHandle WaveStartTimerHandle;
+
+	//UFUNCTION()
+	//void OnCoreDestroyedFromDelegate();
+
+	//UPROPERTY()
+	//ATGCoreBase* CachedCore = nullptr;
 
 public:
 	UPROPERTY(BlueprintReadOnly, Category = "Game Flow")

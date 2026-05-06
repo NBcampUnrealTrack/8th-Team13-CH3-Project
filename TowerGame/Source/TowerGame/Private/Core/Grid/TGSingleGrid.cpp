@@ -3,11 +3,11 @@
 
 #include "Core/Grid/TGSingleGrid.h"
 #include "BaseTower/TGBaseTower.h"
+#include "Components/BoxComponent.h"
 
 ATGSingleGrid::ATGSingleGrid()
 {
 	PrimaryActorTick.bCanEverTick = false;
-	RootComponent = CreateDefaultSubobject<USceneComponent>("RootComponent");
 
 	//	ToDo : 헤더를 확인하고 삭제해야 할 때. 함께 삭제해주세요
 	Visualizer = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComponent"));
@@ -24,6 +24,7 @@ ATGSingleGrid::ATGSingleGrid()
 	{
 		Visualizer->SetMaterial(0, CubeMaterial.Object);
 	}
+	Visualizer->SetCustomDepthStencilValue(1);
 	//	ToDoEnd
 }
 
@@ -37,18 +38,27 @@ void ATGSingleGrid::SetBoxSize(float Size) const
 	const float Scale = Size / 100.0f;
 	const FVector CurrentScale = Visualizer->GetRelativeScale3D();
 	Visualizer->SetRelativeScale3D(FVector(Scale, Scale, CurrentScale.Z));
+
+	const float HalfSize = Size / 2.f;
+	InteractionCollision->SetBoxExtent(FVector(HalfSize, HalfSize, InteractionCollision->GetUnscaledBoxExtent().Z));
 }
 
 void ATGSingleGrid::OnFocused_Implementation(ATGPlayer* Player)
 {
 	Super::OnFocused_Implementation(Player);
 	Visualizer->SetRenderCustomDepth(true);
-	Visualizer->SetCustomDepthStencilValue(1);
+	//Visualizer->SetRenderInDepthPass(true);
+
+
+	UE_LOG(LogTemp, Warning, TEXT("focused"));
 }
 
 void ATGSingleGrid::OnUnfocused_Implementation(ATGPlayer* Player)
 {
 	Super::OnUnfocused_Implementation(Player);
+	Visualizer->SetRenderCustomDepth(false);
+	UE_LOG(LogTemp, Warning, TEXT("Unfocused"));
+
 }
 
 // void ATGSingleGrid::PlaceTower(TObjectPtr<ABaseTower> Tower)
