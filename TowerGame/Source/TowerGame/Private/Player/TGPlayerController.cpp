@@ -43,7 +43,7 @@ ATGPlayerController::ATGPlayerController()
 		Action_Shot = IA_Shot_Asset.Object;
 
 	static ConstructorHelpers::FObjectFinder<UInputAction> IA_Interact_Asset =
-		TEXT("/Game/Player/Input/Actions/IA_Interaction.IA_Interaction");
+		TEXT("/Game/Player/Input/Actions/IA_Interact.IA_Interact");
 	if (IA_Interact_Asset.Succeeded())
 		Action_Interact = IA_Interact_Asset.Object;
 }
