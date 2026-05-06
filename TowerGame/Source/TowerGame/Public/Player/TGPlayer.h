@@ -30,8 +30,13 @@ protected:
 	void JumpAction(const FInputActionValue& value);
 	UFUNCTION()
 	void Evade(const FInputActionValue& value);
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)	// BlueprintNativeEvent: C++로 짠것을 블루프린트에서 이어서 짤 수 있다.
+	UFUNCTION()
 	void Build(const FInputActionValue& InputValue);
+	UFUNCTION()
+	void Shot(const FInputActionValue& InputValue);
+	// 상호작용 실행 (입력 바인딩에서 호출) TODO : IA 바인딩 필요
+	UFUNCTION(BlueprintCallable, Category = "TowerGame|Interaction")
+	void Interact(const FInputActionValue& InputValue);
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -56,10 +61,6 @@ public:
 	// 현재 시선에 잡힌 Interactive 액터 반환 (없으면 nullptr)
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "TowerGame|Interaction")
 	ATGInteractiveActor* GetFocusedInteractiveActor() const { return CurrentFocusedActor; }
-
-	// 상호작용 실행 (입력 바인딩에서 호출) TODO : IA 바인딩 필요
-	UFUNCTION(BlueprintCallable, Category = "TowerGame|Interaction")
-	void Interact();
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
 	TObjectPtr<class UCameraComponent> Camera;
@@ -80,7 +81,7 @@ protected:
 
 private:
 	void InteractiveTrace(bool debug = false);
-	bool CameraLineTrace(FHitResult& TraceHit, ECollisionChannel Channel, float MaxDistance, bool debug = false);
+	bool CameraLineTrace(FHitResult& TraceHit, ECollisionChannel Channel, float MaxDistance = 5000.0f, bool debug = false);
 
 	//	포커싱된 액터
 	UPROPERTY()

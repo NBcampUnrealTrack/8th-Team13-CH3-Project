@@ -36,6 +36,16 @@ ATGPlayerController::ATGPlayerController()
 		TEXT("/Game/Player/Input/Actions/IA_Build.IA_Build");
 	if (IA_Build_Asset.Succeeded())
 		Action_Build = IA_Build_Asset.Object;
+
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_Shot_Asset =
+		TEXT("/Game/Player/Input/Actions/IA_Shot.IA_Shot");
+	if (IA_Shot_Asset.Succeeded())
+		Action_Shot = IA_Shot_Asset.Object;
+
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_Interact_Asset =
+		TEXT("/Game/Player/Input/Actions/IA_Interaction.IA_Interaction");
+	if (IA_Interact_Asset.Succeeded())
+		Action_Interact = IA_Interact_Asset.Object;
 }
 
 void ATGPlayerController::BeginPlay()

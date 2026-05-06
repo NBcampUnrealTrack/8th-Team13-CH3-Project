@@ -8,7 +8,8 @@
 #include "InputActionValue.h"
 #include "Core/Grid/TGGridBase.h"
 #include "TGInteractiveActor.h"
-
+#include "Enemies/TGEnemyBase.h"
+#include "Engine/DamageEvents.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 // Sets default values
@@ -94,24 +95,55 @@ void ATGPlayer::Evade(const FInputActionValue& value)
 	LaunchCharacter(LaunchVel, true, true);
 }
 
-void ATGPlayer::Build_Implementation(const FInputActionValue& InputValue)
+void ATGPlayer::Build(const FInputActionValue& InputValue)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Called BuildAction"));
+	bBuildMode = !bBuildMode;
+}
 
+void ATGPlayer::Shot(const FInputActionValue& InputValue)
+{
+	FHitResult TraceHit;
+	if (CameraLineTrace(TraceHit, ECC_Visibility))
+	{
+		ATGEnemyBase* target = Cast<ATGEnemyBase>(TraceHit.GetActor());
+		if (target)
+		{
+			FDamageEvent DamEvent;
+			target->TakeDamage(6.0f, DamEvent, GetController(), this);
+		}
+	}
+}
+
+void ATGPlayer::Interact(const FInputActionValue& InputValue)
+{
+	if (bBuildMode && CurrentFocusedActor)
+		CurrentFocusedActor->OnInteract(this);
 }
 
 // Called every frame
 void ATGPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 	RestoreEvadeCooldown(DeltaTime);	// 회피기동 쿨타임 회복
-	FVector LookingPoint;
-	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Looking Point: %s"), *LookingPoint.ToString()));
+
+	FHitResult debugTemp;
+	if (bBuildMode)
+	{
+		InteractiveTrace();
+	}
+	else
+	{
+		CurrentFocusedActor = nullptr;
+
+		// 시각화 디버그용 (UI 추가 후 삭제)
+		CameraLineTrace(debugTemp, ECC_Visibility, 5000.0f, true);
+	}
+
 	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Current Evade Cooldown: %f / %f"), CurrentEvadeCooldown, EvadeCooldown));
 	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Current Evade Count(LSHIFT): %d / %d"), CurrentEvadeCount, EvadeCount));
+	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Aim Target: %s"), debugTemp.bBlockingHit ? *debugTemp.GetActor()->GetName() : TEXT("None")));
+	GEngine->AddOnScreenDebugMessage(-1, 0.0f, bBuildMode ? FColor::Emerald : FColor::Orange, FString::Printf(TEXT("Current Mode: %s"), bBuildMode ? TEXT("Build") : TEXT("Combat")));
 
-	InteractiveTrace();
 
 	// 현재 이동조작중인가?
 	if (bMoving)
@@ -157,6 +189,10 @@ void ATGPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 				EnhancedInputComponent->BindAction(PlayerController->Action_Evade, ETriggerEvent::Triggered, this, &ATGPlayer::Evade);
 			if (PlayerController->Action_Build)
 				EnhancedInputComponent->BindAction(PlayerController->Action_Build, ETriggerEvent::Triggered, this, &ATGPlayer::Build);
+			if (PlayerController->Action_Shot)
+				EnhancedInputComponent->BindAction(PlayerController->Action_Shot, ETriggerEvent::Triggered, this, &ATGPlayer::Shot);
+			if (PlayerController->Action_Interact)
+				EnhancedInputComponent->BindAction(PlayerController->Action_Interact, ETriggerEvent::Triggered, this, &ATGPlayer::Interact);
 		}
 	}
 }
@@ -180,7 +216,10 @@ void ATGPlayer::InteractiveTrace(bool debug)
 		CurrentFocusedActor = HitActor;
 
 		if (CurrentFocusedActor)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Red, FString::Printf(TEXT("Build Target: %s"), *CurrentFocusedActor->GetName()));
 			CurrentFocusedActor->OnFocused(this);
+		}
 	}
 }
 
@@ -221,10 +260,3 @@ bool ATGPlayer::CameraLineTrace(FHitResult& TraceHit, ECollisionChannel Channel,
 	}
 
 }
-
-void ATGPlayer::Interact()
-{
-	if (CurrentFocusedActor)
-		CurrentFocusedActor->OnInteract(this);
-}
-
