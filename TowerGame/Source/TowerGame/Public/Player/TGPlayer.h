@@ -29,6 +29,8 @@ protected:
 	void JumpAction(const FInputActionValue& value);
 	UFUNCTION()
 	void Evade(const FInputActionValue& value);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)	// BlueprintNativeEvent: C++로 짠것을 블루프린트에서 이어서 짤 수 있다.
+	void Build(const FInputActionValue& InputValue);
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

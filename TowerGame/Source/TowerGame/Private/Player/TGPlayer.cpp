@@ -90,6 +90,12 @@ void ATGPlayer::Evade(const FInputActionValue& value)
 	LaunchCharacter(LaunchVel, true, true);
 }
 
+void ATGPlayer::Build_Implementation(const FInputActionValue& InputValue)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Called BuildAction"));
+	
+}
+
 // Called every frame
 void ATGPlayer::Tick(float DeltaTime)
 {
@@ -145,6 +151,8 @@ void ATGPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 				EnhancedInputComponent->BindAction(PlayerController->Action_Jump, ETriggerEvent::Triggered, this, &ATGPlayer::JumpAction);
 			if (PlayerController->Action_Evade)
 				EnhancedInputComponent->BindAction(PlayerController->Action_Evade, ETriggerEvent::Triggered, this, &ATGPlayer::Evade);
+			if (PlayerController->Action_Build)
+				EnhancedInputComponent->BindAction(PlayerController->Action_Build, ETriggerEvent::Triggered, this, &ATGPlayer::Build);
 		}
 	}
 }
