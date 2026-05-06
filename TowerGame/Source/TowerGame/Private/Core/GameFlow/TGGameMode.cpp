@@ -11,7 +11,7 @@ void ATGGameMode::BeginPlay()
 	Super::BeginPlay();
 
 	UE_LOG(LogTemp, Warning, TEXT("TGGameMode BeginPlay"));
-	ChangeFlowState(ETGGameFlowState::Title);
+	ChangeFlowState(ETGGameFlowState::MainMenu);
 }
 
 void ATGGameMode::ChangeFlowState(ETGGameFlowState NewState)
@@ -36,6 +36,8 @@ void ATGGameMode::ChangeFlowState(ETGGameFlowState NewState)
 
 	UE_LOG(LogTemp, Warning, TEXT("Flow State Changed: %s"),
 		*UEnum::GetValueAsString(CurrentState));
+
+	OnFlowStateChanged.Broadcast(CurrentState);
 }
 
 void ATGGameMode::StartGameFlow()

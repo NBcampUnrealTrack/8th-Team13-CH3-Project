@@ -5,6 +5,8 @@
 #include "TGGameFlowState.h"
 #include "TGGameMode.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTGFlowStateChanged, ETGGameFlowState, NewState);
+
 UCLASS()
 class TOWERGAME_API ATGGameMode : public AGameMode
 {
@@ -19,6 +21,9 @@ protected:
 public:
 	UPROPERTY(BlueprintReadOnly, Category = "Game Flow")
 	ETGGameFlowState CurrentState;
+
+	UPROPERTY(BlueprintAssignable, Category = "Game Flow")
+	FOnTGFlowStateChanged OnFlowStateChanged;
 
 	UFUNCTION(BlueprintCallable, Category = "Game Flow")
 	void ChangeFlowState(ETGGameFlowState NewState);
