@@ -6,6 +6,7 @@
 
 ATGSingleGrid::ATGSingleGrid()
 {
+	PrimaryActorTick.bCanEverTick = false;
 	RootComponent = CreateDefaultSubobject<USceneComponent>("RootComponent");
 
 	//	ToDo : 헤더를 확인하고 삭제해야 할 때. 함께 삭제해주세요
@@ -24,7 +25,6 @@ ATGSingleGrid::ATGSingleGrid()
 		Visualizer->SetMaterial(0, CubeMaterial.Object);
 	}
 	//	ToDoEnd
-
 }
 
 void ATGSingleGrid::SetParent(TObjectPtr<ATGGridBase> Parent)
@@ -39,12 +39,42 @@ void ATGSingleGrid::SetBoxSize(float Size) const
 	Visualizer->SetRelativeScale3D(FVector(Scale, Scale, CurrentScale.Z));
 }
 
-void ATGSingleGrid::PlaceTower(TObjectPtr<ABaseTower> Tower)
+void ATGSingleGrid::OnFocused_Implementation(ATGPlayer* Player)
 {
-	PlacedTower = Tower;
+	Super::OnFocused_Implementation(Player);
+	Visualizer->SetRenderCustomDepth(true);
+	Visualizer->SetCustomDepthStencilValue(1);
 }
 
-void ATGSingleGrid::RemoveTower(TObjectPtr<ABaseTower> Tower)
+void ATGSingleGrid::OnUnfocused_Implementation(ATGPlayer* Player)
 {
-	PlacedTower = nullptr;
+	Super::OnUnfocused_Implementation(Player);
+}
+
+// void ATGSingleGrid::PlaceTower(TObjectPtr<ABaseTower> Tower)
+// {
+// 	PlacedTower = Tower;
+// }
+//
+// void ATGSingleGrid::RemoveTower(TObjectPtr<ABaseTower> Tower)
+// {
+// 	PlacedTower = nullptr;
+// }
+
+void ATGSingleGrid::OnInteract_Implementation(ATGPlayer* Player)
+{
+	Super::OnInteract_Implementation(Player);
+
+	//	TODO : PlacedTower->Enable();
+}
+
+void ATGSingleGrid::BeginPlay()
+{
+	Super::BeginPlay();
+
+	PlacedTower = GetWorld()->SpawnActor<ABaseTower>();
+	if (!IsValid(PlacedTower))	return;
+	PlacedTower->SetActorLocation(GetActorLocation());
+	PlacedTower->BaseMesh->SetVisibility(false);
+	//	TODO : PlacedTower->Disable();
 }
