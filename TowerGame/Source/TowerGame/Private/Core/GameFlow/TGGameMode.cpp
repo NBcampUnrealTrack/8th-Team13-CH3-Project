@@ -1,4 +1,6 @@
 #include "Core/GameFlow/TGGameMode.h"
+#include "Enemies/TGCoreBase.h"
+#include "Enemies/TGWaveManager.h"
 #include "Kismet/GameplayStatics.h"
 
 ATGGameMode::ATGGameMode()
@@ -12,7 +14,19 @@ void ATGGameMode::BeginPlay()
 
 	UE_LOG(LogTemp, Warning, TEXT("TGGameMode BeginPlay"));
 	ChangeFlowState(ETGGameFlowState::MainMenu);
+
+	//CachedCore = Cast<ATGCoreBase>(UGameplayStatics::GetActorOfClass(this, ATGCoreBase::StaticClass()));
+	//if (CachedCore)
+	//{
+	//	CachedCore->OnCoreDestroyed.AddDynamic(this, &ATGGameMode::OnCoreDestroyedFromDelegate);
+	//}
 }
+
+//void ATGGameMode::OnCoreDestroyedFromDelegate()
+//{
+//	UE_LOG(LogTemp, Warning, TEXT("GameMode: Core Destroyed Event Received"));
+//	HandleGameOver();
+//}
 
 void ATGGameMode::ChangeFlowState(ETGGameFlowState NewState)
 {
@@ -43,6 +57,14 @@ void ATGGameMode::ChangeFlowState(ETGGameFlowState NewState)
 void ATGGameMode::StartGameFlow()
 {
 	ChangeFlowState(ETGGameFlowState::Playing);
+
+	GetWorldTimerManager().SetTimer(
+		WaveStartTimerHandle,
+		this,
+		&ATGGameMode::StartWave,
+		3.0f,
+		false
+	);
 }
 
 void ATGGameMode::EnterBuildMode()
@@ -84,10 +106,23 @@ void ATGGameMode::HandleWaveClear()
 
 void ATGGameMode::HandleGameOver()
 {
+	GetWorldTimerManager().ClearTimer(WaveStartTimerHandle);
 	ChangeFlowState(ETGGameFlowState::GameOver);
 }
 
 void ATGGameMode::HandleGameClear()
 {
 	ChangeFlowState(ETGGameFlowState::Result);
+}
+
+void ATGGameMode::StartWave()
+{
+	ATGWaveManager* WaveManager = ATGWaveManager::Get(this);
+	if (!WaveManager)
+	{
+		UE_LOG(LogTemp, Error, TEXT("WaveManager is nullptr"));
+		return;
+	}
+
+	WaveManager->StartNextWave();
 }

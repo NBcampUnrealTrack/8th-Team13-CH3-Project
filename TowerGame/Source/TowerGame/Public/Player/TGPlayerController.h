@@ -31,6 +31,10 @@ public:
 	TObjectPtr<UInputAction> Action_Evade;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	TObjectPtr<UInputAction> Action_Build;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	TObjectPtr<UInputAction> Action_Shot;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	TObjectPtr<UInputAction> Action_Interact;
 protected:
 	virtual void BeginPlay() override;
 };
