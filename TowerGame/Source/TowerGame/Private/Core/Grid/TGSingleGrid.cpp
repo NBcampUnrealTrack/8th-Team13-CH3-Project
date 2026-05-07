@@ -4,6 +4,7 @@
 #include "Core/Grid/TGSingleGrid.h"
 #include "BaseTower/TGBaseTower.h"
 #include "Components/BoxComponent.h"
+#include "Core/Grid/TGGridBase.h"
 
 ATGSingleGrid::ATGSingleGrid()
 {
@@ -31,6 +32,7 @@ ATGSingleGrid::ATGSingleGrid()
 void ATGSingleGrid::SetParent(TObjectPtr<ATGGridBase> Parent)
 {
 	GridBase = Parent;
+	MyPoint = Parent->GetPointFromPosition(GetActorLocation());
 }
 
 void ATGSingleGrid::SetBoxSize(float Size) const
@@ -75,9 +77,13 @@ void ATGSingleGrid::OnInteract_Implementation(ATGPlayer* Player)
 {
 	Super::OnInteract_Implementation(Player);
 
+	if (!GridBase->CanBePlacedBuilding(MyPoint))	return;
+
 	PlacedTower->FinalizeInstallation();
 	bIsPlacedTower = true;
 	SetInteractionEnabled(false);
+
+	GridBase->PlacingBuilding(MyPoint);
 }
 
 void ATGSingleGrid::BeginPlay()

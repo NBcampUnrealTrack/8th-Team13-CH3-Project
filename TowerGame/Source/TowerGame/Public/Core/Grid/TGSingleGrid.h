@@ -45,5 +45,6 @@ private:
 	UPROPERTY()
 	TObjectPtr<ABaseTower> PlacedTower = nullptr;
 
+	FIntPoint MyPoint;
 	bool bIsPlacedTower = false;
 };
