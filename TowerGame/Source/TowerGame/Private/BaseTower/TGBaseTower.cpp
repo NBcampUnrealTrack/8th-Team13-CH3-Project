@@ -36,12 +36,8 @@ ABaseTower::ABaseTower()
 
 void ABaseTower::Disable()
 {
-	// 완전 투명 처리
-	DynamicMaterial = BaseMesh->CreateDynamicMaterialInstance(0);
-	if (DynamicMaterial)
-	{
-		DynamicMaterial->SetScalarParameterValue(TEXT("Opacity"), 0.f);
-	}
+	// 메쉬 숨기기
+	BaseMesh->SetVisibility(false);
 
 	// 충돌 끄기
 	BaseMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -64,7 +60,7 @@ void ABaseTower::SetPreviewMode()
 	// 배치 중에는 내비게이션을 막지 않도록 컴포넌트 비활성화 (선택 사항)
 	if (NavModifier)
 	{
-		NavModifier->SetComponentTickEnabled(false);
+		NavModifier->Deactivate();
 	}
 
 	// 반투명 처리
@@ -86,7 +82,7 @@ void ABaseTower::FinalizeInstallation()
 	// 설치가 완료되면 내비게이션 차단 영역 활성화
 	if (NavModifier)
 	{
-		NavModifier->SetComponentTickEnabled(true);
+		NavModifier->Activate();
 	}
 
 	// 불투명하게 복구

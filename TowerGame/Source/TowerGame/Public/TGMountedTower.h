@@ -39,3 +39,4 @@ public:
 	// 플레이어가 상호작용 키를 눌렀을 때
 	virtual void OnInteract_Implementation(ATGPlayer* Player) override;
 };
+
