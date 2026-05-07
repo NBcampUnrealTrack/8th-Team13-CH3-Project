@@ -53,6 +53,10 @@ public:
 	const float GetMaxEvadeCooldown() { return EvadeCooldown; }	// 최대 Evade 쿨타임
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Status")
 	const float GetCurrentEvadeCooldown() { return CurrentEvadeCooldown; }	// 현재 남은 Evade 쿨타임
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Status")
+	const float GetPlayerHP() { return HP; }
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Status")
+	const float GetPlayerMaxHP() { return MaxHP; }
 	//UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Skill")
 	//const bool GetLookingPoint(FVector& result, float MaxDistance = 5000.0f);	// 카메라가 바라보는 위치 가져오기
 	//UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Skill")
@@ -61,9 +65,17 @@ public:
 	// 현재 시선에 잡힌 Interactive 액터 반환 (없으면 nullptr)
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "TowerGame|Interaction")
 	ATGInteractiveActor* GetFocusedInteractiveActor() const { return CurrentFocusedActor; }
+
+	UFUNCTION(BlueprintCallable, Category = "Status")
+	int32 AddPlayerHP(int32 value);
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
 	TObjectPtr<class UCameraComponent> Camera;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
+	int32 MaxHP;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Status")
+	int32 HP;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TowerGame|Interaction")
 	float InteractDistance;	//	상호작용 최대 거리

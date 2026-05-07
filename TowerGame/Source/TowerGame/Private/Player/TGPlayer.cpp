@@ -13,13 +13,14 @@
 #include "Kismet/KismetSystemLibrary.h"
 
 // Sets default values
-ATGPlayer::ATGPlayer()
+ATGPlayer::ATGPlayer() : MaxHP(100)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
 	Camera->SetupAttachment(RootComponent);
 	Camera->bUsePawnControlRotation = true;
+
 	EvadeCount = 2;
 	EvadeCooldown = 3.0f;
 	InteractDistance = 300.f;
@@ -30,10 +31,14 @@ ATGPlayer::ATGPlayer()
 void ATGPlayer::BeginPlay()
 {
 	Super::BeginPlay();
+	HP = MaxHP;
 	bMoving = false;
 	bBuildMode = false;
 	CurrentEvadeCount = EvadeCount;
 	CurrentEvadeCooldown = 0.0f;
+
+	if (GetWorld()->GetFirstPlayerController())
+		EnableInput(GetWorld()->GetFirstPlayerController());
 }
 
 void ATGPlayer::Move(const FInputActionValue& value)
@@ -195,6 +200,18 @@ void ATGPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 				EnhancedInputComponent->BindAction(PlayerController->Action_Interact, ETriggerEvent::Triggered, this, &ATGPlayer::Interact);
 		}
 	}
+}
+
+int32 ATGPlayer::AddPlayerHP(int32 value)
+{
+	HP += value;
+	if (HP > MaxHP)
+		HP = MaxHP;
+	if (HP <= 0 && GetWorld()->GetFirstPlayerController())
+	{
+		DisableInput(GetWorld()->GetFirstPlayerController());
+	}
+	return HP;
 }
 
 void ATGPlayer::InteractiveTrace(bool debug)

@@ -49,6 +49,11 @@ float ATGCoreBase::GetCurrentHP()
 	return CurrentHP;
 }
 
+float ATGCoreBase::GetMaxHP()
+{
+	return MaxHP;
+}
+
 // Called when the game starts or when spawned
 void ATGCoreBase::BeginPlay()
 {

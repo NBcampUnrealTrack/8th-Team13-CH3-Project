@@ -1,12 +1,14 @@
 #include "UI/TGHUD.h"
 #include "UI/TGMainMenuWidget.h"
 #include "UI/TGGameOverWidget.h"
+#include "UI/TGPlayerWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "Core/GameFlow/TGGameMode.h"
 
 ATGHUD::ATGHUD()
 	: CachedGameMode(nullptr),
 	MainMenuWidget(nullptr),
+	PlayingWidget(nullptr),
 	GameOverWidget(nullptr)
 {
 }
@@ -35,6 +37,11 @@ void ATGHUD::HideAllWidgets()
 	if (MainMenuWidget && MainMenuWidget->IsInViewport())
 	{
 		MainMenuWidget->RemoveFromParent();
+	}
+
+	if (PlayingWidget && PlayingWidget->IsInViewport())
+	{
+		PlayingWidget->RemoveFromParent();
 	}
 
 	if (GameOverWidget && GameOverWidget->IsInViewport())
@@ -69,6 +76,15 @@ void ATGHUD::UpdateUIByState(ETGGameFlowState NewState)
 		break;
 
 	case ETGGameFlowState::Playing:
+		if (!PlayingWidget && PlayingWidgetClass)
+		{
+			PlayingWidget = CreateWidget<UTGPlayerWidget>(PC, PlayingWidgetClass);
+		}
+
+		if (PlayingWidget)
+		{
+			PlayingWidget->AddToViewport();
+		}
 		UE_LOG(LogTemp, Warning, TEXT("Now Playing"));
 		break;
 

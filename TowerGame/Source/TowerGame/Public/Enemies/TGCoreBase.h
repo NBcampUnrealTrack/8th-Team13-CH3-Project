@@ -30,6 +30,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category="TowerGame|Status")
 	float GetCurrentHP();
 
+	UFUNCTION(BlueprintCallable, Category = "TowerGame|Status")
+	float GetMaxHP();
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
