@@ -37,6 +37,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "TowerGame|Grid")
 	TObjectPtr<UStaticMeshComponent> Visualizer;
 
+	UPROPERTY()
+	TSubclassOf<ABaseTower> BaseTowerClass;
+
 private:
 	//	그리드 매니저
 	UPROPERTY()

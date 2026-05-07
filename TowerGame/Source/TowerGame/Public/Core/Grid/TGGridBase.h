@@ -6,6 +6,7 @@
 #include "TGActorBase.h"
 #include "TGGridBase.generated.h"
 
+class ABaseTower;
 class ATGCoreBase;
 class ATGEnemySpawner;
 class ATGSingleGrid;
@@ -58,6 +59,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category="TowerGame|Grid")
 	FVector ConvertIndexToVector(FIntPoint Point);
 
+	TSubclassOf<ABaseTower> GetTowerClassOf()	{return TowerBaseClass;};
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -82,6 +85,11 @@ protected:
 	TSubclassOf<ATGEnemySpawner> EnemySpawnerClass;
 	UPROPERTY(EditDefaultsOnly, Category="TowerGame|Spawner")
 	TSubclassOf<ATGCoreBase> CoreClass;
+	UPROPERTY(EditDefaultsOnly, Category="TowerGame|Grid")
+	TSubclassOf<ATGSingleGrid> SingleGridClass;
+	UPROPERTY(EditDefaultsOnly, Category="TowerGame|Grid")
+	TSubclassOf<ABaseTower> TowerBaseClass;
+
 
 private:
 

@@ -148,6 +148,8 @@ void ATGGridBase::BeginPlay()
 {
 	Super::BeginPlay();
 
+	const FVector OriginPos = GetActorLocation();
+
 	GridActors.SetNum(GridY);
 	bBuildingPlaced.SetNum(GridY);
 	for (int32 i = 0; i < GridY; i++)
@@ -156,14 +158,20 @@ void ATGGridBase::BeginPlay()
 		bBuildingPlaced[i].Reserve(GridX);
 		for (int32 j = 0; j < GridX; j++)
 		{
-			ATGSingleGrid* NewGrid = GetWorld()->SpawnActor<ATGSingleGrid>();
+			FVector GridPos = OriginPos;
+			GridPos.X += (GridSize * j) + (GridSize / 2);
+			GridPos.Y += (GridSize * i) + (GridSize / 2);
+			const FTransform GridTransform(FRotator::ZeroRotator, GridPos);
+
+			ATGSingleGrid* NewGrid = GetWorld()->SpawnActorDeferred<ATGSingleGrid>(SingleGridClass, GridTransform);
+			check(NewGrid != nullptr);
 			NewGrid->SetParent(this);
+			NewGrid->FinishSpawning(GridTransform);
 			NewGrid->SetBoxSize(GridSize);
 			GridActors[i].Add(NewGrid);
 			bBuildingPlaced[i].Add(false);
 		}
 	}
-	PlacingGrid();
 	//FindSpawnPoints();
 	//FindCorePoints();
 }
