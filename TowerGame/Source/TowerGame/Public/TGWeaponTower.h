@@ -1,11 +1,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "TGInteractiveActor.h"
+#include "TGMountedTower.h"
 #include "TGWeaponTower.generated.h"
 
 UCLASS()
-class TOWERGAME_API ATGWeaponTower : public ATGInteractiveActor
+class TOWERGAME_API ATGWeaponTower : public ATGMountedTower
 {
 	GENERATED_BODY()
 
@@ -30,18 +30,6 @@ protected:
 	// 공격 반복 타이머 핸들
 	FTimerHandle AttackTimerHandle;
 
-	// 업그레이드 레벨
-	UPROPERTY(BlueprintReadOnly, Category = "Tower Settings")
-	int32 UpgradeLevel = 0;
-
-	// 무기 메시
-	UPROPERTY(VisibleAnywhere, Category = "Tower|Weapon")
-	class UStaticMeshComponent* WeaponMesh;
-
-	// 런타임에 색상을 변경하기 위한 다이나믹 머티리얼 인스턴스
-	UPROPERTY()
-	class UMaterialInstanceDynamic* DynamicMaterial;
-
 public:
 	// 공격 시작 (타워 설치 완료 시 호출)
 	UFUNCTION(BlueprintCallable, Category = "Tower Logic")
@@ -55,15 +43,5 @@ public:
 	void ApplyRangeDamage();
 
 	// 업그레이드 (데미지 1.5배 증가)
-	UFUNCTION(BlueprintCallable, Category = "Tower Logic")
-	void Upgrade();
-
-	// 플레이어 시선이 닿을 때 — 강조 표시
-	virtual void OnFocused_Implementation(ATGPlayer* Player) override;
-
-	// 플레이어 시선이 벗어날 때 — 강조 해제
-	virtual void OnUnfocused_Implementation(ATGPlayer* Player) override;
-
-	// 플레이어가 상호작용 키를 눌렀을 때 — 업그레이드 UI 연결
-	virtual void OnInteract_Implementation(ATGPlayer* Player) override;
+	virtual void Upgrade() override;
 };

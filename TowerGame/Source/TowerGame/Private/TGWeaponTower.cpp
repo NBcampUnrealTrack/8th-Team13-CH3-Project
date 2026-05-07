@@ -2,16 +2,9 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
-#include "Components/StaticMeshComponent.h"
 
 ATGWeaponTower::ATGWeaponTower()
 {
-	// 타이머 방식 사용으로 틱 끔 (최적화)
-	PrimaryActorTick.bCanEverTick = false;
-
-	// 무기 메시
-	WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponMesh"));
-	RootComponent = WeaponMesh;
 }
 
 void ATGWeaponTower::BeginPlay()
@@ -81,30 +74,7 @@ void ATGWeaponTower::StopAttack()
 
 void ATGWeaponTower::Upgrade()
 {
+	// 데미지 1.5배 증가 후 부모 호출로 UpgradeLevel++
 	AttackDamage *= 1.5f;
-	UpgradeLevel++;
-}
-
-// 플레이어 시선이 닿을 때 — 강조 표시
-void ATGWeaponTower::OnFocused_Implementation(ATGPlayer* Player)
-{
-	if (DynamicMaterial)
-	{
-		DynamicMaterial->SetScalarParameterValue(TEXT("Highlight"), 1.0f);
-	}
-}
-
-// 플레이어 시선이 벗어날 때 — 강조 해제
-void ATGWeaponTower::OnUnfocused_Implementation(ATGPlayer* Player)
-{
-	if (DynamicMaterial)
-	{
-		DynamicMaterial->SetScalarParameterValue(TEXT("Highlight"), 0.0f);
-	}
-}
-
-// 플레이어가 상호작용 키를 눌렀을 때 — 나중에 업그레이드 UI 연결
-void ATGWeaponTower::OnInteract_Implementation(ATGPlayer* Player)
-{
-	// TODO: 업그레이드 UI 열기
+	Super::Upgrade();
 }
