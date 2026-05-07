@@ -1,20 +1,15 @@
 #include "BaseTower/TGTowerWidget.h"
 #include "Components/TextBlock.h"
-#include "Components/Button.h"
 #include "TGMountedTower.h"
 
 void UTGTowerWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
-
-	if (UpgradeButton)
-	{
-		UpgradeButton->OnClicked.AddDynamic(this, &UTGTowerWidget::HandleUpgradeClicked);
-	}
 }
 
 void UTGTowerWidget::SetOwnerTower(ATGMountedTower* InTower)
 {
+	// 이 위젯이 표시할 타워를 연결하고 UI 갱신
 	OwnerTower = InTower;
 	RefreshUI();
 }
@@ -23,19 +18,11 @@ void UTGTowerWidget::RefreshUI()
 {
 	if (!OwnerTower) return;
 
+	// 타워의 현재 업그레이드 레벨을 "Lv. 1" 형식으로 텍스트에 표시
 	if (LevelText)
 	{
-		// "Lv. 1" 형식으로 표시
 		LevelText->SetText(FText::FromString(
 			FString::Printf(TEXT("Lv. %d"), OwnerTower->GetUpgradeLevel())
 		));
 	}
-}
-
-void UTGTowerWidget::HandleUpgradeClicked()
-{
-	if (!OwnerTower) return;
-
-	OwnerTower->Upgrade();
-	RefreshUI();
 }

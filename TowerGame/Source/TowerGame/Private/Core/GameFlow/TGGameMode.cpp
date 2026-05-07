@@ -35,20 +35,24 @@ void ATGGameMode::ChangeFlowState(ETGGameFlowState NewState)
 		return;
 	}
 
-	CurrentState = NewState;
+	const ETGGameFlowState OldState = CurrentState;
 
-	switch (CurrentState)
+	// 이전 상태에서 빠져나갈 때 처리
+	if (OldState == ETGGameFlowState::Paused)
 	{
-	case ETGGameFlowState::Paused:
-		UGameplayStatics::SetGamePaused(GetWorld(), true);
-		break;
-
-	default:
 		UGameplayStatics::SetGamePaused(GetWorld(), false);
-		break;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("Flow State Changed: %s"),
+	CurrentState = NewState;
+
+	// 새 상태로 들어갈 때 처리
+	if (CurrentState == ETGGameFlowState::Paused)
+	{
+		UGameplayStatics::SetGamePaused(GetWorld(), true);
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Flow State Changed: %s -> %s"),
+		*UEnum::GetValueAsString(OldState),
 		*UEnum::GetValueAsString(CurrentState));
 
 	OnFlowStateChanged.Broadcast(CurrentState);

@@ -2,13 +2,17 @@
 #include "UI/TGMainMenuWidget.h"
 #include "UI/TGGameOverWidget.h"
 #include "UI/TGPlayerWidget.h"
+#include "UI/TGPlayingWidget.h"
+#include "UI/TGPauseWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "Core/GameFlow/TGGameMode.h"
 
 ATGHUD::ATGHUD()
 	: CachedGameMode(nullptr),
 	MainMenuWidget(nullptr),
-	PlayingWidget(nullptr),
+	PlayerWidget(nullptr),
+	//PlayingWidget(nullptr),
+	PauseWidget(nullptr),
 	GameOverWidget(nullptr)
 {
 }
@@ -39,9 +43,19 @@ void ATGHUD::HideAllWidgets()
 		MainMenuWidget->RemoveFromParent();
 	}
 
-	if (PlayingWidget && PlayingWidget->IsInViewport())
+	if (PlayerWidget && PlayerWidget->IsInViewport())
 	{
-		PlayingWidget->RemoveFromParent();
+		PlayerWidget->RemoveFromParent();
+	}
+
+	//if (PlayingWidget && PlayingWidget->IsInViewport())
+	//{
+	//	PlayingWidget->RemoveFromParent();
+	//}
+
+	if (PauseWidget && PauseWidget->IsInViewport())
+	{
+		PauseWidget->RemoveFromParent();
 	}
 
 	if (GameOverWidget && GameOverWidget->IsInViewport())
@@ -73,19 +87,41 @@ void ATGHUD::UpdateUIByState(ETGGameFlowState NewState)
 		{
 			MainMenuWidget->AddToViewport();
 		}
+
+		PC->bShowMouseCursor = true;
+		PC->SetInputMode(FInputModeUIOnly());
 		break;
 
 	case ETGGameFlowState::Playing:
-		if (!PlayingWidget && PlayingWidgetClass)
+		if (!PlayerWidget && PlayerWidgetClass)
 		{
-			PlayingWidget = CreateWidget<UTGPlayerWidget>(PC, PlayingWidgetClass);
+			PlayerWidget = CreateWidget<UTGPlayerWidget>(PC, PlayerWidgetClass);
 		}
 
-		if (PlayingWidget)
+		if (PlayerWidget)
 		{
-			PlayingWidget->AddToViewport();
+			PlayerWidget->AddToViewport();
 		}
-		UE_LOG(LogTemp, Warning, TEXT("Now Playing"));
+
+		PC->bShowMouseCursor = false;
+		PC->SetInputMode(FInputModeGameOnly());
+		/*PC->bShowMouseCursor = true;
+		PC->SetInputMode(FInputModeUIOnly());*/
+		break;
+
+	case ETGGameFlowState::Paused:
+		if (!PauseWidget && PauseWidgetClass)
+		{
+			PauseWidget = CreateWidget<UTGPauseWidget>(PC, PauseWidgetClass);
+		}
+
+		if (PauseWidget)
+		{
+			PauseWidget->AddToViewport();
+		}
+
+		PC->bShowMouseCursor = true;
+		PC->SetInputMode(FInputModeUIOnly());
 		break;
 
 	case ETGGameFlowState::GameOver:
@@ -98,6 +134,9 @@ void ATGHUD::UpdateUIByState(ETGGameFlowState NewState)
 		{
 			GameOverWidget->AddToViewport();
 		}
+
+		PC->bShowMouseCursor = true;
+		PC->SetInputMode(FInputModeUIOnly());
 		break;
 
 	default:
