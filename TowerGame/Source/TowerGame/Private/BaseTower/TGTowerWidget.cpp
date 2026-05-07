@@ -1,7 +1,7 @@
 #include "BaseTower/TGTowerWidget.h"
 #include "Components/TextBlock.h"
 #include "Components/Button.h"
-#include "BaseTower/TGMountedTower.h"
+#include "TGMountedTower.h"
 
 void UTGTowerWidget::NativeConstruct()
 {
