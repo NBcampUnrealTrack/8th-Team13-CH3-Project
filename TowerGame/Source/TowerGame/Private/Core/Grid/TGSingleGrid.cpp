@@ -82,6 +82,7 @@ void ATGSingleGrid::OnInteract_Implementation(ATGPlayer* Player)
 	PlacedTower->FinalizeInstallation();
 	bIsPlacedTower = true;
 	SetInteractionEnabled(false);
+	Visualizer->SetRenderCustomDepth(false);
 
 	GridBase->PlacingBuilding(MyPoint);
 }
@@ -90,7 +91,8 @@ void ATGSingleGrid::BeginPlay()
 {
 	Super::BeginPlay();
 
-	PlacedTower = GetWorld()->SpawnActor<ABaseTower>();
+	BaseTowerClass = GridBase->GetTowerClassOf();
+	PlacedTower = GetWorld()->SpawnActor<ABaseTower>(BaseTowerClass);
 	if (!IsValid(PlacedTower))	return;
 	PlacedTower->SetActorLocation(GetActorLocation());
 	PlacedTower->Disable();
