@@ -5,7 +5,7 @@
 #include "TGTowerWidget.generated.h"
 
 class UTextBlock;
-class UButton;
+
 class ATGMountedTower;
 
 UCLASS()
@@ -20,16 +20,9 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* LevelText;
 
-	// 업그레이드 버튼
-	UPROPERTY(meta = (BindWidget))
-	UButton* UpgradeButton;
-
 	// 연결된 타워 참조
 	UPROPERTY()
 	ATGMountedTower* OwnerTower;
-
-	UFUNCTION()
-	void HandleUpgradeClicked();
 
 public:
 	// 타워 연결 및 UI 갱신

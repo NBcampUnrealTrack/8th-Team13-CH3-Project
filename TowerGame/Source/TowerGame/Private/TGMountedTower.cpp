@@ -60,5 +60,12 @@ void ATGMountedTower::OnUnfocused_Implementation(ATGPlayer* Player)
 // 플레이어가 상호작용 키를 눌렀을 때
 void ATGMountedTower::OnInteract_Implementation(ATGPlayer* Player)
 {
+	// 상호작용 키 누르면 업그레이드
+	Upgrade();
 
+	// UI 갱신
+	if (TowerWidget)
+	{
+		TowerWidget->RefreshUI();
+	}
 }
