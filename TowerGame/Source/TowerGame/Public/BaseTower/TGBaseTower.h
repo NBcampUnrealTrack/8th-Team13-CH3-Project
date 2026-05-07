@@ -1,20 +1,22 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
-#include "Components/StaticMeshComponent.h"
-#include "NavModifierComponent.h"
+#include "TGInteractiveActor.h"
 #include "TGBaseTower.generated.h"
 
+class ATGMountedTower;
+class UNavModifierComponent;
 class UStaticMeshComponent;
 
 UCLASS()
-class TOWERGAME_API ABaseTower : public AActor
+class TOWERGAME_API ABaseTower : public ATGInteractiveActor
 {
 	GENERATED_BODY()
 
 public:
 	ABaseTower();
+
+	virtual void BeginPlay() override;
 
 	// 기본 메시 (몸통)
 	UPROPERTY(VisibleAnywhere, Category = "Tower|Base")
@@ -31,6 +33,7 @@ public:
 	// 현재 부착된 무기 액터 참조 (필요할 경우)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Tower|Base")
 	AActor* AttachedWeapon;
+	bool bAttached = false;
 
 	// 그리드에 미리 배치 후 대기 상태 (완전 투명 / 충돌 X / 네비 X)
 	void Disable();
@@ -40,6 +43,13 @@ public:
 
 	// 클릭 후 최종 배치 완료 처리 (활성화, 바디 활성화)
 	void FinalizeInstallation();
+
+	// 플레이어 시선이 닿을 때
+	virtual void OnFocused_Implementation(ATGPlayer* Player) override;
+	// 플레이어 시선이 벗어날 때
+	virtual void OnUnfocused_Implementation(ATGPlayer* Player) override;
+	// 플레이어가 상호작용 키를 눌렀을 때
+	virtual void OnInteract_Implementation(ATGPlayer* Player) override;
 
 protected:
 	// 런타임에 색상을 변경하기 위한 다이나믹 머티리얼 인스턴스

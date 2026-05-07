@@ -2,6 +2,7 @@
 
 #include "TGInteractiveActor.h"
 #include "Components/BoxComponent.h"
+#include "DrawDebugHelpers.h"
 
 ATGInteractiveActor::ATGInteractiveActor()
 	: InteractionBoxExtent(50.f, 50.f, 50.f)
@@ -16,11 +17,26 @@ ATGInteractiveActor::ATGInteractiveActor()
 	InteractionCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	InteractionCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
 	InteractionCollision->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Block);
+	InteractionCollision->SetCanEverAffectNavigation(false);
 }
 
 void ATGInteractiveActor::BeginPlay()
 {
 	Super::BeginPlay();
+
+	GetWorldTimerManager().SetTimer(
+		DebugDrawTimerHandle,
+		this,
+		&ATGInteractiveActor::DrawDebugCollisionBox,
+		2.0f,
+		false
+	);
+}
+
+void ATGInteractiveActor::DrawDebugCollisionBox()
+{
+	const FVector Extent = InteractionCollision->GetScaledBoxExtent();
+	DrawDebugBox(GetWorld(), GetActorLocation(), Extent, FColor::Yellow, true);
 }
 
 void ATGInteractiveActor::OnFocused_Implementation(ATGPlayer* Player) {}

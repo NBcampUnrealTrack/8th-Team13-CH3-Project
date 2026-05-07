@@ -13,6 +13,7 @@ ATGSingleGrid::ATGSingleGrid()
 	//	ToDo : 헤더를 확인하고 삭제해야 할 때. 함께 삭제해주세요
 	Visualizer = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComponent"));
 	Visualizer->SetupAttachment(RootComponent);
+	Visualizer->SetCanEverAffectNavigation(false);
 
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMesh(TEXT("/Engine/BasicShapes/Cube"));
 	if (CubeMesh.Succeeded())
@@ -25,8 +26,11 @@ ATGSingleGrid::ATGSingleGrid()
 	{
 		Visualizer->SetMaterial(0, CubeMaterial.Object);
 	}
-	Visualizer->SetCustomDepthStencilValue(1);
 	//	ToDoEnd
+
+	//	외곽선 표현을 위한 커스텀 뎁스 스텐실 등록
+	Visualizer->SetCustomDepthStencilValue(1);
+
 }
 
 void ATGSingleGrid::SetParent(TObjectPtr<ATGGridBase> Parent)
@@ -49,6 +53,7 @@ void ATGSingleGrid::OnFocused_Implementation(ATGPlayer* Player)
 {
 	if (bIsPlacedTower)	return;
 	Super::OnFocused_Implementation(Player);
+	//	커스텀 뎁스 패스에 등록 -> 포스트 프로세싱 가능
 	Visualizer->SetRenderCustomDepth(true);
 
 	PlacedTower->SetPreviewMode();
@@ -58,6 +63,7 @@ void ATGSingleGrid::OnUnfocused_Implementation(ATGPlayer* Player)
 {
 	if (bIsPlacedTower)	return;
 	Super::OnUnfocused_Implementation(Player);
+	//	커스텀 뎁스 패스에서 제외
 	Visualizer->SetRenderCustomDepth(false);
 
 	PlacedTower->Disable();

@@ -1,6 +1,8 @@
 #include "BaseTower/TGBaseTower.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "NavModifierComponent.h"
+#include "TGMountedTower.h"
+#include "TGWeaponTower.h"
 #include "NavAreas/NavArea_Null.h"
 #include "Components/StaticMeshComponent.h"
 
@@ -11,10 +13,11 @@ ABaseTower::ABaseTower()
 
 	// 발판메시
 	BaseMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BaseMesh"));
-	RootComponent = BaseMesh;
+	BaseMesh->SetupAttachment(RootComponent);
 
 	// 길막 (기본값)
 	BaseMesh->SetCollisionProfileName(TEXT("BlockAll"));
+	BaseMesh->SetCanEverAffectNavigation(false);
 
 	// Navigation 차단영역
 	// 건물 배치 시 함께 생성
@@ -22,16 +25,25 @@ ABaseTower::ABaseTower()
 
 	if (NavModifier)
 	{
-		// 적들이 지나갈 수 없는 영역으로 만들기
-		NavModifier->SetAreaClass(UNavArea_Null::StaticClass());
+		NavModifier->SetAutoActivate(false);
 	}
 
 	// 무기 설치지점
 	MountPoint = CreateDefaultSubobject<USceneComponent>(TEXT("MountPoint"));
-	MountPoint->SetupAttachment(RootComponent);
+	MountPoint->SetupAttachment(BaseMesh);
 
 	// 큐브 높이에 맞춰서 설치 위치를 윗면(50.f)으로 고정
 	MountPoint->SetRelativeLocation(FVector(0.f, 0.f, 50.f));
+
+	//	기본적으로 인터랙션을 끕니다
+	SetInteractionEnabled(false);
+}
+
+void ABaseTower::BeginPlay()
+{
+	Super::BeginPlay();
+
+	DynamicMaterial = BaseMesh->CreateDynamicMaterialInstance(0);
 }
 
 void ABaseTower::Disable()
@@ -67,6 +79,7 @@ void ABaseTower::SetPreviewMode()
 	if (DynamicMaterial)
 	{
 		DynamicMaterial->SetScalarParameterValue(TEXT("Opacity"), 0.5f);
+		UE_LOG(LogTemp, Warning, TEXT("Setting Opacity"));
 	}
 }
 
@@ -82,6 +95,7 @@ void ABaseTower::FinalizeInstallation()
 	// 설치가 완료되면 내비게이션 차단 영역 활성화
 	if (NavModifier)
 	{
+		NavModifier->SetAreaClass(UNavArea_Null::StaticClass());
 		NavModifier->Activate();
 	}
 
@@ -90,4 +104,32 @@ void ABaseTower::FinalizeInstallation()
 	{
 		DynamicMaterial->SetScalarParameterValue(TEXT("Opacity"), 1.0f);
 	}
+
+	//	인터랙션을 활성화합니다.
+	SetInteractionEnabled(true);
+}
+
+void ABaseTower::OnFocused_Implementation(ATGPlayer* Player)
+{
+	Super::OnFocused_Implementation(Player);
+}
+
+void ABaseTower::OnUnfocused_Implementation(ATGPlayer* Player)
+{
+	Super::OnUnfocused_Implementation(Player);
+}
+
+void ABaseTower::OnInteract_Implementation(ATGPlayer* Player)
+{
+	if (bAttached)	return;
+	Super::OnInteract_Implementation(Player);
+
+	//	공격 타워 올리기
+	AttachedWeapon = GetWorld()->SpawnActor<ATGWeaponTower>();
+	bAttached = true;
+	AttachedWeapon->SetActorLocation(GetActorLocation() + MountPoint->GetRelativeLocation());
+
+	//	우선은 인터랙션 비활성화
+	//	TODO : 추후 타워 파괴 기능 생겼을 때 재건축을 위해 활성화 하는 코드 추가해야함
+	SetInteractionEnabled(false);
 }

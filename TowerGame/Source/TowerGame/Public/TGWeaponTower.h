@@ -14,6 +14,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void Tick( float DeltaTime ) override;
 
 	// 공격 사거리
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tower Settings")

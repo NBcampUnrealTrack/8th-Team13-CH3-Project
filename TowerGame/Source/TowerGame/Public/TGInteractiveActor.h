@@ -35,6 +35,7 @@ public:
 	void OnInteract(ATGPlayer* Player);
 	virtual void OnInteract_Implementation(ATGPlayer* Player);
 
+	//	상호작용 토글 함수
 	UFUNCTION(BlueprintCallable, Category = "TowerGame|Interaction")
 	void SetInteractionEnabled(bool bEnabled);
 
@@ -51,4 +52,7 @@ protected:
 
 private:
 	bool bInteractionEnabled = true;
+
+	FTimerHandle DebugDrawTimerHandle;
+	void DrawDebugCollisionBox();
 };

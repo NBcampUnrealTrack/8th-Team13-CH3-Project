@@ -5,11 +5,20 @@
 
 ATGWeaponTower::ATGWeaponTower()
 {
+	PrimaryActorTick.bCanEverTick = true;
 }
 
 void ATGWeaponTower::BeginPlay()
 {
 	Super::BeginPlay();
+}
+
+void ATGWeaponTower::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	//	사거리 그려줄 디버그스피어
+	DrawDebugSphere(GetWorld(), GetActorLocation(), AttackRange, 16, FColor::Green);
 }
 
 void ATGWeaponTower::StartAttack()
