@@ -32,6 +32,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Tower|Base")
 	AActor* AttachedWeapon;
 
+	// 그리드에 미리 배치 후 대기 상태 (완전 투명 / 충돌 X / 네비 X)
+	void Disable();
+
 	// 마우스로 배치하는 동안의 미리보기 모드 (반투명, 충돌 없음)
 	void SetPreviewMode();
 

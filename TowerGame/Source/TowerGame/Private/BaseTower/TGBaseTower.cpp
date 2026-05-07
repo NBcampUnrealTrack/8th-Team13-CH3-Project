@@ -24,7 +24,6 @@ ABaseTower::ABaseTower()
 	{
 		// 적들이 지나갈 수 없는 영역으로 만들기
 		NavModifier->SetAreaClass(UNavArea_Null::StaticClass());
-
 	}
 
 	// 무기 설치지점
@@ -35,8 +34,30 @@ ABaseTower::ABaseTower()
 	MountPoint->SetRelativeLocation(FVector(0.f, 0.f, 50.f));
 }
 
+void ABaseTower::Disable()
+{
+	// 완전 투명 처리
+	DynamicMaterial = BaseMesh->CreateDynamicMaterialInstance(0);
+	if (DynamicMaterial)
+	{
+		DynamicMaterial->SetScalarParameterValue(TEXT("Opacity"), 0.f);
+	}
+
+	// 충돌 끄기
+	BaseMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	// 네비게이션 차단 끄기
+	if (NavModifier)
+	{
+		NavModifier->Deactivate();
+	}
+}
+
 void ABaseTower::SetPreviewMode()
 {
+	// 메쉬 보이게
+	BaseMesh->SetVisibility(true);
+
 	// 충돌끄기
 	BaseMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
@@ -47,8 +68,6 @@ void ABaseTower::SetPreviewMode()
 	}
 
 	// 반투명 처리
-	DynamicMaterial = BaseMesh->CreateDynamicMaterialInstance(0);
-
 	if (DynamicMaterial)
 	{
 		DynamicMaterial->SetScalarParameterValue(TEXT("Opacity"), 0.5f);
@@ -57,6 +76,9 @@ void ABaseTower::SetPreviewMode()
 
 void ABaseTower::FinalizeInstallation()
 {
+	// 메쉬 보이게
+	BaseMesh->SetVisibility(true);
+
 	// 충돌 켜기
 	BaseMesh->SetCollisionProfileName(TEXT("BlockAll"));
 	BaseMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
