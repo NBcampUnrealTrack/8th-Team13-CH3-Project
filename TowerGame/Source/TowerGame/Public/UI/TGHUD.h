@@ -8,6 +8,8 @@
 class UTGMainMenuWidget;
 class UTGGameOverWidget;
 class UTGPlayerWidget;
+class UTGPlayingWidget;
+class UTGPauseWidget;
 class ATGGameMode;
 
 UCLASS()
@@ -32,13 +34,21 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UTGMainMenuWidget> MainMenuWidgetClass;
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	TSubclassOf<UTGPlayerWidget> PlayingWidgetClass;
+	TSubclassOf<UTGPlayerWidget> PlayerWidgetClass;
+	//UPROPERTY(EditDefaultsOnly, Category = "UI")
+	//TSubclassOf<UTGPlayingWidget> PlayingWidgetClass;
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UTGPauseWidget> PauseWidgetClass;
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UTGGameOverWidget> GameOverWidgetClass;
 	UPROPERTY()
 	UTGMainMenuWidget* MainMenuWidget;
 	UPROPERTY()
-	UTGPlayerWidget* PlayingWidget;
+	UTGPlayerWidget* PlayerWidget;
+	//UPROPERTY()
+	//UTGPlayingWidget* PlayingWidget;
+	UPROPERTY()
+	UTGPauseWidget* PauseWidget;
 	UPROPERTY()
 	UTGGameOverWidget* GameOverWidget;
 };

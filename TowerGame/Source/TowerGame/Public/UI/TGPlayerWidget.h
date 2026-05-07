@@ -7,6 +7,7 @@
 #include "TGPlayerWidget.generated.h"
 
 class UProgressBar;
+class UButton;
 
 /**
  * 
@@ -16,6 +17,12 @@ class TOWERGAME_API UTGPlayerWidget : public UUserWidget
 {
 	GENERATED_BODY()
 protected:
+	UPROPERTY(meta = (BindWidget))
+	UButton* PauseButton;
+
+	UFUNCTION()
+	void HandlePauseClicked();
+
 	virtual void NativeConstruct() override;
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
