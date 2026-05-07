@@ -26,3 +26,14 @@ void ATGInteractiveActor::BeginPlay()
 void ATGInteractiveActor::OnFocused_Implementation(ATGPlayer* Player) {}
 void ATGInteractiveActor::OnUnfocused_Implementation(ATGPlayer* Player) {}
 void ATGInteractiveActor::OnInteract_Implementation(ATGPlayer* Player) {}
+
+void ATGInteractiveActor::SetInteractionEnabled(bool bEnabled)
+{
+	if (bInteractionEnabled == bEnabled) return;
+
+	bInteractionEnabled = bEnabled;
+	InteractionCollision->SetCollisionResponseToChannel(
+		ECC_GameTraceChannel1,
+		bEnabled ? ECR_Block : ECR_Ignore
+	);
+}

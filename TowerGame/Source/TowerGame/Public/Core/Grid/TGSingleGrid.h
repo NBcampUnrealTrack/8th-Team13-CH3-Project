@@ -44,4 +44,6 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<ABaseTower> PlacedTower = nullptr;
+
+	bool bIsPlacedTower = false;
 };

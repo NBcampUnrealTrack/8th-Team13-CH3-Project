@@ -45,20 +45,20 @@ void ATGSingleGrid::SetBoxSize(float Size) const
 
 void ATGSingleGrid::OnFocused_Implementation(ATGPlayer* Player)
 {
+	if (bIsPlacedTower)	return;
 	Super::OnFocused_Implementation(Player);
 	Visualizer->SetRenderCustomDepth(true);
-	//Visualizer->SetRenderInDepthPass(true);
 
-
-	UE_LOG(LogTemp, Warning, TEXT("focused"));
+	PlacedTower->SetPreviewMode();
 }
 
 void ATGSingleGrid::OnUnfocused_Implementation(ATGPlayer* Player)
 {
+	if (bIsPlacedTower)	return;
 	Super::OnUnfocused_Implementation(Player);
 	Visualizer->SetRenderCustomDepth(false);
-	UE_LOG(LogTemp, Warning, TEXT("Unfocused"));
 
+	PlacedTower->Disable();
 }
 
 // void ATGSingleGrid::PlaceTower(TObjectPtr<ABaseTower> Tower)
@@ -75,7 +75,9 @@ void ATGSingleGrid::OnInteract_Implementation(ATGPlayer* Player)
 {
 	Super::OnInteract_Implementation(Player);
 
-	//	TODO : PlacedTower->Enable();
+	PlacedTower->FinalizeInstallation();
+	bIsPlacedTower = true;
+	SetInteractionEnabled(false);
 }
 
 void ATGSingleGrid::BeginPlay()
@@ -85,6 +87,5 @@ void ATGSingleGrid::BeginPlay()
 	PlacedTower = GetWorld()->SpawnActor<ABaseTower>();
 	if (!IsValid(PlacedTower))	return;
 	PlacedTower->SetActorLocation(GetActorLocation());
-	PlacedTower->BaseMesh->SetVisibility(false);
-	//	TODO : PlacedTower->Disable();
+	PlacedTower->Disable();
 }

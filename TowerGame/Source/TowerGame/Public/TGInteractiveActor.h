@@ -35,6 +35,12 @@ public:
 	void OnInteract(ATGPlayer* Player);
 	virtual void OnInteract_Implementation(ATGPlayer* Player);
 
+	UFUNCTION(BlueprintCallable, Category = "TowerGame|Interaction")
+	void SetInteractionEnabled(bool bEnabled);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "TowerGame|Interaction")
+	bool IsInteractionEnabled() const { return bInteractionEnabled; }
+
 protected:
 	// Interactive 트레이스 채널에만 반응하는 콜리전
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "TowerGame|Interaction")
@@ -42,4 +48,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TowerGame|Interaction")
 	FVector InteractionBoxExtent;
+
+private:
+	bool bInteractionEnabled = true;
 };
