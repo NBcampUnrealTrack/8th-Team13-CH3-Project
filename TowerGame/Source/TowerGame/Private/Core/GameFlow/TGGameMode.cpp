@@ -4,6 +4,7 @@
 #include "Kismet/GameplayStatics.h"
 
 ATGGameMode::ATGGameMode()
+	: SetWaveStartTime(10.0f)
 {
 	CurrentState = ETGGameFlowState::Title;
 }
@@ -66,7 +67,7 @@ void ATGGameMode::StartGameFlow()
 		WaveStartTimerHandle,
 		this,
 		&ATGGameMode::StartWave,
-		3.0f,
+		SetWaveStartTime,
 		false
 	);
 }

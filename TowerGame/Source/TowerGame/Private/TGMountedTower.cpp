@@ -10,7 +10,10 @@ ATGMountedTower::ATGMountedTower()
 
 	// 무기 메시
 	WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponMesh"));
-	RootComponent = WeaponMesh;
+	WeaponMesh->SetupAttachment(RootComponent);
+
+	// 외곽선 강조를 위한 커스텀 뎁스 스텐실 값 설정
+	WeaponMesh->SetCustomDepthStencilValue(1);
 }
 
 void ATGMountedTower::Upgrade()
@@ -21,10 +24,8 @@ void ATGMountedTower::Upgrade()
 // 플레이어 시선이 닿을 때 — 강조 표시
 void ATGMountedTower::OnFocused_Implementation(ATGPlayer* Player)
 {
-	if (DynamicMaterial)
-	{
-		DynamicMaterial->SetScalarParameterValue(TEXT("Highlight"), 1.0f);
-	}
+	// 외곽선 강조 표시 (커스텀 뎁스 패스 활성화)
+	WeaponMesh->SetRenderCustomDepth(true);
 
 	// 위젯 생성 및 표시
 	if (TowerWidgetClass)
@@ -45,10 +46,8 @@ void ATGMountedTower::OnFocused_Implementation(ATGPlayer* Player)
 // 플레이어 시선이 벗어날 때 — 강조 해제
 void ATGMountedTower::OnUnfocused_Implementation(ATGPlayer* Player)
 {
-	if (DynamicMaterial)
-	{
-		DynamicMaterial->SetScalarParameterValue(TEXT("Highlight"), 0.0f);
-	}
+	// 외곽선 강조 해제
+		WeaponMesh->SetRenderCustomDepth(false);
 
 	// 위젯 숨기기
 	if (TowerWidget && TowerWidget->IsInViewport())

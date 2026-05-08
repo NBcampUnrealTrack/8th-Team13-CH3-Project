@@ -6,6 +6,9 @@
 ATGWeaponTower::ATGWeaponTower()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	//	기본적으로 인터랙션을 끕니다
+	SetInteractionEnabled(false);
 }
 
 void ATGWeaponTower::BeginPlay()
