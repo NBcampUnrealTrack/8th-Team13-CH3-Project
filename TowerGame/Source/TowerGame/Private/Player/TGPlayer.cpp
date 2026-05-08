@@ -12,7 +12,8 @@
 #include "Engine/DamageEvents.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
-
+#include "Components/ChildActorComponent.h"
+#include "Weapons/TGWeaponPistol.h"
 
 // Sets default values
 ATGPlayer::ATGPlayer() : MaxHP(100)
@@ -22,6 +23,12 @@ ATGPlayer::ATGPlayer() : MaxHP(100)
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
 	Camera->SetupAttachment(RootComponent);
 	Camera->bUsePawnControlRotation = true;
+
+	static ConstructorHelpers::FClassFinder<ATGWeaponPistol> testAsset = TEXT("/Game/Weapons/TestWeapon/TaserPistol.TaserPistol_C");
+	CurrentWeapon = CreateDefaultSubobject<UChildActorComponent>("Weapon");
+	CurrentWeapon->SetupAttachment(GetMesh());
+	if (testAsset.Succeeded())
+		CurrentWeapon->SetChildActorClass(testAsset.Class);
 
 	EvadeCount = 2;
 	EvadeCooldown = 3.0f;

@@ -8,6 +8,7 @@
 
 struct FInputActionValue;
 class ATGInteractiveActor;
+class ATGWeaponBase;
 
 UCLASS()
 class TOWERGAME_API ATGPlayer : public ACharacter
@@ -71,6 +72,8 @@ public:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
 	TObjectPtr<class UCameraComponent> Camera;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+	TObjectPtr<class UChildActorComponent> CurrentWeapon;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
 	int32 MaxHP;
@@ -90,6 +93,9 @@ protected:
 	bool bMoving;
 	FVector2D MoveDir;	// 현재 이동중인 방향, 정규화벡터
 	bool bBuildMode;	// 빌드모드
+
+	UPROPERTY()
+	TMap<TSubclassOf<ATGWeaponBase>, ATGWeaponBase*> OwnedWeapons;
 
 private:
 	void InteractiveTrace(bool debug = false);
