@@ -22,6 +22,9 @@ protected:
 
 	FTimerHandle WaveStartTimerHandle;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Flow")
+	float SetWaveStartTime;
+
 	//UFUNCTION()
 	//void OnCoreDestroyedFromDelegate();
 
