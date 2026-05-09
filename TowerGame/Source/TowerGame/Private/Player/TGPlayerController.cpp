@@ -8,6 +8,8 @@
 #include "Core/GameFlow/TGGameMode.h"
 #include "Kismet/GameplayStatics.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/ProgressBar.h"
+#include "Components/TextBlock.h"
 
 ATGPlayerController::ATGPlayerController()
 {
@@ -64,11 +66,6 @@ ATGPlayerController::ATGPlayerController()
 		Action_Pause = IA_Pause_Asset.Object;
 }
 
-UUserWidget* ATGPlayerController::GetHUDWidget() const
-{
-	return HUDWidgetInstance;
-}
-
 void ATGPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
@@ -91,13 +88,6 @@ void ATGPlayerController::BeginPlay()
 				EnhancedInputComponent->BindAction(Action_Pause, ETriggerEvent::Triggered, this, &ATGPlayerController::GamePause);
 			}
 		}
-	}
-
-	if (HUDWidgetClass)
-	{
-		HUDWidgetInstance = CreateWidget<UUserWidget>(this, HUDWidgetClass);
-		if (HUDWidgetInstance)	return;
-		HUDWidgetInstance->AddToViewport();
 	}
 }
 

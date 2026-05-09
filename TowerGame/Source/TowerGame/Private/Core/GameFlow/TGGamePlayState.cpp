@@ -13,16 +13,16 @@ void ATGGamePlayState::UpdateHUD()
 	{
 		if (ATGPlayerController* TGPlayerController = Cast<ATGPlayerController>(PlayerController))
 		{
-			if (UUserWidget* HUDWidget = TGPlayerController->GetHUDWidget())
-			{
-				if (UTextBlock* WaveText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName("WaveText")))
-				{
-					//	TODO : 웨이브 정보 출력
-					WaveText->SetText(FText::FromString(FString::Printf(TEXT("Wave"))));
-				}
-
-				//	TODO : 데이터 <-> UI 연동 작업
-			}
+			//if (UUserWidget* HUDWidget = TGPlayerController->GetHUDWidget())
+			//{
+			//	if (UTextBlock* WaveText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName("WaveText")))
+			//	{
+			//		//	TODO : 웨이브 정보 출력
+			//		WaveText->SetText(FText::FromString(FString::Printf(TEXT("Wave"))));
+			//	}
+			//
+			//	//	TODO : 데이터 <-> UI 연동 작업
+			//}
 		}
 	}
 }

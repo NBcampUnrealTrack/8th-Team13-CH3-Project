@@ -36,18 +36,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	TObjectPtr<UInputAction> Action_Interact;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TowerGame|UI")
-	TSubclassOf<UUserWidget> HUDWidgetClass;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TowerGame|UI")
-	UUserWidget* HUDWidgetInstance = nullptr;
-
-	UFUNCTION(BlueprintCallable, Category = "TowerGame|UI")
-	UUserWidget* GetHUDWidget() const;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	TObjectPtr<UInputMappingContext> IMC_Menu;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	TObjectPtr<UInputAction> Action_Pause;
+
 protected:
 	virtual void BeginPlay() override;
 
