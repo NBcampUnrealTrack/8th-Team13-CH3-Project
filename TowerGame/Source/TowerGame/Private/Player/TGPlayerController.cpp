@@ -4,6 +4,7 @@
 #include "Player/TGPlayerController.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
+#include "Blueprint/UserWidget.h"
 
 ATGPlayerController::ATGPlayerController()
 {
@@ -48,6 +49,11 @@ ATGPlayerController::ATGPlayerController()
 		Action_Interact = IA_Interact_Asset.Object;
 }
 
+UUserWidget* ATGPlayerController::GetHUDWidget() const
+{
+	return HUDWidgetInstance;
+}
+
 void ATGPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
@@ -62,5 +68,12 @@ void ATGPlayerController::BeginPlay()
 				Subsystem->AddMappingContext(InputMappingContext, 0);
 			}
 		}
+	}
+
+	if (HUDWidgetClass)
+	{
+		HUDWidgetInstance = CreateWidget<UUserWidget>(this, HUDWidgetClass);
+		if (HUDWidgetInstance)	return;
+		HUDWidgetInstance->AddToViewport();
 	}
 }

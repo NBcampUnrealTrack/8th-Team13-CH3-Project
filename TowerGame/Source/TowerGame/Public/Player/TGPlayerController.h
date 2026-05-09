@@ -10,7 +10,7 @@ class UInputMappingContext;
 class UInputAction;
 
 /**
- * 
+ *
  */
 UCLASS()
 class TOWERGAME_API ATGPlayerController : public APlayerController
@@ -35,6 +35,15 @@ public:
 	TObjectPtr<UInputAction> Action_Shot;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	TObjectPtr<UInputAction> Action_Interact;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TowerGame|UI")
+	TSubclassOf<UUserWidget> HUDWidgetClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TowerGame|UI")
+	UUserWidget* HUDWidgetInstance = nullptr;
+
+	UFUNCTION(BlueprintCallable, Category = "TowerGame|UI")
+	UUserWidget* GetHUDWidget() const;
+
 protected:
 	virtual void BeginPlay() override;
 };
