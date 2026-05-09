@@ -1,4 +1,6 @@
 #include "BaseTower/TGBaseTower.h"
+#include "Core/GameFlow/TGGameMode.h"
+#include "Kismet/GameplayStatics.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "NavModifierComponent.h"
 #include "TGMountedTower.h"
@@ -122,6 +124,10 @@ void ABaseTower::OnUnfocused_Implementation(ATGPlayer* Player)
 void ABaseTower::OnInteract_Implementation(ATGPlayer* Player)
 {
 	if (bAttached)	return;
+
+	ATGGameMode* GM = Cast<ATGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+	if (!GM || !GM->SpendEnergy(50)) return;
+
 	Super::OnInteract_Implementation(Player);
 
 	//	공격 타워 올리기

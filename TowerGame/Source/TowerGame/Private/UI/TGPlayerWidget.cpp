@@ -4,6 +4,7 @@
 #include "UI/TGPlayerWidget.h"
 #include "Components/ProgressBar.h"
 #include "Components/Button.h"
+#include "Components/TextBlock.h"
 #include "Player/TGPlayer.h"
 #include "Enemies/TGNavigationManager.h"
 #include "Enemies/TGCoreBase.h"
@@ -19,6 +20,12 @@ void UTGPlayerWidget::NativeConstruct()
 	{
 		PauseButton->OnClicked.AddUniqueDynamic(this, &UTGPlayerWidget::HandlePauseClicked);
 	}
+
+	if (ATGGameMode* GM = Cast<ATGGameMode>(UGameplayStatics::GetGameMode(this)))
+	{
+		if (EnergyText)
+			EnergyText->SetText(FText::AsNumber(GM->GetEnergy()));
+	}
 }
 
 void UTGPlayerWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
@@ -26,8 +33,13 @@ void UTGPlayerWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	Super::NativeTick(MyGeometry, InDeltaTime);
 	if (player)
 		HP_Bar->SetPercent(static_cast<int32>(player->GetPlayerHP() / player->GetPlayerMaxHP()));
-	if(core)
+	if (core)
 		CoreHP_Bar->SetPercent(core->GetCurrentHP() / core->GetMaxHP());
+	if (EnergyText)
+	{
+		if (ATGGameMode* GM = Cast<ATGGameMode>(UGameplayStatics::GetGameMode(this)))
+			EnergyText->SetText(FText::AsNumber(GM->GetEnergy()));
+	}
 }
 
 void UTGPlayerWidget::HandlePauseClicked()

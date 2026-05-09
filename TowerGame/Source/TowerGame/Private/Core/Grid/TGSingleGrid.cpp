@@ -4,7 +4,9 @@
 #include "Core/Grid/TGSingleGrid.h"
 #include "BaseTower/TGBaseTower.h"
 #include "Components/BoxComponent.h"
+#include "Core/GameFlow/TGGameMode.h"
 #include "Core/Grid/TGGridBase.h"
+#include "Kismet/GameplayStatics.h"
 
 ATGSingleGrid::ATGSingleGrid()
 {
@@ -83,7 +85,14 @@ void ATGSingleGrid::OnInteract_Implementation(ATGPlayer* Player)
 {
 	Super::OnInteract_Implementation(Player);
 
-	if (!GridBase->CanBePlacedBuilding(MyPoint))	return;
+	ATGGameMode* GM = Cast<ATGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+	if (!GM || !GM->SpendEnergy(50)) return;
+
+	if (!GridBase->CanBePlacedBuilding(MyPoint))
+	{
+		GM->AddEnergy(50);
+		return;
+	}
 
 	PlacedTower->FinalizeInstallation();
 	bIsPlacedTower = true;

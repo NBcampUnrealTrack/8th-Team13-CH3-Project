@@ -5,6 +5,7 @@
 
 #include "EngineUtils.h"
 #include "BaseTower/TGBaseTower.h"
+#include "Core/GameFlow/TGGameMode.h"
 #include "Enemies/TGCoreBase.h"
 #include "Enemies/TGEnemyAIController.h"
 
@@ -129,6 +130,10 @@ float ATGEnemyBase::TakeDamage(float DamageAmount, const FDamageEvent& DamageEve
 	UE_LOG(LogTemp, Warning, TEXT("Enemy 피격 - Damage: %.1f / HP: %.1f"), AppliedDamage, HP);
 
 	if (HP <= 0){
+		if (ATGGameMode* GM = Cast<ATGGameMode>(UGameplayStatics::GetGameMode(GetWorld())))
+		{
+			GM->AddEnergy(EnergyDropAmount);
+		}
 		Destroy();
 	}
 

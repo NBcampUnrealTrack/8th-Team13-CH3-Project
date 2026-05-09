@@ -48,6 +48,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
 	float HP;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Drop")
+	int32 EnergyDropAmount = 30;
+
 protected:
 	// Enemy 공격 관련 변수
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Attack")

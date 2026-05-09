@@ -8,6 +8,7 @@
 
 class UProgressBar;
 class UButton;
+class UTextBlock;
 
 /**
  * 
@@ -30,6 +31,10 @@ protected:
 	UProgressBar* HP_Bar;
 	UPROPERTY(meta = (BindWidget))
 	UProgressBar* CoreHP_Bar;
+
+	// TODO: UMG 블루프린트(WBP_PlayerWidget)에 TextBlock을 추가하고 이름을 "EnergyText"로 지정하면 자동 바인딩됩니다.
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UTextBlock> EnergyText;
 
 	UPROPERTY()
 	TObjectPtr<class ATGPlayer> player;
