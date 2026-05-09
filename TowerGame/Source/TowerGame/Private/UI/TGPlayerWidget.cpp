@@ -24,7 +24,7 @@ void UTGPlayerWidget::NativeConstruct()
 	if (ATGGameMode* GM = Cast<ATGGameMode>(UGameplayStatics::GetGameMode(this)))
 	{
 		if (EnergyText)
-			EnergyText->SetText(FText::AsNumber(GM->GetEnergy()));
+			EnergyText->SetText(FText::AsNumber(GM->GetCurrentEnergy()));
 	}
 }
 
@@ -38,7 +38,7 @@ void UTGPlayerWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	if (EnergyText)
 	{
 		if (ATGGameMode* GM = Cast<ATGGameMode>(UGameplayStatics::GetGameMode(this)))
-			EnergyText->SetText(FText::AsNumber(GM->GetEnergy()));
+			EnergyText->SetText(FText::AsNumber(GM->GetCurrentEnergy()));
 	}
 }
 

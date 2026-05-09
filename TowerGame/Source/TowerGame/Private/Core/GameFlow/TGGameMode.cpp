@@ -151,7 +151,7 @@ void ATGGameMode::AddEnergy(int32 Amount)
 	OnEnergyChanged.Broadcast(CurrentEnergy);
 }
 
-int32 ATGGameMode::GetEnergy() const
+int32 ATGGameMode::GetCurrentEnergy() const
 {
 	return CurrentEnergy;
 }

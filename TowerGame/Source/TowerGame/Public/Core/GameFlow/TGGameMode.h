@@ -8,7 +8,7 @@
 //class ATGCoreBase;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTGFlowStateChanged, ETGGameFlowState, NewState);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTGEnergyChanged, int32, NewEnergy);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEnergyChanged, int32, NewEnergy);
 
 UCLASS()
 class TOWERGAME_API ATGGameMode : public AGameMode
@@ -39,20 +39,23 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Game Flow")
 	FOnTGFlowStateChanged OnFlowStateChanged;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Game|Economy")
+	//	현재 자원량
+	UPROPERTY(BlueprintReadOnly, Category = "TowerGame|Economy")
 	int32 CurrentEnergy;
+	//	자원 정보 변경 델리게이트
+	UPROPERTY(BlueprintAssignable, Category = "TowerGame|Economy")
+	FOnEnergyChanged OnEnergyChanged;
 
-	UPROPERTY(BlueprintAssignable, Category = "Game|Economy")
-	FOnTGEnergyChanged OnEnergyChanged;
-
-	UFUNCTION(BlueprintCallable, Category = "Game|Economy")
+	//	자원 관련
+	//	자원 사용, 실패시 사용 안됨
+	UFUNCTION(BlueprintCallable, Category = "TowerGame|Economy")
 	bool SpendEnergy(int32 Amount);
-
-	UFUNCTION(BlueprintCallable, Category = "Game|Economy")
+	//	자원 추가
+	UFUNCTION(BlueprintCallable, Category = "TowerGame|Economy")
 	void AddEnergy(int32 Amount);
-
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Game|Economy")
-	int32 GetEnergy() const;
+	//	현재 자원량을 반환합니다
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "TowerGame|Economy")
+	int32 GetCurrentEnergy() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Game Flow")
 	void ChangeFlowState(ETGGameFlowState NewState);
