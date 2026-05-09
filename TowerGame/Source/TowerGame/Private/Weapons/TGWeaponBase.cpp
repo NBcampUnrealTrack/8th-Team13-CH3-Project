@@ -19,7 +19,6 @@ void ATGWeaponBase::BeginPlay()
 	
 }
 
-void ATGWeaponBase::Hit(AActor* target)
+void ATGWeaponBase::Shoot(AActor* target)
 {
 }
-

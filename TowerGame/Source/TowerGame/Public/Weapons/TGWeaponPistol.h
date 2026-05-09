@@ -15,4 +15,7 @@ class TOWERGAME_API ATGWeaponPistol : public ATGWeaponBase
 	GENERATED_BODY()
 public:
 	ATGWeaponPistol();
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
+	float ShotInterval;
 };

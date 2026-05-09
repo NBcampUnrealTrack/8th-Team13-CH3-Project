@@ -20,7 +20,7 @@ public:
 	ATGPlayerController();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
-	TObjectPtr<UInputMappingContext> InputMappingContext;
+	TObjectPtr<UInputMappingContext> IMC_Player;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	TObjectPtr<UInputAction> Action_Move;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
@@ -44,6 +44,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "TowerGame|UI")
 	UUserWidget* GetHUDWidget() const;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	TObjectPtr<UInputMappingContext> IMC_Menu;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	TObjectPtr<UInputAction> Action_Pause;
 protected:
 	virtual void BeginPlay() override;
+
+	void GamePause();
 };

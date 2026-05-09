@@ -131,3 +131,8 @@ void ATGGameMode::StartWave()
 
 	WaveManager->StartNextWave();
 }
+
+bool ATGGameMode::IsPauseGameFlow()
+{
+	return CurrentState == ETGGameFlowState::Paused;
+}

@@ -67,4 +67,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Game Flow")
 	void StartWave();
+
+	UFUNCTION(BlueprintCallable, Category = "Game Flow")
+	bool IsPauseGameFlow();
 };

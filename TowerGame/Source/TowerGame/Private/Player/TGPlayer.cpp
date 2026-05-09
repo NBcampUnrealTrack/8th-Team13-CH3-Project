@@ -11,6 +11,9 @@
 #include "Enemies/TGEnemyBase.h"
 #include "Engine/DamageEvents.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/GameplayStatics.h"
+#include "Components/ChildActorComponent.h"
+#include "Weapons/TGWeaponPistol.h"
 
 // Sets default values
 ATGPlayer::ATGPlayer() : MaxHP(100)
@@ -20,6 +23,12 @@ ATGPlayer::ATGPlayer() : MaxHP(100)
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
 	Camera->SetupAttachment(RootComponent);
 	Camera->bUsePawnControlRotation = true;
+
+	static ConstructorHelpers::FClassFinder<ATGWeaponPistol> testAsset = TEXT("/Game/Weapons/TestWeapon/TaserPistol.TaserPistol_C");
+	CurrentWeapon = CreateDefaultSubobject<UChildActorComponent>("Weapon");
+	CurrentWeapon->SetupAttachment(GetMesh());
+	if (testAsset.Succeeded())
+		CurrentWeapon->SetChildActorClass(testAsset.Class);
 
 	EvadeCount = 2;
 	EvadeCooldown = 3.0f;
@@ -115,6 +124,7 @@ void ATGPlayer::Shot(const FInputActionValue& InputValue)
 		{
 			FDamageEvent DamEvent;
 			target->TakeDamage(6.0f, DamEvent, GetController(), this);
+
 		}
 	}
 }
@@ -138,8 +148,12 @@ void ATGPlayer::Tick(float DeltaTime)
 	}
 	else
 	{
-		CurrentFocusedActor = nullptr;
+		if (CurrentFocusedActor)
+		{
+			CurrentFocusedActor->OnUnfocused(this);
 
+			CurrentFocusedActor = nullptr;
+		}
 		// 시각화 디버그용 (UI 추가 후 삭제)
 		CameraLineTrace(debugTemp, ECC_Visibility, 5000.0f, true);
 	}

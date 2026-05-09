@@ -3,15 +3,19 @@
 
 #include "Player/TGPlayerController.h"
 #include "EnhancedInputSubsystems.h"
+#include "EnhancedInputComponent.h"
 #include "InputMappingContext.h"
+#include "Core/GameFlow/TGGameMode.h"
+#include "Kismet/GameplayStatics.h"
 #include "Blueprint/UserWidget.h"
 
 ATGPlayerController::ATGPlayerController()
 {
-	static ConstructorHelpers::FObjectFinder<UInputMappingContext> IMC_Asset =
+	// 플레이어 조작
+	static ConstructorHelpers::FObjectFinder<UInputMappingContext> IMCPlayer_Asset =
 		TEXT("/Game/Player/Input/IMC_Player.IMC_Player");
-	if (IMC_Asset.Succeeded())
-		InputMappingContext = IMC_Asset.Object;
+	if (IMCPlayer_Asset.Succeeded())
+		IMC_Player = IMCPlayer_Asset.Object;
 
 	static ConstructorHelpers::FObjectFinder<UInputAction> IA_Move_Asset =
 		TEXT("/Game/Player/Input/Actions/IA_Move.IA_Move");
@@ -47,6 +51,17 @@ ATGPlayerController::ATGPlayerController()
 		TEXT("/Game/Player/Input/Actions/IA_Interact.IA_Interact");
 	if (IA_Interact_Asset.Succeeded())
 		Action_Interact = IA_Interact_Asset.Object;
+
+	// 메뉴 조작
+	static ConstructorHelpers::FObjectFinder<UInputMappingContext> IMCMenu_Asset =
+		TEXT("/Game/Player/Input/IMC_Menu.IMC_Menu");
+	if (IMCMenu_Asset.Succeeded())
+		IMC_Menu = IMCMenu_Asset.Object;
+
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_Pause_Asset =
+		TEXT("/Game/Player/Input/Actions/IA_Pause.IA_Pause");
+	if (IA_Pause_Asset.Succeeded())
+		Action_Pause = IA_Pause_Asset.Object;
 }
 
 UUserWidget* ATGPlayerController::GetHUDWidget() const
@@ -63,9 +78,17 @@ void ATGPlayerController::BeginPlay()
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
 			LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
 		{
-			if (InputMappingContext)
+			if (IMC_Player)
 			{
-				Subsystem->AddMappingContext(InputMappingContext, 0);
+				Subsystem->AddMappingContext(IMC_Player, 0);
+			}
+		}
+		if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
+		{
+			if (Action_Pause)
+			{
+				Action_Pause->bTriggerWhenPaused = true;
+				EnhancedInputComponent->BindAction(Action_Pause, ETriggerEvent::Triggered, this, &ATGPlayerController::GamePause);
 			}
 		}
 	}
@@ -75,5 +98,16 @@ void ATGPlayerController::BeginPlay()
 		HUDWidgetInstance = CreateWidget<UUserWidget>(this, HUDWidgetClass);
 		if (HUDWidgetInstance)	return;
 		HUDWidgetInstance->AddToViewport();
+	}
+}
+
+void ATGPlayerController::GamePause()
+{
+	if (ATGGameMode* GM = Cast<ATGGameMode>(UGameplayStatics::GetGameMode(this)))
+	{
+		if (GM->IsPauseGameFlow())
+			GM->ResumeGameFlow();
+		else
+			GM->PauseGameFlow();
 	}
 }

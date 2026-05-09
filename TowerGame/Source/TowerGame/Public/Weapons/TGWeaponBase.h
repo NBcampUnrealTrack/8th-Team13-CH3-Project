@@ -26,13 +26,18 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
 	FName Name;
-	AActor* Owner;
-	EWeaponTriggerType TriggerType;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
 	int32 Power;
+
+	AActor* Owner;
+
+	EWeaponTriggerType TriggerType;
+	
 	//int Ammo;
 	//int Magazine;
 public:
 	void SetOwner(AActor* owner) { Owner = owner; }
-	void Hit(AActor* target);
+	void Shoot(AActor* target);
 };
