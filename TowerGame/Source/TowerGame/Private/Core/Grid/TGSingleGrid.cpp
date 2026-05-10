@@ -47,8 +47,7 @@ void ATGSingleGrid::SetBoxSize(float Size) const
 	const FVector CurrentScale = Visualizer->GetRelativeScale3D();
 	Visualizer->SetRelativeScale3D(FVector(Scale, Scale, CurrentScale.Z));
 
-	const float HalfSize = Size / 2.f;
-	InteractionCollision->SetBoxExtent(FVector(HalfSize, HalfSize, InteractionCollision->GetUnscaledBoxExtent().Z));
+	SyncCollisionToMeshBounds();
 }
 
 void ATGSingleGrid::OnFocused_Implementation(ATGPlayer* Player)

@@ -2,6 +2,7 @@
 
 #include "TGInteractiveActor.h"
 #include "Components/BoxComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "DrawDebugHelpers.h"
 
 ATGInteractiveActor::ATGInteractiveActor()
@@ -24,6 +25,8 @@ void ATGInteractiveActor::BeginPlay()
 {
 	Super::BeginPlay();
 
+	SyncCollisionToMeshBounds();
+
 	GetWorldTimerManager().SetTimer(
 		DebugDrawTimerHandle,
 		this,
@@ -31,6 +34,28 @@ void ATGInteractiveActor::BeginPlay()
 		2.0f,
 		false
 	);
+}
+
+void ATGInteractiveActor::SyncCollisionToMeshBounds() const
+{
+	TArray<UStaticMeshComponent*> MeshComps;
+	GetComponents<UStaticMeshComponent>(MeshComps);
+
+	if (MeshComps.IsEmpty()) return;
+
+	FBox CombinedBox(ForceInit);
+	for (UStaticMeshComponent* Mesh : MeshComps)
+	{
+		if (!Mesh || !Mesh->GetStaticMesh()) continue;
+		// 메쉬 로컬 바운드에 컴포넌트의 상대 트랜스폼(위치·회전·스케일)을 적용해 액터 로컬 공간으로 변환
+		FBox MeshBox = Mesh->GetStaticMesh()->GetBoundingBox();
+		CombinedBox += MeshBox.TransformBy(Mesh->GetRelativeTransform());
+	}
+
+	if (CombinedBox.IsValid)
+	{
+		InteractionCollision->SetBoxExtent(CombinedBox.GetExtent());
+	}
 }
 
 void ATGInteractiveActor::DrawDebugCollisionBox()
