@@ -1,5 +1,6 @@
-#include "EngineUtils.h"
 #include "BaseTower/TGResourceManager.h"
+
+#include "EngineUtils.h"
 
 // 싱글톤 인스턴스 초기화
 TWeakObjectPtr<ATGResourceManager> ATGResourceManager::Instance;

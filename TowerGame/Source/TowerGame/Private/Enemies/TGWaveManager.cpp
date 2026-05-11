@@ -6,24 +6,18 @@
 #include "EngineUtils.h"
 #include "Enemies/TGEnemyBase.h"
 #include "Enemies/TGEnemySpawner.h"
+#include "Enemies/TGWaveData.h"
 
 TWeakObjectPtr<ATGWaveManager> ATGWaveManager::Instance;
 
-FTGEnemySpawnInfo::FTGEnemySpawnInfo() : EnemyClass(nullptr), SpawnCount(0)
-{
-}
-
-FTGWaveInfo::FTGWaveInfo() : SpawnInterval(1.0f), DelayAfterSpawnCompleted(5.0f)
-{
-}
-
 // Sets default values
-ATGWaveManager::ATGWaveManager()
-	: NextWaveIndex(0),
+ATGWaveManager::ATGWaveManager():
+	SpawnInterval(1.0f),
+	DelayBeforeNextWave(5.0f),
+	NextWaveIndex(0),
 	ActiveWaveIndex(0),
 	bIsSpawning(false),
-	CurrentSpawnInfoIndex(0),
-	SpawnedCountInCurrentInfo(0),
+	PendingSpawnIndex(0),
 	NextSpawnerIndex(0)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -107,14 +101,15 @@ bool ATGWaveManager::StartNextWave()
 	if (EnemySpawners.Num() == 0) return  false;
 	if (!HasNextWave()) return  false;
 
-	// 현재 / 다음 웨이브 정보 갱신
+	// 현재 Wave 스폰 상태 초기화
 	InitializeSpawnState(NextWaveIndex);
 	NextWaveIndex++;
 
 	// 웨이브 시작 이벤튼
 	OnWaveStarted.Broadcast(ActiveWaveIndex);
 
-	if (WaveInfos[ActiveWaveIndex].EnemySpawnInfos.Num() == 0){
+	// 유효한 SpawnGroup이 없으면 Spawn 완료 처리
+	if (PendingSpawnQueue.Num() == 0){
 		FinishCurrentWaveSpawn();
 		return true;
 	}
@@ -122,12 +117,11 @@ bool ATGWaveManager::StartNextWave()
 	bIsSpawning = true;
 
 	// Spawn Timer 시작
-	const float Interval = WaveInfos[ActiveWaveIndex].SpawnInterval;
 	GetWorldTimerManager().SetTimer(
 		SpawnTimerHandle,
 		this,
 		&ATGWaveManager::SpawnNextEnemy,
-		Interval,
+		SpawnInterval,
 		true,
 		0
 	);
@@ -137,56 +131,33 @@ bool ATGWaveManager::StartNextWave()
 
 void ATGWaveManager::SpawnNextEnemy()
 {
-	FTGWaveInfo& CurrentWave = WaveInfos[ActiveWaveIndex];
-	while (true){
-		// 모든 Enemy Spawn이 끝났는가
-		if (!CurrentWave.EnemySpawnInfos.IsValidIndex(CurrentSpawnInfoIndex)){
-			FinishCurrentWaveSpawn();
-			return;
-		}
-
-		// SpawnInfo에서 지정된 수만큼 생성되었는가
-		FTGEnemySpawnInfo& SpawnInfo = CurrentWave.EnemySpawnInfos[CurrentSpawnInfoIndex];
-		if (SpawnedCountInCurrentInfo >= SpawnInfo.SpawnCount){
-			if (!MoveToNextSpawnInfo()){
-				FinishCurrentWaveSpawn();
-				return;
-			}
-			continue;
-		}
-
-		// 해당 Enemy가 비어 있는가
-		if (!SpawnInfo.EnemyClass){
-			if (!MoveToNextSpawnInfo()){
-				FinishCurrentWaveSpawn();
-				return;
-			}
-			continue;
-		}
-
-		if (EnemySpawners.Num() == 0){
-			FinishCurrentWaveSpawn();
-			return;
-		}
-
-		// Spawner을 순회하며 Enemy Spawn
-		NextSpawnerIndex %= EnemySpawners.Num();
-		ATGEnemySpawner* Spawner = EnemySpawners[NextSpawnerIndex];
-		NextSpawnerIndex = NextSpawnerIndex + 1;
-
-		// Enemy 생성
-		if (Spawner && Spawner->SpawnEnemy(SpawnInfo.EnemyClass)) SpawnedCountInCurrentInfo++;
+	// 현재 Wave에서 더 이상 스폰할 Enemy가 없으면 종료
+	if (!PendingSpawnQueue.IsValidIndex(PendingSpawnIndex)){
+		FinishCurrentWaveSpawn();
 		return;
 	}
-}
 
-bool ATGWaveManager::MoveToNextSpawnInfo()
-{
-	// Enemy 생성에 사용할 인자 초기화
-	CurrentSpawnInfoIndex++;
-	SpawnedCountInCurrentInfo = 0;
+	if (EnemySpawners.Num() == 0){
+		FinishCurrentWaveSpawn();
+		return;
+	}
 
-	return WaveInfos[ActiveWaveIndex].EnemySpawnInfos.IsValidIndex(CurrentSpawnInfoIndex);
+	TSubclassOf<ATGEnemyBase> EnemyClass = PendingSpawnQueue[PendingSpawnIndex];
+
+	// 유효하지 않은 EnemyClass 제외
+	if (!EnemyClass){
+		PendingSpawnIndex++;
+		return;
+	}
+
+	// Spawner을 순회하면 Enemy을 Spawn
+	// 이게 왜 스폰?
+	NextSpawnerIndex %= EnemySpawners.Num();
+	ATGEnemySpawner* Spawner = EnemySpawners[NextSpawnerIndex];
+	NextSpawnerIndex++;
+
+	// Spawn 성공 시에만 다음 Enmey로 넘어감
+	if (Spawner && Spawner->SpawnEnemy(EnemyClass)) PendingSpawnIndex++;
 }
 
 void ATGWaveManager::FinishCurrentWaveSpawn()
@@ -204,12 +175,11 @@ void ATGWaveManager::FinishCurrentWaveSpawn()
 	if (!bCanStartNextWave) return;
 
 	// 웨이브 대기 시간 적용
-	const float Delay = WaveInfos[ActiveWaveIndex].DelayAfterSpawnCompleted;
 	GetWorldTimerManager().SetTimer(
 		NextWaveDelayTimerHandle,
 		this,
 		&ATGWaveManager::HandleNextWaveDelayFinished,
-		Delay,
+		DelayBeforeNextWave,
 		false
 	);
 }
@@ -223,11 +193,25 @@ void ATGWaveManager::InitializeSpawnState(int32 WaveIndex)
 {
 	// 새 웨이브 스폰 시작 상태 설정
 	ActiveWaveIndex = WaveIndex;
-	CurrentSpawnInfoIndex = 0;
-	SpawnedCountInCurrentInfo = 0;
+
+	PendingSpawnQueue.Reset();
+	PendingSpawnIndex = 0;
+
+	if (!WaveDataList.IsValidIndex(WaveIndex)) return;
+
+	UTGWaveData* WaveData = WaveDataList[WaveIndex];
+	if (!WaveData) return;
+
+	for (const FTGEnemySpawnGroup& SpawnGroup : WaveData->SpawnGroups){
+		if (!SpawnGroup.IsValid()) continue;
+
+		for (int32 i = 0; i < SpawnGroup.SpawnCount; ++i){
+			PendingSpawnQueue.Add(SpawnGroup.EnemyClass);
+		}
+	}
 }
 
 bool ATGWaveManager::HasNextWave() const
 {
-	return WaveInfos.IsValidIndex(NextWaveIndex);
+	return WaveDataList.IsValidIndex(NextWaveIndex);
 }
