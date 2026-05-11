@@ -3,12 +3,13 @@
 
 #include "Enemies/TGEnemySpawner.h"
 
+#include "Components/CapsuleComponent.h"
 #include "Enemies/TGEnemyBase.h"
 #include "Enemies/TGNavigationManager.h"
 #include "Enemies/TGWaveManager.h"
 
 // Sets default values
-ATGEnemySpawner::ATGEnemySpawner() : SpawnLocationOffset(0,0,88)
+ATGEnemySpawner::ATGEnemySpawner() : SpawnLocationOffset(FVector::ZeroVector), LastSpawnedEnemyClass(nullptr)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
@@ -37,6 +38,20 @@ void ATGEnemySpawner::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
+// EnemyBase의 HalfHeight를 가져와 저장
+void ATGEnemySpawner::UpdateSpawnLocationOffset(TSubclassOf<ATGEnemyBase> EnemyClass)
+{
+	if (!EnemyClass) return;
+
+	const ATGEnemyBase* DefaultEnemy = EnemyClass->GetDefaultObject<ATGEnemyBase>();
+	if (!DefaultEnemy) return;
+
+	const UCapsuleComponent* CapsuleCollision = DefaultEnemy->GetCapsuleComponent();
+	if (!CapsuleCollision) return;
+
+	SpawnLocationOffset = FVector(0, 0, CapsuleCollision->GetScaledCapsuleHalfHeight());
+}
+
 ATGEnemyBase* ATGEnemySpawner::SpawnEnemy(TSubclassOf<ATGEnemyBase> EnemyClass)
 {
 	if (!EnemyClass) return nullptr;
@@ -53,6 +68,12 @@ ATGEnemyBase* ATGEnemySpawner::SpawnEnemy(TSubclassOf<ATGEnemyBase> EnemyClass)
 		}
 	}
 
+	// Spawn하는 Enemy가 달라진 경우 Offset 재 계산
+	if (LastSpawnedEnemyClass != EnemyClass){
+		UpdateSpawnLocationOffset(LastSpawnedEnemyClass);
+		LastSpawnedEnemyClass = EnemyClass;
+	}
+
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Owner = this;
 
@@ -60,7 +81,7 @@ ATGEnemyBase* ATGEnemySpawner::SpawnEnemy(TSubclassOf<ATGEnemyBase> EnemyClass)
 	SpawnParams.SpawnCollisionHandlingOverride =
 		ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
 
-	// 생성 위치 보정 - 기본 캡슙액터의 Capsule Half Height(88)
+	// 생성 위치 보정
 	FTransform SpawnTransform = GetActorTransform();
 	SpawnTransform.AddToTranslation(SpawnLocationOffset);
 

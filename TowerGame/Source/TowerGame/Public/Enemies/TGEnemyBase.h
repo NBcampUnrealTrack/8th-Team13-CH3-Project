@@ -69,6 +69,8 @@ protected:
 	UFUNCTION()
 	void HandleMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result);
 
+	bool TryRecoverToNearestNavMesh();
+
 private:
 	// 가까운 건물 반환 추후 우선도 고려
 	AActor* FindBlockingBuilding() const;

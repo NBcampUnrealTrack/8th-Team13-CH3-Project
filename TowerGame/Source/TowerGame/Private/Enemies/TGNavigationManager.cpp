@@ -44,7 +44,7 @@ ATGNavigationManager* ATGNavigationManager::Get(const UObject* WorldContextObjec
 	UWorld* World = WorldContextObject->GetWorld();
 	if (!World) return nullptr;
 
-	// 등록된 인스턴스가 있고 같은 World 소속이면 그대로 사용한디
+	// 등록된 인스턴스가 있고 같은 World 소속이면 그대로 사용한다
 	if (Instance.IsValid() && Instance->GetWorld() == World->GetWorld()){
 		return Instance.Get();
 	}
