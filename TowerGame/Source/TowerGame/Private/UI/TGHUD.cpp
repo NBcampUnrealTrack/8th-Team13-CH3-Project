@@ -90,7 +90,7 @@ void ATGHUD::UpdateUIByState(ETGGameFlowState NewState)
 		}
 
 		PC->bShowMouseCursor = true;
-		PC->SetInputMode(FInputModeUIOnly());
+		PC->SetInputMode(FInputModeGameAndUI());
 		break;
 
 	case ETGGameFlowState::GameOver:
