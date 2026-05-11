@@ -317,3 +317,141 @@ no watermark, no text overlays
 ```
 --style raw --ar 16:9 --v 6.1 --stylize 750
 ```
+
+---
+
+## BaseColor 전용 이미지 생성 가이드
+
+### 왜 BaseColor가 필요한가?
+
+UE5의 PBR 머티리얼은 텍스처 채널이 분리되어 있다.  
+AI가 생성한 이미지를 그대로 쓰면 **조명·그림자·글로우가 BaseColor에 구워진(baked) 상태**라  
+엔진 안에서 Lumen 광원과 충돌해 이중 조명, 색조 오염이 발생한다.
+
+| 채널 | 역할 | AI 이미지에 흔히 섞이는 문제 |
+|------|------|---------------------------|
+| **BaseColor** | 순수 재질 색상 (조명 0%) | 하이라이트·그림자·글로우가 혼합됨 |
+| **Emissive** | 자체 발광 | BaseColor에 bloom이 포함됨 |
+| **Roughness / Normal** | 표면 질감·요철 | 별도 채널이므로 BaseColor에서 제거 필요 |
+
+BaseColor 전용 이미지 = **조명 없음 + 그림자 없음 + 글로우 없음 + 순수 평면 색상**
+
+---
+
+### 범용 BaseColor 프롬프트 블록
+
+아래 블록을 기존 프롬프트의 **기존 품질 태그 전체를 대체**해서 붙여넣는다.
+
+```
+RENDERING STYLE: flat BaseColor map, unlit texture reference.
+NO shadows, NO highlights, NO specular reflections, NO ambient occlusion.
+NO glow, NO bloom, NO lens flare, NO light emission effects.
+NO gradient shading on surfaces — all surfaces rendered with 100% flat solid fill color.
+Lighting: perfectly neutral, directionless, uniform flat illumination (as if rendered with an Unlit material shader).
+Neon/circuit lines shown as their RAW solid color only (e.g. flat #00FFFF cyan, flat #FF6600 orange)
+  — no surrounding bloom halo, no soft glow radius, no emissive spread.
+Dark panel surfaces: flat solid #0D0D0D or #1A1A1A, no specular glint, no surface sheen.
+Translucent parts (energy chambers, fields): flat solid fill with a single opacity level, no refraction, no caustics.
+Style: technical texture sheet / UV albedo reference. Similar to a diffuse-only render or a 2D vector fill.
+White background or neutral mid-grey background (#808080) for correct perceived color — NOT dark background.
+Ultra-detailed flat color illustration, game asset BaseColor reference, no watermark, no text.
+```
+
+---
+
+### 기존 원화 프롬프트 → BaseColor 전환 방법
+
+**Step 1.** 기존 프롬프트에서 아래 표현들을 **제거**한다.
+
+| 제거 대상 표현 | 이유 |
+|--------------|------|
+| `glowing`, `pulsing`, `shimmering` | 발광 묘사 → Emissive 채널 영역 |
+| `glow pool`, `glow effect`, `neon glow` | bloom/halo 생성 유발 |
+| `self-illumination`, `light emission` | 엔진 조명과 충돌 |
+| `dark background` | 자체 발광처럼 보이게 만드는 배경 |
+| `Unreal Engine 5 PBR quality` | PBR = 조명 포함 렌더링 암시 |
+| `ultra-detailed, cinematic` | 드라마틱 조명 연출 유발 |
+
+**Step 2.** 색상 묘사를 **발광 없는 순수 색상**으로 교체한다.
+
+| 원본 묘사 | BaseColor 묘사로 교체 |
+|---------|-------------------|
+| `glowing cyan circuit lines` | `flat solid cyan circuit lines (#00FFFF), no glow` |
+| `pulsing blue energy` | `solid flat blue (#0055FF) fill, no gradient` |
+| `brilliant glowing sphere` | `flat solid white-cyan sphere (#AAFFFF), no bloom` |
+| `orange amber glow` | `solid flat orange fill (#FF6600), no halo` |
+
+---
+
+### 프롬프트 적용 예시 — 연사형 터렛 BaseColor 버전
+
+```
+Game asset BaseColor texture reference sheet.
+OBJECT: Wall-mounted Rapid-Fire Turret for a tower defense game.
+A compact, aggressive turret mounted on a flat wall-top platform via a swivel joint.
+Dual barrels, sleek and elongated.
+COLORS (flat, unlit):
+  - Main body armor: flat solid #0D0D0D (near-black matte panel)
+  - Edge trim lines and circuit engravings: flat solid #00FFFF (cyan) — no glow, no halo
+  - Barrel muzzle interior: flat solid #AAFFFF
+  - Energy conduit cables: flat solid #0055FF
+  - Sensor dome: flat solid #1A1A1A with flat #00FFFF detail lines
+RENDERING STYLE: flat BaseColor map, unlit texture reference.
+NO shadows, NO highlights, NO specular reflections, NO ambient occlusion.
+NO glow, NO bloom, NO lens flare, NO light emission effects.
+NO gradient shading — all surfaces flat solid fill only.
+Lighting: perfectly neutral, directionless, uniform flat illumination.
+Background: neutral mid-grey (#808080).
+Reference sheet layout: isometric perspective view (main), front orthographic, side view.
+Ultra-detailed flat color illustration, game asset BaseColor reference, no watermark, no text.
+```
+
+---
+
+### 도구별 BaseColor 추가 설정
+
+**ChatGPT (DALL-E)**
+> 프롬프트 앞에 다음 문장 추가:
+> `"Render this as a flat unlit texture map with no lighting or shadows."`
+
+**Midjourney**
+> 파라미터 교체:
+> ```
+> --style raw --no shadow,glow,bloom,highlight,lighting,shading --ar 3:2 --v 6.1
+> ```
+
+**Gemini Imagen**
+> 프롬프트 앞에 다음 문장 추가:
+> `"Technical flat color illustration, diffuse-only render, zero lighting."`
+
+**Adobe Firefly**
+> Content Type → `Graphic`  
+> Style → `Flat design` + `No shading`
+
+---
+
+### 이 게임(Tron 스타일)에서 BaseColor 색상 팔레트
+
+```
+[플레이어 / 아군 계열]
+Panel Body   : #0D0D0D  (near-black)
+Circuit Line : #00FFFF  (cyan)
+Energy Fill  : #AAFFFF  (light cyan)
+Accent       : #0055FF  (electric blue)
+
+[적 계열]
+Panel Body   : #111111  (near-black)
+Circuit Line : #FF6600  (orange)
+Energy Fill  : #FFAA44  (light orange)
+
+[슬로우 타워]
+Circuit Line : #CC00FF  (purple)
+Energy Fill  : #00FFCC  (teal)
+
+[에너지 코어 (본진)]
+Frame        : #0A0A0A
+Core Crystal : #AAFFFF  (light cyan)
+Ring Detail  : #FFFFFF  (pure white)
+```
+
+BaseColor 이미지를 엔진에 임포트한 뒤, **Emissive 채널에 동일 이미지를 마스크로 사용**하면 회로선만 발광하는 트론 스타일 머티리얼을 빠르게 구성할 수 있다.
