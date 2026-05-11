@@ -18,9 +18,6 @@ class TOWERGAME_API UTGPlayerWidget : public UUserWidget
 {
 	GENERATED_BODY()
 protected:
-	UPROPERTY(meta = (BindWidget))
-	UButton* PauseButton;
-
 	UFUNCTION()
 	void HandlePauseClicked();
 

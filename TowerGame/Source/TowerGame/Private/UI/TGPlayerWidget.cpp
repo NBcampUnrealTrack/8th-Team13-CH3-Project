@@ -16,10 +16,6 @@ void UTGPlayerWidget::NativeConstruct()
 	Super::NativeConstruct();
 	player = Cast<ATGPlayer>(GetWorld()->GetFirstPlayerController()->GetPawn());
 	core = Cast<ATGCoreBase>(ATGNavigationManager::Get(GetWorld())->GetCurrentCoreActor());
-	if (PauseButton)
-	{
-		PauseButton->OnClicked.AddUniqueDynamic(this, &UTGPlayerWidget::HandlePauseClicked);
-	}
 
 	if (ATGGameMode* GM = Cast<ATGGameMode>(UGameplayStatics::GetGameMode(this)))
 	{
