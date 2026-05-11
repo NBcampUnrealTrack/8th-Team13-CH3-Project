@@ -9,9 +9,7 @@
 
 ATGHUD::ATGHUD()
 	: CachedGameMode(nullptr),
-	MainMenuWidget(nullptr),
 	PlayerWidget(nullptr),
-	//PlayingWidget(nullptr),
 	PauseWidget(nullptr),
 	GameOverWidget(nullptr)
 {
@@ -38,21 +36,10 @@ void ATGHUD::HandleFlowStateChanged(ETGGameFlowState NewState)
 
 void ATGHUD::HideAllWidgets()
 {
-	if (MainMenuWidget && MainMenuWidget->IsInViewport())
-	{
-		MainMenuWidget->RemoveFromParent();
-	}
-
 	if (PlayerWidget && PlayerWidget->IsInViewport())
 	{
 		PlayerWidget->RemoveFromParent();
 	}
-
-	//if (PlayingWidget && PlayingWidget->IsInViewport())
-	//{
-	//	PlayingWidget->RemoveFromParent();
-	//}
-
 	if (PauseWidget && PauseWidget->IsInViewport())
 	{
 		PauseWidget->RemoveFromParent();
@@ -76,22 +63,6 @@ void ATGHUD::UpdateUIByState(ETGGameFlowState NewState)
 
 	switch (NewState)
 	{
-	case ETGGameFlowState::Title:
-	case ETGGameFlowState::MainMenu:
-		if (!MainMenuWidget && MainMenuWidgetClass)
-		{
-			MainMenuWidget = CreateWidget<UTGMainMenuWidget>(PC, MainMenuWidgetClass);
-		}
-
-		if (MainMenuWidget)
-		{
-			MainMenuWidget->AddToViewport();
-		}
-
-		PC->bShowMouseCursor = true;
-		PC->SetInputMode(FInputModeUIOnly());
-		break;
-
 	case ETGGameFlowState::Playing:
 		if (!PlayerWidget && PlayerWidgetClass)
 		{
@@ -105,8 +76,6 @@ void ATGHUD::UpdateUIByState(ETGGameFlowState NewState)
 
 		PC->bShowMouseCursor = false;
 		PC->SetInputMode(FInputModeGameOnly());
-		/*PC->bShowMouseCursor = true;
-		PC->SetInputMode(FInputModeUIOnly());*/
 		break;
 
 	case ETGGameFlowState::Paused:

@@ -5,10 +5,8 @@
 #include "Core/GameFlow/TGGameFlowState.h"
 #include "TGHUD.generated.h"
 
-class UTGMainMenuWidget;
 class UTGGameOverWidget;
 class UTGPlayerWidget;
-class UTGPlayingWidget;
 class UTGPauseWidget;
 class ATGGameMode;
 
@@ -32,21 +30,13 @@ protected:
 	ATGGameMode* CachedGameMode;
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	TSubclassOf<UTGMainMenuWidget> MainMenuWidgetClass;
-	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UTGPlayerWidget> PlayerWidgetClass;
-	//UPROPERTY(EditDefaultsOnly, Category = "UI")
-	//TSubclassOf<UTGPlayingWidget> PlayingWidgetClass;
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UTGPauseWidget> PauseWidgetClass;
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UTGGameOverWidget> GameOverWidgetClass;
 	UPROPERTY()
-	UTGMainMenuWidget* MainMenuWidget;
-	UPROPERTY()
 	UTGPlayerWidget* PlayerWidget;
-	//UPROPERTY()
-	//UTGPlayingWidget* PlayingWidget;
 	UPROPERTY()
 	UTGPauseWidget* PauseWidget;
 	UPROPERTY()
