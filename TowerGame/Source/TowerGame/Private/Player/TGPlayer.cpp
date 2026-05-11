@@ -18,17 +18,24 @@
 // Sets default values
 ATGPlayer::ATGPlayer() : MaxHP(100)
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
 	Camera->SetupAttachment(RootComponent);
 	Camera->bUsePawnControlRotation = true;
 
-	static ConstructorHelpers::FClassFinder<ATGWeaponPistol> testAsset = TEXT("/Game/Weapons/TestWeapon/TaserPistol.TaserPistol_C");
-	CurrentWeapon = CreateDefaultSubobject<UChildActorComponent>("Weapon");
-	CurrentWeapon->SetupAttachment(GetMesh());
-	if (testAsset.Succeeded())
-		CurrentWeapon->SetChildActorClass(testAsset.Class);
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> TempAsset = TEXT("SkeletalMesh'/Game/Weapons/TestWeapon/Mesh/SK_FPGun.SK_FPGun'");
+	Weapon_Skeletal = CreateDefaultSubobject<USkeletalMeshComponent>("Weapon_SKM");
+	Weapon_Skeletal->SetupAttachment(Camera);
+	Weapon_Skeletal->SetRelativeLocation(FVector(25.0f, 25.0f, -25.0f));
+	if (TempAsset.Succeeded())
+	{
+		Weapon_Skeletal->SetSkeletalMesh(TempAsset.Object);
+		Weapon_Skeletal->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
+	}
+	Weapon_Static = CreateDefaultSubobject<UStaticMeshComponent>("Weapon_SM");
+	Weapon_Static->SetupAttachment(Camera);
+	Weapon_Static->SetRelativeLocation(FVector(25.0f, 25.0f, -25.0f));
 
 	EvadeCount = 2;
 	EvadeCooldown = 3.0f;
@@ -48,6 +55,8 @@ void ATGPlayer::BeginPlay()
 
 	if (GetWorld()->GetFirstPlayerController())
 		EnableInput(GetWorld()->GetFirstPlayerController());
+
+	//CurrentWeapon = GetWorld()->SpawnActor<>
 }
 
 void ATGPlayer::Move(const FInputActionValue& value)
@@ -81,7 +90,7 @@ void ATGPlayer::Look(const FInputActionValue& value)
 void ATGPlayer::JumpAction(const struct FInputActionValue& value)
 {
 	if (!Controller) return;
-	if(!bWasJumping)
+	if (!bWasJumping)
 		Jump();
 }
 

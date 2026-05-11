@@ -7,15 +7,21 @@
 #include "TGWeaponPistol.generated.h"
 
 /**
- * 
+ *
  */
+ //USTRUCT(BlueprintType)
+ //struct FTGStatusWeaponPistol : public FTGStatusWeaponBase
+ //{
+ //	GENERATED_BODY()
+ //protected:
+ //	float ShotInterval;
+ //};
+
+
 UCLASS()
 class TOWERGAME_API ATGWeaponPistol : public ATGWeaponBase
 {
 	GENERATED_BODY()
-public:
-	ATGWeaponPistol();
-protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
-	float ShotInterval;
+private:
+	//FTGStatusWeaponPistol info;
 };
