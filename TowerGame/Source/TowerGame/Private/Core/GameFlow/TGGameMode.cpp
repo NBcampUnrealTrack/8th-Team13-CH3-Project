@@ -13,8 +13,7 @@ void ATGGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 
-	UE_LOG(LogTemp, Warning, TEXT("TGGameMode BeginPlay"));
-	ChangeFlowState(ETGGameFlowState::MainMenu);
+	StartGameFlow();
 
 	//CachedCore = Cast<ATGCoreBase>(UGameplayStatics::GetActorOfClass(this, ATGCoreBase::StaticClass()));
 	//if (CachedCore)

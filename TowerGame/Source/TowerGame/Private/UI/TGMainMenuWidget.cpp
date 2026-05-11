@@ -1,7 +1,7 @@
 #include "UI/TGMainMenuWidget.h"
 #include "Components/Button.h"
 #include "Kismet/GameplayStatics.h"
-#include "Core/GameFlow/TGGameMode.h"
+#include "Core/GameFlow/TGMenuGameMode.h"
 
 void UTGMainMenuWidget::NativeConstruct()
 {
@@ -17,8 +17,8 @@ void UTGMainMenuWidget::HandleStartClicked()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Start Button Clicked"));
 
-	if (ATGGameMode* GM = Cast<ATGGameMode>(UGameplayStatics::GetGameMode(this)))
+	if (ATGMenuGameMode* MGM = Cast<ATGMenuGameMode>(UGameplayStatics::GetGameMode(this)))
 	{
-		GM->StartGameFlow();
+		MGM->StartGame();
 	}
 }
