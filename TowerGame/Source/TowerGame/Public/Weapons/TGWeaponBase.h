@@ -6,19 +6,31 @@
 #include "GameFramework/Actor.h"
 #include "TGWeaponBase.generated.h"
 
-UENUM()
-enum EWeaponTriggerType
+UENUM(BlueprintType)
+enum class EWeaponTriggerType : uint8
 {
-	SINGLE_SHOT,	// 단발
-	BURST,			// 점사
-	REPEATER		// 연발
+	/*단발*/ SINGLE_SHOT UMETA(DisplayName = "SingleShot"),
+	/*점사*/ BURST UMETA(DisplayName = "Burst"),
+	/*연사*/ REPEATER UMETA(DisplayName = "Repeater"),
+	TRIGGER_COUNT UMETA(Hidden)
 };
+
+//USTRUCT(BlueprintType)
+//struct FTGStatusWeaponBase
+//{
+//	GENERATED_BODY()
+//protected:
+//	FName Name;
+//	int32 Power;
+//	//int32 Ammo;
+//	//int32 Magazine;
+//};
 
 UCLASS()
 class TOWERGAME_API ATGWeaponBase : public AActor
 {
 	GENERATED_BODY()
-public:	
+public:
 	// Sets default values for this actor's properties
 	ATGWeaponBase();
 
@@ -26,13 +38,11 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 protected:
-	FName Name;
 	AActor* Owner;
 	EWeaponTriggerType TriggerType;
-	int32 Power;
-	//int Ammo;
-	//int Magazine;
+private:
+	//FTGStatusWeaponBase info;
 public:
 	void SetOwner(AActor* owner) { Owner = owner; }
-	void Hit(AActor* target);
+	void Shoot(AActor* target);
 };

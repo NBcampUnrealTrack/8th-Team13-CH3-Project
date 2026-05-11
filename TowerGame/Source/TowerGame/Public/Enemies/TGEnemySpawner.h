@@ -22,6 +22,10 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+private:
+	// Enemy의 SpawnOffSet 재 계산
+	void UpdateSpawnLocationOffset(TSubclassOf<ATGEnemyBase> EnemyClass);
+
 public:
 	// Enemy 생성
 	ATGEnemyBase* SpawnEnemy(TSubclassOf<ATGEnemyBase> EnemyClass);
@@ -35,4 +39,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawn")
 	FVector  SpawnLocationOffset;
+
+private:
+	TSubclassOf<ATGEnemyBase> LastSpawnedEnemyClass;
 };

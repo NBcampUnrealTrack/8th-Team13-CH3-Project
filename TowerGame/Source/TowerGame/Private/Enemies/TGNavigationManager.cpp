@@ -4,6 +4,7 @@
 #include "Enemies/TGNavigationManager.h"
 
 #include "EngineUtils.h"
+#include "NavigationSystem.h"
 #include "Enemies/TGCoreBase.h"
 #include "Enemies/TGEnemyBase.h"
 
@@ -26,6 +27,12 @@ void ATGNavigationManager::BeginPlay()
 	}
 
 	Instance = this;
+
+	// NavMesh 갱신 완료 델리게이트
+	if (UNavigationSystemV1* NavigationSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld())){
+		NavigationSystem->OnNavigationGenerationFinishedDelegate.AddDynamic(
+			this, &ATGNavigationManager::HandleNavigationGenerationFinished);
+	}
 }
 
 void ATGNavigationManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -44,7 +51,7 @@ ATGNavigationManager* ATGNavigationManager::Get(const UObject* WorldContextObjec
 	UWorld* World = WorldContextObject->GetWorld();
 	if (!World) return nullptr;
 
-	// 등록된 인스턴스가 있고 같은 World 소속이면 그대로 사용한디
+	// 등록된 인스턴스가 있고 같은 World 소속이면 그대로 사용한다
 	if (Instance.IsValid() && Instance->GetWorld() == World->GetWorld()){
 		return Instance.Get();
 	}
@@ -115,7 +122,7 @@ ATGCoreBase* ATGNavigationManager::GetCurrentCoreActor() const
 
 void ATGNavigationManager::NotifyBuildingPlaced()
 {
-	RepathAllEnemies();
+	bPendingRepathAfterNavGeneration = true;
 }
 
 void ATGNavigationManager::RepathAllEnemies()
@@ -128,3 +135,13 @@ void ATGNavigationManager::RepathAllEnemies()
 	}
 }
 
+// NavMesh 갱신 이후 경로 탐색
+void ATGNavigationManager::HandleNavigationGenerationFinished(ANavigationData* NavDate)
+{
+	if (!bPendingRepathAfterNavGeneration) return;
+	bPendingRepathAfterNavGeneration = false;
+
+	UE_LOG(LogNavigation, Warning, TEXT("NavMesh 생성 완료 후 RepathAllEnies 호출"));
+
+	RepathAllEnemies();
+}

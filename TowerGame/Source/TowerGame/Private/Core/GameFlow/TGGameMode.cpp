@@ -4,7 +4,7 @@
 #include "Kismet/GameplayStatics.h"
 
 ATGGameMode::ATGGameMode()
-	: SetWaveStartTime(10.0f)
+	: SetWaveStartTime(10.0f), CurrentEnergy(500)
 {
 	CurrentState = ETGGameFlowState::Title;
 }
@@ -130,4 +130,28 @@ void ATGGameMode::StartWave()
 	}
 
 	WaveManager->StartNextWave();
+}
+
+bool ATGGameMode::IsPauseGameFlow()
+{
+	return CurrentState == ETGGameFlowState::Paused;
+}
+
+bool ATGGameMode::SpendEnergy(int32 Amount)
+{
+	if (CurrentEnergy < Amount) return false;
+	CurrentEnergy -= Amount;
+	OnEnergyChanged.Broadcast(CurrentEnergy);
+	return true;
+}
+
+void ATGGameMode::AddEnergy(int32 Amount)
+{
+	CurrentEnergy += Amount;
+	OnEnergyChanged.Broadcast(CurrentEnergy);
+}
+
+int32 ATGGameMode::GetCurrentEnergy() const
+{
+	return CurrentEnergy;
 }

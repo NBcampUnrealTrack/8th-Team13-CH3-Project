@@ -2,10 +2,3 @@
 
 
 #include "Weapons/TGWeaponPistol.h"
-
-ATGWeaponPistol::ATGWeaponPistol()
-{
-	Name = TEXT("Pistol");
-	Power = 10;
-	TriggerType = SINGLE_SHOT;
-}

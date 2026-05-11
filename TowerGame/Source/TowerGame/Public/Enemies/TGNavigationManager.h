@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "TGNavigationManager.generated.h"
 
+class ANavigationData;
 class ATGCoreBase;
 class ATGEnemyBase;
 
@@ -39,6 +40,13 @@ public:
 	// 그리드 연동 전 임시 사용 함수
 	void NotifyBuildingPlaced();
 
+private:
+	void RepathAllEnemies();
+
+	// NavMesh 갱신 후 호출 될 함수
+	UFUNCTION()
+	void HandleNavigationGenerationFinished(ANavigationData* NavDate);
+
 protected:
 	// 목적지
 	UPROPERTY(BlueprintReadOnly, Category = "Navigation")
@@ -54,7 +62,5 @@ private:
 
 	static TWeakObjectPtr<ATGNavigationManager> Instance;
 
-private:
-	void RepathAllEnemies();
-
+	bool bPendingRepathAfterNavGeneration = false;
 };

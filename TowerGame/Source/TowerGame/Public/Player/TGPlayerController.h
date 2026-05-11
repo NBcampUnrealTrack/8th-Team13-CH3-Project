@@ -10,7 +10,7 @@ class UInputMappingContext;
 class UInputAction;
 
 /**
- * 
+ *
  */
 UCLASS()
 class TOWERGAME_API ATGPlayerController : public APlayerController
@@ -20,7 +20,7 @@ public:
 	ATGPlayerController();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
-	TObjectPtr<UInputMappingContext> InputMappingContext;
+	TObjectPtr<UInputMappingContext> IMC_Player;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	TObjectPtr<UInputAction> Action_Move;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
@@ -35,6 +35,14 @@ public:
 	TObjectPtr<UInputAction> Action_Shot;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	TObjectPtr<UInputAction> Action_Interact;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	TObjectPtr<UInputMappingContext> IMC_Menu;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	TObjectPtr<UInputAction> Action_Pause;
+
 protected:
 	virtual void BeginPlay() override;
+
+	void GamePause();
 };

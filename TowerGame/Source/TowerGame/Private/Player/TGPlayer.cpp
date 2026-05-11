@@ -11,15 +11,31 @@
 #include "Enemies/TGEnemyBase.h"
 #include "Engine/DamageEvents.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/GameplayStatics.h"
+#include "Components/ChildActorComponent.h"
+#include "Weapons/TGWeaponPistol.h"
 
 // Sets default values
 ATGPlayer::ATGPlayer() : MaxHP(100)
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
 	Camera->SetupAttachment(RootComponent);
 	Camera->bUsePawnControlRotation = true;
+
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> TempAsset = TEXT("SkeletalMesh'/Game/Weapons/TestWeapon/Mesh/SK_FPGun.SK_FPGun'");
+	Weapon_Skeletal = CreateDefaultSubobject<USkeletalMeshComponent>("Weapon_SKM");
+	Weapon_Skeletal->SetupAttachment(Camera);
+	Weapon_Skeletal->SetRelativeLocation(FVector(25.0f, 25.0f, -25.0f));
+	if (TempAsset.Succeeded())
+	{
+		Weapon_Skeletal->SetSkeletalMesh(TempAsset.Object);
+		Weapon_Skeletal->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
+	}
+	Weapon_Static = CreateDefaultSubobject<UStaticMeshComponent>("Weapon_SM");
+	Weapon_Static->SetupAttachment(Camera);
+	Weapon_Static->SetRelativeLocation(FVector(25.0f, 25.0f, -25.0f));
 
 	EvadeCount = 2;
 	EvadeCooldown = 3.0f;
@@ -39,6 +55,8 @@ void ATGPlayer::BeginPlay()
 
 	if (GetWorld()->GetFirstPlayerController())
 		EnableInput(GetWorld()->GetFirstPlayerController());
+
+	//CurrentWeapon = GetWorld()->SpawnActor<>
 }
 
 void ATGPlayer::Move(const FInputActionValue& value)
@@ -72,7 +90,7 @@ void ATGPlayer::Look(const FInputActionValue& value)
 void ATGPlayer::JumpAction(const struct FInputActionValue& value)
 {
 	if (!Controller) return;
-	if(!bWasJumping)
+	if (!bWasJumping)
 		Jump();
 }
 
@@ -115,6 +133,7 @@ void ATGPlayer::Shot(const FInputActionValue& InputValue)
 		{
 			FDamageEvent DamEvent;
 			target->TakeDamage(6.0f, DamEvent, GetController(), this);
+
 		}
 	}
 }
@@ -138,8 +157,12 @@ void ATGPlayer::Tick(float DeltaTime)
 	}
 	else
 	{
-		CurrentFocusedActor = nullptr;
+		if (CurrentFocusedActor)
+		{
+			CurrentFocusedActor->OnUnfocused(this);
 
+			CurrentFocusedActor = nullptr;
+		}
 		// 시각화 디버그용 (UI 추가 후 삭제)
 		CameraLineTrace(debugTemp, ECC_Visibility, 5000.0f, true);
 	}
