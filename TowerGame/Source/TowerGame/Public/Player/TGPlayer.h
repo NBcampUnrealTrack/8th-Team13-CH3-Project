@@ -72,8 +72,10 @@ public:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
 	TObjectPtr<class UCameraComponent> Camera;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
-	TObjectPtr<class UChildActorComponent> CurrentWeapon;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<USkeletalMeshComponent> Weapon_Skeletal;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UStaticMeshComponent> Weapon_Static;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
 	int32 MaxHP;
@@ -94,8 +96,8 @@ protected:
 	FVector2D MoveDir;	// 현재 이동중인 방향, 정규화벡터
 	bool bBuildMode;	// 빌드모드
 
-	UPROPERTY()
-	TMap<TSubclassOf<ATGWeaponBase>, ATGWeaponBase*> OwnedWeapons;
+	//UPROPERTY()
+	//TMap<TSubclassOf<ATGWeaponBase>, ATGWeaponBase*> OwnedWeapons;
 
 private:
 	void InteractiveTrace(bool debug = false);
