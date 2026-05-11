@@ -7,6 +7,7 @@
 #include "Navigation/PathFollowingComponent.h"
 #include "TGEnemyBase.generated.h"
 
+class ABaseTower;
 struct FAIRequestID;
 class ATGNavigationManager;
 
@@ -32,7 +33,7 @@ public:
 	void SetNavigationManager(ATGNavigationManager* InNavigationManager);
 
 	// Enemy 공격 (Core)
-	void StartAttack(AActor* TargetActor);
+	void StartAttack();
 	void AttackTarget();
 
 	void StopAttack();
@@ -59,11 +60,16 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Attack")
 	float AttackInterVal;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Attack")
+	float AttackRange;
+
 	UPROPERTY()
 	TObjectPtr<AActor> CurrentAttackTarget;
 
 	FTimerHandle AttackTimerHandle;
 
+private:
+	int32 GridSize;
 
 protected:
 	UFUNCTION()
@@ -73,5 +79,6 @@ protected:
 
 private:
 	// 가까운 건물 반환 추후 우선도 고려
-	AActor* FindBlockingBuilding() const;
+	bool MoveToBlockingBuilding();
+	bool TryMoveToAttackRangeOfBuilding(ABaseTower* Building);
 };
