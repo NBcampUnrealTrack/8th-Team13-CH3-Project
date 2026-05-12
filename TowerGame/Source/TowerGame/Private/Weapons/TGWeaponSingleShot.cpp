@@ -37,8 +37,6 @@ void UTGWeaponSingleShot::Shoot(AActor* Instigator, UMeshComponent* WeaponCompon
 		if (target)
 		{
 			UGameplayStatics::ApplyDamage(target,status.Power,Instigator->GetInstigatorController(), Instigator, nullptr);
-			FDamageEvent DamEvent;
-
 		}
 	}
 }
