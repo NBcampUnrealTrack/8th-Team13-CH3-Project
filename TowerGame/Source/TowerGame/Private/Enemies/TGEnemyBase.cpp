@@ -19,7 +19,13 @@
 
 // Sets default values
 ATGEnemyBase::ATGEnemyBase() :
-	HP(1), EnergyDropAmount(0), AttackDamage(0), AttackInterVal(0.5f), AttackRange(200), GridSize(300)
+	HP(1),
+	EnergyDropAmount(0),
+	AttackDamage(0),
+	AttackInterVal(0.5f),
+	AttackRange(200),
+	NavigationLocationOffset(FVector::ZeroVector),
+	GridSize(300)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
@@ -60,12 +66,19 @@ void ATGEnemyBase::InitializeEnemy(ATGNavigationManager* InNavigationManager)
 	RequestRepath();
 }
 
+FVector ATGEnemyBase::GetNavigationLocationOffset() const
+{
+	return NavigationLocationOffset;
+}
+
 void ATGEnemyBase::RequestRepath()
 {
 	if (!NavigationManager) return;
 
+
 	AAIController* AIController = Cast<AAIController>(GetController());
 	if (!AIController) return;
+
 
 	// 이동 완료 콜백 중복 바인딩 방지
 	AIController->ReceiveMoveCompleted.RemoveDynamic(this, &ATGEnemyBase::HandleMoveCompleted);
@@ -74,7 +87,11 @@ void ATGEnemyBase::RequestRepath()
 	AIController->ReceiveMoveCompleted.AddDynamic(this, &ATGEnemyBase::HandleMoveCompleted);
 
 	// 목적지 위치 get
-	const FVector CoreLocation = NavigationManager->GetCoreLocation();
+	const UCapsuleComponent* CapsuleCollision = GetCapsuleComponent();
+	const float CapsuleHalfHeight = CapsuleCollision ? CapsuleCollision->GetScaledCapsuleHalfHeight() : 0.0f;
+	const FVector CoreLocation = NavigationManager->GetCoreLocation()
+		+ NavigationLocationOffset
+		+ FVector(0, 0, CapsuleHalfHeight);
 
 	//목적지로 이동
 	EPathFollowingRequestResult::Type MoveResult = AIController->MoveToLocation(

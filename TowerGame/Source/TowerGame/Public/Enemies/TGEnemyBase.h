@@ -27,9 +27,10 @@ public:
 
 public:
 	void InitializeEnemy(ATGNavigationManager* InNavigationManager);
+	FVector GetNavigationLocationOffset() const;
 
 	// 경로
-	void RequestRepath();
+	virtual void RequestRepath();
 	void SetNavigationManager(ATGNavigationManager* InNavigationManager);
 
 	// Enemy 공격
@@ -60,8 +61,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Attack")
 	float AttackInterVal;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Attack", meta = (ClampMin = "200.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Attack", meta = (ClampMin = "50.0"))
 	float AttackRange;
+
+	// FlyingEnemy 위치 보정을 위한 FVector
+	UPROPERTY(VisibleAnywhere, Category = "Enemy|Spawn")
+	FVector NavigationLocationOffset;
 
 	UPROPERTY()
 	TObjectPtr<AActor> CurrentAttackTarget;
