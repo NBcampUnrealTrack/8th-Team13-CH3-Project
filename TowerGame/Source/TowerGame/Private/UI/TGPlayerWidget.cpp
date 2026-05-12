@@ -15,7 +15,6 @@ void UTGPlayerWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 	player = Cast<ATGPlayer>(GetWorld()->GetFirstPlayerController()->GetPawn());
-	core = Cast<ATGCoreBase>(ATGNavigationManager::Get(GetWorld())->GetCurrentCoreActor());
 
 	if (ATGGameMode* GM = Cast<ATGGameMode>(UGameplayStatics::GetGameMode(this)))
 	{
@@ -29,6 +28,7 @@ void UTGPlayerWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	Super::NativeTick(MyGeometry, InDeltaTime);
 	if (player)
 		HP_Bar->SetPercent(static_cast<int32>(player->GetPlayerHP() / player->GetPlayerMaxHP()));
+	core = Cast<ATGCoreBase>(ATGNavigationManager::Get(GetWorld())->GetCurrentCoreActor());
 	if (core)
 		CoreHP_Bar->SetPercent(core->GetCurrentHP() / core->GetMaxHP());
 	if (EnergyText)

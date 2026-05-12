@@ -24,6 +24,8 @@ public:
 		USkeletalMesh* SkeletalMesh;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)	// 스태틱 메시 (스켈레탈 메시가 있으면 무시됨)
 		UStaticMesh* StaticMesh;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)	// 총구 위치 (메시 기준)
+		FVector MuzzlePos;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)	// 위치 오프셋 (오차수정)
 		FVector LocationOffset;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)	// 회전 오프셋
@@ -51,10 +53,8 @@ class TOWERGAME_API UTGWeaponBase : public UObject
 {
 	GENERATED_BODY()
 protected:
-	AActor* Owner;
 	ETGWeaponTriggerType TriggerType;
 public:
-	void SetOwner(AActor* owner) { Owner = owner; }
 	virtual const FTGWeaponAsset* GetAsset() { return nullptr; }
-	virtual void Shoot(FVector Pos, FRotator Dir) {}
+	virtual void Shoot(FVector StartPos, FVector EndPos) {}
 };

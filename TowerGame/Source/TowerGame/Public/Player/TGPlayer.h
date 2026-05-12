@@ -97,12 +97,13 @@ protected:
 	bool bBuildMode;	// 빌드모드
 
 	UPROPERTY()
-	TMap<FString, TObjectPtr<UTGWeaponBase>> OwnedWeapons;
+	TMap<FString, TObjectPtr<UTGWeaponBase>> OwnedWeapons;	// 소유중인 무기
+	FString CurrentWeaponKey;	// 현재 장착중인 무기의 Key
 
-	UPROPERTY()
-	FString CurrentWeaponKey;
+	UFUNCTION(BlueprintCallable)
+	UTGWeaponBase* GetCurrentWeapon();	// 현재 장착중인 무기를 가져온다.
 
-	void LoadWeapon(ETGWeaponTriggerType TriggerType, FName RowName, bool equip);
+	void OwnWeapon(ETGWeaponTriggerType TriggerType, FName RowName, bool equip);	// 무기를 소유한다. equip을 하면 장착까지 한다.
 	FString GetWeaponKey(ETGWeaponTriggerType TriggerType, FName WeaponName);
 private:
 	void InteractiveTrace(bool debug = false);

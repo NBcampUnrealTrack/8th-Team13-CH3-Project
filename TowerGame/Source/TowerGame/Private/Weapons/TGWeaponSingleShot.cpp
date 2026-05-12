@@ -3,6 +3,7 @@
 
 #include "Weapons/TGWeaponSingleShot.h"
 
-void UTGWeaponSingleShot::Shoot(FVector Pos, FRotator Dir)
+void UTGWeaponSingleShot::Shoot(FVector StartPos, FVector EndPos)
 {
+
 }
