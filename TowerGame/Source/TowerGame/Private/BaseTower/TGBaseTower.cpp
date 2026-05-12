@@ -131,9 +131,14 @@ void ABaseTower::OnInteract_Implementation(ATGPlayer* Player)
 	Super::OnInteract_Implementation(Player);
 
 	//	공격 타워 올리기
-	AttachedWeapon = GetWorld()->SpawnActor<ATGWeaponTower>();
+	ATGWeaponTower* WeaponTower = GetWorld()->SpawnActor<ATGWeaponTower>();
 	bAttached = true;
+	AttachedWeapon = WeaponTower;
 	AttachedWeapon->SetActorLocation(GetActorLocation() + MountPoint->GetRelativeLocation());
+
+	//	웨폰타워 인터랙션 활성화
+	WeaponTower->SetInteractionEnabled(true);
+
 
 	//	우선은 인터랙션 비활성화
 	//	TODO : 추후 타워 파괴 기능 생겼을 때 재건축을 위해 활성화 하는 코드 추가해야함

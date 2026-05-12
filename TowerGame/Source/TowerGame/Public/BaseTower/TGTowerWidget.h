@@ -7,6 +7,7 @@
 class UTextBlock;
 
 class ATGMountedTower;
+class ATGWeaponTower;
 
 UCLASS()
 class TOWERGAME_API UTGTowerWidget : public UUserWidget
@@ -27,6 +28,14 @@ protected:
 	// 업그레이드 비용 텍스트
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* UpgradeCostText;
+
+	// 공격 데미지 텍스트
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* DamageText;
+
+	// 공격 사거리 텍스트
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* RangeText;
 
 	// 연결된 타워 참조
 	UPROPERTY()

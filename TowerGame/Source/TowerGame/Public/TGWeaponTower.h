@@ -14,7 +14,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	virtual void Tick( float DeltaTime ) override;
+	virtual void Tick(float DeltaTime) override;
 
 	// 공격 사거리
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tower Settings")
@@ -45,4 +45,12 @@ public:
 
 	// 업그레이드 (데미지 1.5배 증가)
 	virtual void Upgrade() override;
+
+	// 현재 공격 데미지 반환
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Tower Settings")
+	float GetAttackDamage() const { return AttackDamage; }
+
+	// 현재 공격 사거리 반환
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Tower Settings")
+	float GetAttackRange() const { return AttackRange; }
 };
