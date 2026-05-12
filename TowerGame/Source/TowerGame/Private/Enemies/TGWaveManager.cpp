@@ -132,12 +132,7 @@ bool ATGWaveManager::StartNextWave()
 void ATGWaveManager::SpawnNextEnemy()
 {
 	// 현재 Wave에서 더 이상 스폰할 Enemy가 없으면 종료
-	if (!PendingSpawnQueue.IsValidIndex(PendingSpawnIndex)){
-		FinishCurrentWaveSpawn();
-		return;
-	}
-
-	if (EnemySpawners.Num() == 0){
+	if (!PendingSpawnQueue.IsValidIndex(PendingSpawnIndex) || EnemySpawners.Num() == 0){
 		FinishCurrentWaveSpawn();
 		return;
 	}
@@ -151,7 +146,6 @@ void ATGWaveManager::SpawnNextEnemy()
 	}
 
 	// Spawner을 순회하면 Enemy을 Spawn
-	// 이게 왜 스폰?
 	NextSpawnerIndex %= EnemySpawners.Num();
 	ATGEnemySpawner* Spawner = EnemySpawners[NextSpawnerIndex];
 	NextSpawnerIndex++;
