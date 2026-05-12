@@ -32,7 +32,7 @@ public:
 	void RequestRepath();
 	void SetNavigationManager(ATGNavigationManager* InNavigationManager);
 
-	// Enemy 공격 (Core)
+	// Enemy 공격
 	void StartAttack();
 	void AttackTarget();
 
@@ -60,7 +60,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Attack")
 	float AttackInterVal;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Attack")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Attack", meta = (ClampMin = "200.0"))
 	float AttackRange;
 
 	UPROPERTY()
@@ -76,6 +76,8 @@ protected:
 	void HandleMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result);
 
 	bool TryRecoverToNearestNavMesh();
+
+	bool IsTargetInAttackRange(const AActor* Target) const;
 
 private:
 	// 가까운 건물 반환 추후 우선도 고려

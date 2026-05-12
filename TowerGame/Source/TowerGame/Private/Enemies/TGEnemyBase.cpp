@@ -12,18 +12,27 @@
 #include "Enemies/TGEnemyAIController.h"
 
 #include "Enemies/TGNavigationManager.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 #include "Navigation/PathFollowingComponent.h"
 
 // Sets default values
-ATGEnemyBase::ATGEnemyBase() : HP(10), AttackDamage(1), AttackInterVal(0.5f), AttackRange(200),GridSize(300)
+ATGEnemyBase::ATGEnemyBase() :
+	HP(1), EnergyDropAmount(0), AttackDamage(0), AttackInterVal(0.5f), AttackRange(200), GridSize(300)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
 	AIControllerClass = ATGEnemyAIController::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+
+	// Enemy 회피 기능
+	GetCharacterMovement()->bUseRVOAvoidance = true;
+	GetCharacterMovement()->AvoidanceConsiderationRadius = 50;
+
+	// 충돌 무시
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 }
 
 void ATGEnemyBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -70,8 +79,8 @@ void ATGEnemyBase::RequestRepath()
 	//목적지로 이동
 	EPathFollowingRequestResult::Type MoveResult = AIController->MoveToLocation(
 		CoreLocation,
-		-1,
-		true,
+		AttackRange,
+		false,
 		true,
 		true,
 		true,
@@ -160,8 +169,16 @@ float ATGEnemyBase::TakeDamage(float DamageAmount,
 
 void ATGEnemyBase::AttackTarget()
 {
+	// 공격 목표가 없는 경우 중단
 	if (!CurrentAttackTarget){
 		StopAttack();
+		return;
+	}
+
+	// 공격 목표가 공격 범위 밖인 경우 공격 중지 및 재탐색
+	if (!IsTargetInAttackRange(CurrentAttackTarget)){
+		StopAttack();
+		RequestRepath();
 		return;
 	}
 
@@ -182,13 +199,15 @@ void ATGEnemyBase::HandleMoveCompleted(FAIRequestID RequestID, EPathFollowingRes
 {
 	// 이동 성공 시 공격 시작
 	if (Result == EPathFollowingResult::Success){
-		StartAttack();
+		if (CurrentAttackTarget && IsTargetInAttackRange(CurrentAttackTarget)){
+			StartAttack();
+		}
 		return;
 	}else if (Result == EPathFollowingResult::Aborted){
-		if (TryRecoverToNearestNavMesh()){
+		//if (TryRecoverToNearestNavMesh()){
 			RequestRepath();
 			return;
-		}
+		//}
 
 		return;
 		// 건물 공격 - 현 시점 고려하지 않음
@@ -236,6 +255,13 @@ bool ATGEnemyBase::TryRecoverToNearestNavMesh()
 	SetActorLocation(ProjectedLocation.Location);
 
 	return true;
+}
+
+bool ATGEnemyBase::IsTargetInAttackRange(const AActor* Target) const
+{
+	if (!Target) return false;
+
+	return FVector::Dist2D(GetActorLocation(), Target->GetActorLocation()) < AttackRange;
 }
 
 bool ATGEnemyBase::MoveToBlockingBuilding()

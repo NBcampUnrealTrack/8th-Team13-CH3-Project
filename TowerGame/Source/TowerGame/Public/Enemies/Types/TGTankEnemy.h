@@ -7,11 +7,14 @@
 #include "TGTankEnemy.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class TOWERGAME_API ATGTankEnemy : public ATGEnemyBase
 {
 	GENERATED_BODY()
-	
+
+public:
+	ATGTankEnemy();
+
 };

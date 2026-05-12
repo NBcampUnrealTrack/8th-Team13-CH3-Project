@@ -7,11 +7,14 @@
 #include "TGNormalEnemy.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class TOWERGAME_API ATGNormalEnemy : public ATGEnemyBase
 {
 	GENERATED_BODY()
-	
+
+public:
+	ATGNormalEnemy();
+
 };
