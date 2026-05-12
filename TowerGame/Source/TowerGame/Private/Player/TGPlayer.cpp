@@ -52,7 +52,7 @@ void ATGPlayer::BeginPlay()
 	if (GetWorld()->GetFirstPlayerController())
 		EnableInput(GetWorld()->GetFirstPlayerController());
 
-	LoadWeapon(ETGWeaponTriggerType::SINGLE_SHOT, TEXT("TaserPistol"), true);
+	OwnWeapon(ETGWeaponTriggerType::SINGLE_SHOT, TEXT("TaserPistol"), true);
 }
 
 void ATGPlayer::Move(const FInputActionValue& value)
@@ -124,6 +124,7 @@ void ATGPlayer::Shot(const FInputActionValue& InputValue)
 	FHitResult TraceHit;
 	if (CameraLineTrace(TraceHit, ECC_Visibility, FLT_MAX))
 	{
+		GetCurrentWeapon()->Shoot(GetActorLocation(), TraceHit.Location);
 		ATGEnemyBase* target = Cast<ATGEnemyBase>(TraceHit.GetActor());
 		if (target)
 		{
@@ -233,7 +234,12 @@ int32 ATGPlayer::AddPlayerHP(int32 value)
 	return HP;
 }
 
-void ATGPlayer::LoadWeapon(ETGWeaponTriggerType TriggerType, FName RowName, bool equip)
+UTGWeaponBase* ATGPlayer::GetCurrentWeapon()
+{
+	return OwnedWeapons.Find(CurrentWeaponKey)->Get();
+}
+
+void ATGPlayer::OwnWeapon(ETGWeaponTriggerType TriggerType, FName RowName, bool equip)
 {
 	UDataTable* DT;
 	switch (TriggerType)
@@ -243,7 +249,7 @@ void ATGPlayer::LoadWeapon(ETGWeaponTriggerType TriggerType, FName RowName, bool
 		UTGWeaponSingleShot* SingleShot;
 		FTGStatusWeaponSingleShot* info;
 		DT = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr,
-			TEXT("/Game/Weapons/TestWeapon/DT_WeaponTable_SingleShot.DT_WeaponTable_SingleShot")));
+			TEXT("/Game/Weapons/DT_WeaponTable_SingleShot.DT_WeaponTable_SingleShot")));
 		if (DT->IsValidLowLevel())
 		{
 			TArray<FName> DTNameArray = DT->GetRowNames();
