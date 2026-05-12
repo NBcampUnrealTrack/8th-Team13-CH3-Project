@@ -8,9 +8,8 @@
 #include "InputActionValue.h"
 #include "Core/Grid/TGGridBase.h"
 #include "TGInteractiveActor.h"
-#include "Enemies/TGEnemyBase.h"
-#include "Engine/DamageEvents.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/ChildActorComponent.h"
 #include "Weapons/TGWeaponSingleShot.h"
@@ -122,16 +121,21 @@ void ATGPlayer::Build(const FInputActionValue& InputValue)
 void ATGPlayer::Shot(const FInputActionValue& InputValue)
 {
 	FHitResult TraceHit;
-	if (CameraLineTrace(TraceHit, ECC_Visibility, FLT_MAX))
+	float Distance = FLT_MAX;
+	UMeshComponent* CurrentWeaponComp = nullptr;
+	if (Weapon_Skeletal)
+		CurrentWeaponComp = Weapon_Skeletal;
+	else if (Weapon_Static)
+		CurrentWeaponComp = Weapon_Static;
+	else
+		CurrentWeaponComp = GetMesh();
+	if (CameraLineTrace(TraceHit, ECC_Visibility, Distance))
 	{
-		GetCurrentWeapon()->Shoot(GetActorLocation(), TraceHit.Location);
-		ATGEnemyBase* target = Cast<ATGEnemyBase>(TraceHit.GetActor());
-		if (target)
-		{
-			FDamageEvent DamEvent;
-			target->TakeDamage(6.0f, DamEvent, GetController(), this);
-
-		}
+		GetCurrentWeapon()->Shoot(this, CurrentWeaponComp, TraceHit.ImpactPoint);
+	}
+	else
+	{
+		GetCurrentWeapon()->Shoot(this, CurrentWeaponComp, Camera->GetComponentLocation() + Camera->GetForwardVector() * Distance);
 	}
 }
 
@@ -147,7 +151,6 @@ void ATGPlayer::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	RestoreEvadeCooldown(DeltaTime);	// 회피기동 쿨타임 회복
 
-	FHitResult debugTemp;
 	if (bBuildMode)
 	{
 		InteractiveTrace();
@@ -160,15 +163,20 @@ void ATGPlayer::Tick(float DeltaTime)
 
 			CurrentFocusedActor = nullptr;
 		}
-		// 시각화 디버그용 (UI 추가 후 삭제)
-		CameraLineTrace(debugTemp, ECC_Visibility, 5000.0f, true);
+		
 	}
+	// 무기가 향하는 방향
+	FHitResult WeaponTrace;
+	CameraLineTrace(WeaponTrace, ECC_Visibility, 5000.0f, true);
+	//FVector MuzzlePos = Weapon_Skeletal->GetComponentTransform().TransformPosition(GetCurrentWeapon()->GetAsset()->MuzzlePos);
+	//Weapon_Skeletal->SetWorldRotation(UKismetMathLibrary::FindLookAtRotation(Camera->GetComponentLocation() + InitialLocation + GetCurrentWeapon()->GetAsset()->LocationOffset, WeaponTrace.Location));
+	////Weapon_Skeletal->AddRelativeRotation(GetCurrentWeapon()->GetAsset()->RotationOffset);
+	//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Aim Rot: %s"), *Weapon_Skeletal->GetComponentRotation().ToString()));
 
 	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Current Evade Cooldown: %f / %f"), CurrentEvadeCooldown, EvadeCooldown));
 	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Current Evade Count(LSHIFT): %d / %d"), CurrentEvadeCount, EvadeCount));
-	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Aim Target: %s"), debugTemp.bBlockingHit ? *debugTemp.GetActor()->GetName() : TEXT("None")));
+	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Aim Target: %s"), WeaponTrace.bBlockingHit ? *WeaponTrace.GetActor()->GetName() : TEXT("None")));
 	GEngine->AddOnScreenDebugMessage(-1, 0.0f, bBuildMode ? FColor::Emerald : FColor::Orange, FString::Printf(TEXT("Current Mode: %s"), bBuildMode ? TEXT("Build") : TEXT("Combat")));
-
 
 	// 현재 이동조작중인가?
 	if (bMoving)

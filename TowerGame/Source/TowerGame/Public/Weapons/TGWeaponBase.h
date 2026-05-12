@@ -56,5 +56,5 @@ protected:
 	ETGWeaponTriggerType TriggerType;
 public:
 	virtual const FTGWeaponAsset* GetAsset() { return nullptr; }
-	virtual void Shoot(FVector StartPos, FVector EndPos) {}
+	virtual void Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector TargetPos) {}
 };
