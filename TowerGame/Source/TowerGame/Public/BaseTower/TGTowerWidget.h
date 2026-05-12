@@ -20,11 +20,20 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* LevelText;
 
+	// 현재 자원량 텍스트
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* EnergyText;
+
+	// 업그레이드 비용 텍스트
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* UpgradeCostText;
+
 	// 연결된 타워 참조
 	UPROPERTY()
 	ATGMountedTower* OwnerTower;
 
 public:
+
 	// 타워 연결 및 UI 갱신
 	void SetOwnerTower(ATGMountedTower* InTower);
 

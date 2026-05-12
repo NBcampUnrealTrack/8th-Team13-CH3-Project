@@ -24,7 +24,6 @@ ABaseTower::ABaseTower()
 	// Navigation 차단영역
 	// 건물 배치 시 함께 생성
 	NavModifier = CreateDefaultSubobject<UNavModifierComponent>(TEXT("NavModifier"));
-
 	if (NavModifier)
 	{
 		NavModifier->SetAutoActivate(false);
@@ -45,7 +44,8 @@ void ABaseTower::BeginPlay()
 {
 	Super::BeginPlay();
 
-	DynamicMaterial = BaseMesh->CreateDynamicMaterialInstance(0);
+	//	투명도 조정용 다이나믹 머티리얼 인스턴스 생성
+	PreviewMaterial = BaseMesh->CreateDynamicMaterialInstance(0);
 }
 
 void ABaseTower::Disable()
@@ -77,11 +77,11 @@ void ABaseTower::SetPreviewMode()
 		NavModifier->Deactivate();
 	}
 
-	// 반투명 처리
-	if (DynamicMaterial)
+	//	미리보기 상태 — 투명도 조정용 머티리얼 적용
+	BaseMesh->SetMaterial(0, PreviewMaterial);
+	if (PreviewMaterial)
 	{
-		DynamicMaterial->SetScalarParameterValue(TEXT("Opacity"), 0.5f);
-		UE_LOG(LogTemp, Warning, TEXT("Setting Opacity"));
+		PreviewMaterial->SetScalarParameterValue(TEXT("Opacity"), 0.5f);
 	}
 }
 
@@ -101,10 +101,10 @@ void ABaseTower::FinalizeInstallation()
 		NavModifier->Activate();
 	}
 
-	// 불투명하게 복구
-	if (DynamicMaterial)
+	//	설치 완료 — PBR 머티리얼로 교체
+	if (PBRMaterial)
 	{
-		DynamicMaterial->SetScalarParameterValue(TEXT("Opacity"), 1.0f);
+		BaseMesh->SetMaterial(0, PBRMaterial);
 	}
 
 	//	인터랙션을 활성화합니다.
@@ -123,7 +123,7 @@ void ABaseTower::OnUnfocused_Implementation(ATGPlayer* Player)
 
 void ABaseTower::OnInteract_Implementation(ATGPlayer* Player)
 {
-	if (bAttached)	return;
+	if (bAttached) return;
 
 	ATGGameMode* GM = Cast<ATGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
 	if (!GM || !GM->SpendEnergy(50)) return;

@@ -52,7 +52,11 @@ public:
 	virtual void OnInteract_Implementation(ATGPlayer* Player) override;
 
 protected:
-	// 런타임에 색상을 변경하기 위한 다이나믹 머티리얼 인스턴스
+	// 투명도 조정용 다이나믹 머티리얼 (미리보기 상태에서 사용)
 	UPROPERTY()
-	class UMaterialInstanceDynamic* DynamicMaterial;
+	class UMaterialInstanceDynamic* PreviewMaterial;
+
+	// PBR 머티리얼 (설치 완료 후 사용)
+	UPROPERTY(EditAnywhere, Category = "Tower|Base")
+	class UMaterialInterface* PBRMaterial;
 };
