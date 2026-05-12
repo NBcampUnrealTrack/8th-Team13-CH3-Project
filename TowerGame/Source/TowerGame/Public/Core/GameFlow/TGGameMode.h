@@ -3,10 +3,12 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameMode.h"
 #include "TGGameFlowState.h"
+#include "BaseTower/TGTurretType.h"
 #include "TGGameMode.generated.h"
 
 //class ATGCoreBase;
 
+class ATGMountedTower;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTGFlowStateChanged, ETGGameFlowState, NewState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEnergyChanged, int32, NewEnergy);
 
@@ -25,6 +27,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Flow")
 	float SetWaveStartTime;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TowerGame")
+	TMap<ETGTurretType, TSubclassOf<ATGMountedTower>> TowerMap;
 
 	//UFUNCTION()
 	//void OnCoreDestroyedFromDelegate();
@@ -56,6 +61,9 @@ public:
 	//	현재 자원량을 반환합니다
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "TowerGame|Economy")
 	int32 GetCurrentEnergy() const;
+
+	UFUNCTION(BlueprintCallable, Category = "TowerGame|Tower")
+	TSubclassOf<ATGMountedTower> GetTowerSubclass(ETGTurretType type);
 
 	UFUNCTION(BlueprintCallable, Category = "Game Flow")
 	void ChangeFlowState(ETGGameFlowState NewState);

@@ -2,22 +2,47 @@
 #include "Components/StaticMeshComponent.h"
 #include "BaseTower/TGTowerWidget.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/ArrowComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Core/GameFlow/TGGameMode.h"
 
 ATGMountedTower::ATGMountedTower()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
+
+	//	몸체 메쉬
+	BodyMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BodyMesh"));
+	BodyMesh->SetupAttachment(RootComponent);
 
 	// 무기 메시
 	WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponMesh"));
-	WeaponMesh->SetupAttachment(RootComponent);
+	WeaponMesh->SetupAttachment(BodyMesh);
+	Arrow = CreateDefaultSubobject<UArrowComponent>(TEXT("Arrow"));
+	Arrow->SetupAttachment(WeaponMesh);
 
 	//	외곽선 표현을 위한 커스텀 뎁스 스텐실 등록
 	WeaponMesh->SetCustomDepthStencilValue(1);
 
 	//	기본적으로 인터랙션을 끕니다
 	SetInteractionEnabled(false);
+}
+
+void ATGMountedTower::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	FollowTarget();
+}
+
+void ATGMountedTower::FollowTarget()
+{
+	if (Target == nullptr) return;
+
+	FVector Direction = Target->GetActorLocation() - WeaponMesh->GetComponentLocation();
+	Direction.Normalize();
+
+	FRotator LookAtRotation = FRotationMatrix::MakeFromX(Direction).Rotator();
+	WeaponMesh->SetWorldRotation(LookAtRotation);
 }
 
 void ATGMountedTower::Upgrade()

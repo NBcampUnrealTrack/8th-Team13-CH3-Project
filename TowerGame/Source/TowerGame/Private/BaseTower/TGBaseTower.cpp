@@ -4,7 +4,6 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "NavModifierComponent.h"
 #include "TGMountedTower.h"
-#include "TGWeaponTower.h"
 #include "NavAreas/NavArea_Null.h"
 #include "Components/StaticMeshComponent.h"
 
@@ -131,7 +130,8 @@ void ABaseTower::OnInteract_Implementation(ATGPlayer* Player)
 	Super::OnInteract_Implementation(Player);
 
 	//	공격 타워 올리기
-	ATGWeaponTower* WeaponTower = GetWorld()->SpawnActor<ATGWeaponTower>();
+	TSubclassOf<ATGMountedTower> TowerClass = GM->GetTowerSubclass(ETGTurretType::WeaponTower);
+	ATGMountedTower* WeaponTower = GetWorld()->SpawnActor<ATGMountedTower>(TowerClass);
 	bAttached = true;
 	AttachedWeapon = WeaponTower;
 	AttachedWeapon->SetActorLocation(GetActorLocation() + MountPoint->GetRelativeLocation());

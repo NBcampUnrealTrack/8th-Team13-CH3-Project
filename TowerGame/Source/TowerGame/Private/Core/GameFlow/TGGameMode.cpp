@@ -154,3 +154,12 @@ int32 ATGGameMode::GetCurrentEnergy() const
 {
 	return CurrentEnergy;
 }
+
+TSubclassOf<ATGMountedTower> ATGGameMode::GetTowerSubclass(ETGTurretType type)
+{
+	if (TowerMap.Contains(type))
+	{
+		return TowerMap[type];
+	}
+	return nullptr;
+}
