@@ -2,22 +2,3 @@
 
 
 #include "Weapons/TGWeaponBase.h"
-
-// Sets default values
-ATGWeaponBase::ATGWeaponBase()
-{
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
-
-}
-
-// Called when the game starts or when spawned
-void ATGWeaponBase::BeginPlay()
-{
-	Super::BeginPlay();
-	
-}
-
-void ATGWeaponBase::Shoot(AActor* target)
-{
-}

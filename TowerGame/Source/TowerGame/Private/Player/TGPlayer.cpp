@@ -13,29 +13,25 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/ChildActorComponent.h"
-#include "Weapons/TGWeaponPistol.h"
+#include "Weapons/TGWeaponSingleShot.h"
 
 // Sets default values
 ATGPlayer::ATGPlayer() : MaxHP(100)
 {
+
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
 	Camera->SetupAttachment(RootComponent);
 	Camera->bUsePawnControlRotation = true;
 
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> TempAsset = TEXT("SkeletalMesh'/Game/Weapons/TestWeapon/Mesh/SK_FPGun.SK_FPGun'");
 	Weapon_Skeletal = CreateDefaultSubobject<USkeletalMeshComponent>("Weapon_SKM");
 	Weapon_Skeletal->SetupAttachment(Camera);
-	Weapon_Skeletal->SetRelativeLocation(FVector(25.0f, 25.0f, -25.0f));
-	if (TempAsset.Succeeded())
-	{
-		Weapon_Skeletal->SetSkeletalMesh(TempAsset.Object);
-		Weapon_Skeletal->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
-	}
+	Weapon_Skeletal->SetRelativeLocation(InitialLocation);
+
 	Weapon_Static = CreateDefaultSubobject<UStaticMeshComponent>("Weapon_SM");
 	Weapon_Static->SetupAttachment(Camera);
-	Weapon_Static->SetRelativeLocation(FVector(25.0f, 25.0f, -25.0f));
+	Weapon_Static->SetRelativeLocation(InitialLocation);
 
 	EvadeCount = 2;
 	EvadeCooldown = 3.0f;
@@ -56,7 +52,7 @@ void ATGPlayer::BeginPlay()
 	if (GetWorld()->GetFirstPlayerController())
 		EnableInput(GetWorld()->GetFirstPlayerController());
 
-	//CurrentWeapon = GetWorld()->SpawnActor<>
+	LoadWeapon(ETGWeaponTriggerType::SINGLE_SHOT, TEXT("TaserPistol"), true);
 }
 
 void ATGPlayer::Move(const FInputActionValue& value)
@@ -126,7 +122,7 @@ void ATGPlayer::Build(const FInputActionValue& InputValue)
 void ATGPlayer::Shot(const FInputActionValue& InputValue)
 {
 	FHitResult TraceHit;
-	if (CameraLineTrace(TraceHit, ECC_Visibility))
+	if (CameraLineTrace(TraceHit, ECC_Visibility, FLT_MAX))
 	{
 		ATGEnemyBase* target = Cast<ATGEnemyBase>(TraceHit.GetActor());
 		if (target)
@@ -235,6 +231,61 @@ int32 ATGPlayer::AddPlayerHP(int32 value)
 		DisableInput(GetWorld()->GetFirstPlayerController());
 	}
 	return HP;
+}
+
+void ATGPlayer::LoadWeapon(ETGWeaponTriggerType TriggerType, FName RowName, bool equip)
+{
+	UDataTable* DT;
+	switch (TriggerType)
+	{
+	case ETGWeaponTriggerType::SINGLE_SHOT:
+	{
+		UTGWeaponSingleShot* SingleShot;
+		FTGStatusWeaponSingleShot* info;
+		DT = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr,
+			TEXT("/Game/Weapons/TestWeapon/DT_WeaponTable_SingleShot.DT_WeaponTable_SingleShot")));
+		if (DT->IsValidLowLevel())
+		{
+			TArray<FName> DTNameArray = DT->GetRowNames();
+			info = DT->FindRow<FTGStatusWeaponSingleShot>(RowName, TEXT(""));
+			if (info)
+			{
+				SingleShot = NewObject<UTGWeaponSingleShot>(this);
+				SingleShot->SetStatus(*info);
+				OwnedWeapons.Add(GetWeaponKey(TriggerType, RowName), SingleShot);
+			}
+		}
+		break;
+	}
+	//case ETGWeaponTriggerType::BURST:
+	}
+		
+	
+
+	if (equip)
+	{
+		CurrentWeaponKey = GetWeaponKey(TriggerType, RowName);
+		FTGWeaponAsset AssetInfo = *OwnedWeapons.Find(CurrentWeaponKey)->Get()->GetAsset();
+		if (AssetInfo.SkeletalMesh)
+		{
+			Weapon_Static->SetStaticMesh(nullptr);
+			Weapon_Skeletal->SetSkeletalMeshAsset(AssetInfo.SkeletalMesh);
+			Weapon_Skeletal->SetRelativeLocation(InitialLocation + AssetInfo.LocationOffset);
+			Weapon_Skeletal->SetRelativeRotation(AssetInfo.RotationOffset);
+		}
+		else if (AssetInfo.StaticMesh)
+		{
+			Weapon_Skeletal->SetSkeletalMeshAsset(nullptr);
+			Weapon_Static->SetStaticMesh(AssetInfo.StaticMesh);
+			Weapon_Static->SetRelativeLocation(InitialLocation + AssetInfo.LocationOffset);
+			Weapon_Static->SetRelativeRotation(AssetInfo.RotationOffset);
+		}
+	}
+}
+
+FString ATGPlayer::GetWeaponKey(ETGWeaponTriggerType TriggerType, FName WeaponName)
+{
+	return FString::Printf(TEXT("%d_%s"), TriggerType, *WeaponName.ToString());
 }
 
 void ATGPlayer::InteractiveTrace(bool debug)

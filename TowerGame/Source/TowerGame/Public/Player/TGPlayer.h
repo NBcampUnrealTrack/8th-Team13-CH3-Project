@@ -4,11 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Weapons/TGWeaponBase.h"
 #include "TGPlayer.generated.h"
 
 struct FInputActionValue;
 class ATGInteractiveActor;
-class ATGWeaponBase;
 
 UCLASS()
 class TOWERGAME_API ATGPlayer : public ACharacter
@@ -96,9 +96,14 @@ protected:
 	FVector2D MoveDir;	// 현재 이동중인 방향, 정규화벡터
 	bool bBuildMode;	// 빌드모드
 
-	//UPROPERTY()
-	//TMap<TSubclassOf<ATGWeaponBase>, ATGWeaponBase*> OwnedWeapons;
+	UPROPERTY()
+	TMap<FString, TObjectPtr<UTGWeaponBase>> OwnedWeapons;
 
+	UPROPERTY()
+	FString CurrentWeaponKey;
+
+	void LoadWeapon(ETGWeaponTriggerType TriggerType, FName RowName, bool equip);
+	FString GetWeaponKey(ETGWeaponTriggerType TriggerType, FName WeaponName);
 private:
 	void InteractiveTrace(bool debug = false);
 	bool CameraLineTrace(FHitResult& TraceHit, ECollisionChannel Channel, float MaxDistance = 5000.0f, bool debug = false);
@@ -106,4 +111,5 @@ private:
 	//	포커싱된 액터
 	UPROPERTY()
 	TObjectPtr<ATGInteractiveActor> CurrentFocusedActor;
+	const FVector InitialLocation = FVector(25.0f, 25.0f, -25.0f);
 };
