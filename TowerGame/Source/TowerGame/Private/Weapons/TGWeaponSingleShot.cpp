@@ -21,7 +21,18 @@ void UTGWeaponSingleShot::Shoot(AActor* Instigator, UMeshComponent* WeaponCompon
 	FVector StartPos = WeaponComponent->GetComponentTransform().TransformPosition(status.Asset.MuzzlePos);
 	FVector Dir = (TargetPos - StartPos);	//오차 수정용
 	Dir.Normalize();
-	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), status.Asset.FireParticle, StartPos)->SetWorldScale3D(FVector::OneVector * status.Asset.FireParticleScale);
+
+	// 발포 이펙트
+	UParticleSystemComponent* FireParticle = UGameplayStatics::SpawnEmitterAttached(
+		status.Asset.FireParticle,
+		WeaponComponent,
+		NAME_None,
+		StartPos,
+		FRotator::ZeroRotator,
+		FVector::OneVector * status.Asset.FireParticleScale,
+		EAttachLocation::KeepWorldPosition
+	);
+
 	UKismetSystemLibrary::LineTraceSingle(
 		GetWorld(), //어느 월드의 소속인가? (this)를 넣어줘도 됨
 		StartPos,
@@ -38,8 +49,17 @@ void UTGWeaponSingleShot::Shoot(AActor* Instigator, UMeshComponent* WeaponCompon
 	);
 	if (TraceHit.bBlockingHit)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Hit Actor: %s"), *TraceHit.GetActor()->GetName());
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), status.Asset.HitParticle, TargetPos)->SetWorldScale3D(FVector::OneVector * status.Asset.HitParticleScale);
+		// 착탄 이펙트
+		UParticleSystemComponent* HitParticle = UGameplayStatics::SpawnEmitterAttached(
+			status.Asset.HitParticle,
+			TraceHit.GetActor()->GetRootComponent(),
+			NAME_None,
+			TargetPos,
+			FRotator::ZeroRotator,
+			FVector::OneVector * status.Asset.HitParticleScale,
+			EAttachLocation::KeepWorldPosition
+		);
+
 		ATGEnemyBase* target = Cast<ATGEnemyBase>(TraceHit.GetActor());
 		if (target)
 		{
