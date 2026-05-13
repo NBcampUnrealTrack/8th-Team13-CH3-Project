@@ -111,6 +111,7 @@ void ATGGameMode::HandleWaveClear()
 void ATGGameMode::HandleGameOver()
 {
 	GetWorldTimerManager().ClearTimer(WaveStartTimerHandle);
+	UGameplayStatics::SetGamePaused(GetWorld(), true);
 	ChangeFlowState(ETGGameFlowState::GameOver);
 }
 
@@ -134,6 +135,11 @@ void ATGGameMode::StartWave()
 bool ATGGameMode::IsPauseGameFlow()
 {
 	return CurrentState == ETGGameFlowState::Paused;
+}
+
+void ATGGameMode::BackMainMenu()
+{
+	UGameplayStatics::OpenLevel(this, FName(TEXT("L_MainMenu")));
 }
 
 bool ATGGameMode::SpendEnergy(int32 Amount)
