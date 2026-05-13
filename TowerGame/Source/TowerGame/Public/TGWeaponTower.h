@@ -53,4 +53,7 @@ public:
 	// 현재 공격 사거리 반환
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Tower Settings")
 	float GetAttackRange() const { return AttackRange; }
+
+private:
+	void DetectingEnemy();
 };
