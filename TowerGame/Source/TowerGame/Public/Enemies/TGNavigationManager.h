@@ -10,6 +10,8 @@ class ANavigationData;
 class ATGCoreBase;
 class ATGEnemyBase;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCurrentCoreChanged, ATGCoreBase*, CurrentCore);
+
 UCLASS()
 class TOWERGAME_API ATGNavigationManager : public AActor
 {
@@ -37,8 +39,11 @@ public:
 	FVector GetCoreLocation() const;
 	ATGCoreBase* GetCurrentCoreActor() const;
 
-	// 그리드 연동 전 임시 사용 함수
 	void NotifyBuildingPlaced();
+
+	// 코어 변경 델리게이트
+	UPROPERTY(BlueprintAssignable, Category = "Navigation")
+	FOnCurrentCoreChanged OnCurrentCoreChanged;
 
 private:
 	void RepathAllEnemies();

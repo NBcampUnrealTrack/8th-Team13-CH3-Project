@@ -7,6 +7,7 @@
 #include "TGCoreBase.generated.h"
 
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCoreDestroyed);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnCoreHPChanged, float, CurrentHP, float, MaxHp);
 
 UCLASS()
 class TOWERGAME_API ATGCoreBase : public AActor
@@ -27,6 +28,10 @@ public:
 	//UPROPERTY(BlueprintAssignable, Category = "Core")
 	//FOnCoreDestroyed OnCoreDestroyed; //델리게이트 위해서 임의로 수정해뒀습니다.
 
+	// 체력 변동 전달
+	UPROPERTY(BlueprintAssignable, Category = "Core")
+	FOnCoreHPChanged OnCoreHPChanged;
+
 	UFUNCTION(BlueprintCallable, Category="TowerGame|Status")
 	float GetCurrentHP();
 
@@ -43,7 +48,7 @@ protected:
 	TObjectPtr<USceneComponent> SceneRoot;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TowerGame|Status")
-	float MaxHP = 100.f;
+	float MaxHP;
 	float CurrentHP;
 
 };

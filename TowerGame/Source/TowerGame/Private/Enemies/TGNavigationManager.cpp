@@ -73,6 +73,7 @@ void ATGNavigationManager::AddCoreActor(ATGCoreBase* InCoreActor)
 	CoreActors.AddUnique(InCoreActor);
 	if (!CurrentCoreActor){
 		CurrentCoreActor = CoreActors[0];
+		OnCurrentCoreChanged.Broadcast(CurrentCoreActor);
 		RepathAllEnemies();
 	}
 }
@@ -87,6 +88,7 @@ void ATGNavigationManager::RemoveCoreActor(ATGCoreBase* InCoreActor)
 	CoreActors.Remove(InCoreActor);
 	if (bWasCurrentCore){
 		CurrentCoreActor = CoreActors.Num() > 0 ? CoreActors[0] : nullptr;
+		OnCurrentCoreChanged.Broadcast(CurrentCoreActor);
 		RepathAllEnemies();
 	}
 }

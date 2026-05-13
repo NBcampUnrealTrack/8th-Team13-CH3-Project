@@ -7,13 +7,15 @@
 #include "Enemies/TGNavigationManager.h"
 
 // Sets default values
-ATGCoreBase::ATGCoreBase()
+ATGCoreBase::ATGCoreBase() : MaxHP(100)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
 	SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("Scene"));
 	SetRootComponent(SceneRoot);
+
+	CurrentHP = MaxHP;
 }
 
 float ATGCoreBase::TakeDamage(float DamageAmount, const FDamageEvent& DamageEvent, AController* EventInstigator,
@@ -23,10 +25,9 @@ float ATGCoreBase::TakeDamage(float DamageAmount, const FDamageEvent& DamageEven
 
 	UE_LOG(LogTemp, Warning, TEXT("CoreBase 피격 - Damage: %.1f"), AppliedDamage);
 
-	CurrentHP -= AppliedDamage;
-
-	// TODO
-	// 상위 Manager에 Core 피격 이벤트 전달
+	// 체력 변동 전달
+	CurrentHP = FMath::Clamp(CurrentHP - AppliedDamage, 0.0f, MaxHP);
+	OnCoreHPChanged.Broadcast(CurrentHP, MaxHP);
 
 	if (CurrentHP <= 0)
 	{
@@ -62,8 +63,6 @@ void ATGCoreBase::BeginPlay()
 	if (ATGNavigationManager* NavigationManager = ATGNavigationManager::Get(this)){
 		NavigationManager->AddCoreActor(this);
 	}
-
-	CurrentHP = MaxHP;
 }
 
 void ATGCoreBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
