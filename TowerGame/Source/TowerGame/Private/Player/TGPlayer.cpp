@@ -121,7 +121,7 @@ void ATGPlayer::Build(const FInputActionValue& InputValue)
 void ATGPlayer::Shot(const FInputActionValue& InputValue)
 {
 	FHitResult TraceHit;
-	float Distance = FLT_MAX;
+	float Distance = 50000.f;
 	UMeshComponent* CurrentWeaponComp = nullptr;
 	if (Weapon_Skeletal)
 		CurrentWeaponComp = Weapon_Skeletal;

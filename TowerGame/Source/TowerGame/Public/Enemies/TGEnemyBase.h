@@ -34,7 +34,7 @@ public:
 	void SetNavigationManager(ATGNavigationManager* InNavigationManager);
 
 	// Enemy 공격
-	void StartAttack();
+	virtual void StartAttack();
 	void AttackTarget();
 
 	void StopAttack();
