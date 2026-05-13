@@ -12,10 +12,11 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/ChildActorComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Weapons/TGWeaponSingleShot.h"
 
 // Sets default values
-ATGPlayer::ATGPlayer() : MaxHP(100)
+ATGPlayer::ATGPlayer() : MaxHP(100), SlowRate(0.5f), DefaultWalkSpeed(0)
 {
 
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -47,6 +48,7 @@ void ATGPlayer::BeginPlay()
 	bBuildMode = false;
 	CurrentEvadeCount = EvadeCount;
 	CurrentEvadeCooldown = 0.0f;
+	DefaultWalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
 
 	if (GetWorld()->GetFirstPlayerController())
 		EnableInput(GetWorld()->GetFirstPlayerController());
@@ -163,7 +165,7 @@ void ATGPlayer::Tick(float DeltaTime)
 
 			CurrentFocusedActor = nullptr;
 		}
-		
+
 	}
 	// 무기가 향하는 방향
 	FHitResult WeaponTrace;
@@ -203,6 +205,17 @@ void ATGPlayer::RestoreEvadeCooldown(float DeltaTime)
 	}
 }
 
+float ATGPlayer::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
+	class AController* EventInstigator, AActor* DamageCauser)
+{
+	const float AppliedDamage =
+		Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+	ChangePlayerHP(-FMath::RoundToInt(AppliedDamage));
+
+	return AppliedDamage;
+}
+
 // Called to bind functionality to input
 void ATGPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -230,7 +243,7 @@ void ATGPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	}
 }
 
-int32 ATGPlayer::AddPlayerHP(int32 value)
+int32 ATGPlayer::ChangePlayerHP(int32 value)
 {
 	HP += value;
 	if (HP > MaxHP)
@@ -240,6 +253,34 @@ int32 ATGPlayer::AddPlayerHP(int32 value)
 		DisableInput(GetWorld()->GetFirstPlayerController());
 	}
 	return HP;
+}
+
+void ATGPlayer::ApplySlowDebuff(float Duration)
+{
+	if (Duration <= 0) return;
+
+	UCharacterMovementComponent* MovementComponent = GetCharacterMovement();
+	if (!MovementComponent) return;
+
+	if (DefaultWalkSpeed <= 0){
+		DefaultWalkSpeed = MovementComponent->MaxWalkSpeed;
+	}
+
+	// Slow 효과 적용
+	MovementComponent->MaxWalkSpeed = DefaultWalkSpeed * SlowRate;
+
+	// Slow효과를 해제할 Timer 추가
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	World->GetTimerManager().ClearTimer(SlowDebuffTimerHandle);
+	World->GetTimerManager().SetTimer(
+		SlowDebuffTimerHandle,
+		this,
+		&ATGPlayer::ClearSlowDebuff,
+		Duration,
+		false
+	);
 }
 
 UTGWeaponBase* ATGPlayer::GetCurrentWeapon()
@@ -273,8 +314,8 @@ void ATGPlayer::OwnWeapon(ETGWeaponTriggerType TriggerType, FName RowName, bool 
 	}
 	//case ETGWeaponTriggerType::BURST:
 	}
-		
-	
+
+
 
 	if (equip)
 	{
@@ -300,6 +341,15 @@ void ATGPlayer::OwnWeapon(ETGWeaponTriggerType TriggerType, FName RowName, bool 
 FString ATGPlayer::GetWeaponKey(ETGWeaponTriggerType TriggerType, FName WeaponName)
 {
 	return FString::Printf(TEXT("%d_%s"), TriggerType, *WeaponName.ToString());
+}
+
+void ATGPlayer::ClearSlowDebuff()
+{
+	UCharacterMovementComponent* MovementComponent = GetCharacterMovement();
+	if (!MovementComponent) return;
+
+	// 기본 이동속도로 복원
+	MovementComponent->MaxWalkSpeed = DefaultWalkSpeed;
 }
 
 void ATGPlayer::InteractiveTrace(bool debug)
