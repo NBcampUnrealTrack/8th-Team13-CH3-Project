@@ -15,6 +15,8 @@ public:
 	ATGMountedTower();
 
 protected:
+	virtual void BeginPlay() override;
+
 	// 무기 메시
 	UPROPERTY(VisibleAnywhere, Category = "Tower|Base")
 	class UStaticMeshComponent* WeaponMesh;

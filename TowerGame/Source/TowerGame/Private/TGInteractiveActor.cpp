@@ -38,25 +38,34 @@ void ATGInteractiveActor::BeginPlay()
 
 void ATGInteractiveActor::SyncCollisionToMeshBounds() const
 {
-	//	손자 컴포넌트는 확인하지 않음
-	const TArray<USceneComponent*>& MeshComps = RootComponent->GetAttachChildren();;
+	TArray<UStaticMeshComponent*> MeshComps;
+	GetComponents<UStaticMeshComponent>(MeshComps);
 
 	if (MeshComps.IsEmpty()) return;
 
-	FBox CombinedBox(ForceInit);
-	for (USceneComponent* Comp : MeshComps)
+	FBox LocalBox(ForceInit);
+	float WorldMaxZ = GetActorLocation().Z;
+
+	for (UStaticMeshComponent* Mesh : MeshComps)
 	{
-		UStaticMeshComponent* Mesh = Cast<UStaticMeshComponent>(Comp);
-		if (!IsValid(Mesh))continue;
-		if (!Mesh || !Mesh->GetStaticMesh()) continue;
-		// 메쉬 로컬 바운드에 컴포넌트의 상대 트랜스폼(위치·회전·스케일)을 적용해 액터 로컬 공간으로 변환
-		FBox MeshBox = Mesh->GetStaticMesh()->GetBoundingBox();
-		CombinedBox += MeshBox.TransformBy(Mesh->GetRelativeTransform());
+		if (!IsValid(Mesh) || !Mesh->GetStaticMesh()) continue;
+
+		if (Mesh->GetAttachParent() == InteractionCollision)
+		{	//	직속 자식은 XY까지 검사
+			// XY: 액터 로컬 공간 기준
+			LocalBox += Mesh->GetStaticMesh()->GetBoundingBox().TransformBy(Mesh->GetRelativeTransform());
+		}
+		//	손자 이하는 Z만 검사
+		// Z: 월드 공간 기준 메쉬 최상단 높이
+		const FBox MeshWorldBox = Mesh->GetStaticMesh()->GetBoundingBox().TransformBy(Mesh->GetComponentTransform());
+		WorldMaxZ = FMath::Max(WorldMaxZ, MeshWorldBox.Max.Z);
 	}
 
-	if (CombinedBox.IsValid)
+	if (LocalBox.IsValid)
 	{
-		InteractionCollision->SetBoxExtent(CombinedBox.GetExtent());
+		FVector Extent = LocalBox.GetExtent();
+		Extent.Z = WorldMaxZ - GetActorLocation().Z;
+		InteractionCollision->SetBoxExtent(Extent);
 	}
 }
 
@@ -64,9 +73,9 @@ void ATGInteractiveActor::DrawDebugCollisionBox()
 {
 	//	디버깅용 바운드 박스 그리기 함수입니다.
 	//	사용 안함
-	return;
-	//const FVector Extent = InteractionCollision->GetScaledBoxExtent();
-	//DrawDebugBox(GetWorld(), GetActorLocation(), Extent, FColor::Yellow, true);
+
+	const FVector Extent = InteractionCollision->GetScaledBoxExtent();
+	DrawDebugBox(GetWorld(), GetActorLocation(), Extent, FColor::Yellow, true);
 }
 
 void ATGInteractiveActor::OnFocused_Implementation(ATGPlayer* Player) {}
