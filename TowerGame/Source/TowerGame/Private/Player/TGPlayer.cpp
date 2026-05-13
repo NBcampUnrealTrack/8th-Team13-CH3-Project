@@ -380,6 +380,7 @@ void ATGPlayer::InteractiveTrace(bool debug)
 bool ATGPlayer::CameraLineTrace(FHitResult& TraceHit, ECollisionChannel Channel, float MaxDistance, bool debug)
 {
 	FCollisionQueryParams QueryParams;
+	QueryParams.bTraceComplex = true;
 	TArray<AActor*> IgnoredActors = { this };
 	QueryParams.AddIgnoredActors(IgnoredActors);
 
