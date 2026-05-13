@@ -80,7 +80,7 @@ void ABaseTower::SetPreviewMode()
 	BaseMesh->SetMaterial(0, PreviewMaterial);
 	if (PreviewMaterial)
 	{
-		PreviewMaterial->SetScalarParameterValue(TEXT("Opacity"), 0.5f);
+		PreviewMaterial->SetScalarParameterValue(TEXT("Opacity"), 0.85f);
 	}
 }
 
