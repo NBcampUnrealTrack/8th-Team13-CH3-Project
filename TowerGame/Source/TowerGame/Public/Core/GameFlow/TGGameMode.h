@@ -97,4 +97,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Game Flow")
 	bool IsPauseGameFlow();
+
+	UFUNCTION(BlueprintCallable, Category = "Game Flow")
+	void BackMainMenu();
 };

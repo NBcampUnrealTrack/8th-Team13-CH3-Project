@@ -20,16 +20,24 @@ struct FTGWeaponAsset
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)	// 스켈레탈 메시 (스태틱메시보다 우선됨)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")	// 스켈레탈 메시 (스태틱메시보다 우선됨)
 		USkeletalMesh* SkeletalMesh;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)	// 스태틱 메시 (스켈레탈 메시가 있으면 무시됨)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")	// 스태틱 메시 (스켈레탈 메시가 있으면 무시됨)
 		UStaticMesh* StaticMesh;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)	// 총구 위치 (메시 기준)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")	// 총구 위치 (메시 기준)
 		FVector MuzzlePos;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)	// 위치 오프셋 (오차수정)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Offset")	// 위치 오프셋 (오차수정)
 		FVector LocationOffset;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)	// 회전 오프셋
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Offset")	// 회전 오프셋
 		FRotator RotationOffset;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VisualEffects")	// 발포 이펙트
+		TObjectPtr<class UParticleSystem> FireParticle;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VisualEffects")	// 발포 이펙트 스케일
+		float FireParticleScale = 1.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VisualEffects")	// 착탄 이펙트
+		TObjectPtr<class UParticleSystem> HitParticle;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VisualEffects")	// 착탄 이펙트 스케일
+		float HitParticleScale = 1.f;
 };
 
 USTRUCT(BlueprintType)

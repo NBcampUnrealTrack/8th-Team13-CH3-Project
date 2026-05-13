@@ -7,6 +7,7 @@
 #include "Enemies/TGEnemyBase.h"
 #include "Engine/DamageEvents.h"
 #include "Kismet/GameplayStatics.h"
+#include "Particles/ParticleSystem.h"
 
 void UTGWeaponSingleShot::Shoot(AActor* Instigator, UMeshComponent* WeaponComponent, FVector TargetPos)
 {
@@ -16,7 +17,7 @@ void UTGWeaponSingleShot::Shoot(AActor* Instigator, UMeshComponent* WeaponCompon
 	QueryParams.AddIgnoredActors(IgnoredActors);
 
 	FVector StartPos = WeaponComponent->GetComponentTransform().TransformPosition(status.Asset.MuzzlePos);
-
+	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), status.Asset.FireParticle, StartPos);
 	UKismetSystemLibrary::LineTraceSingle(
 		GetWorld(), //어느 월드의 소속인가? (this)를 넣어줘도 됨
 		StartPos,
