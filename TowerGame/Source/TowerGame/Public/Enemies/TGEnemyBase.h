@@ -27,14 +27,14 @@ public:
 
 public:
 	void InitializeEnemy(ATGNavigationManager* InNavigationManager);
-	FVector GetNavigationLocationOffset() const;
+	FVector GetNavigationHeightOffset() const;
 
 	// 경로
 	virtual void RequestRepath();
 	void SetNavigationManager(ATGNavigationManager* InNavigationManager);
 
 	// Enemy 공격
-	void StartAttack();
+	virtual void StartAttack();
 	void AttackTarget();
 
 	void StopAttack();
@@ -66,7 +66,7 @@ protected:
 
 	// FlyingEnemy 위치 보정을 위한 FVector
 	UPROPERTY(VisibleAnywhere, Category = "Enemy|Spawn")
-	FVector NavigationLocationOffset;
+	FVector NavigationHeightOffset;
 
 	UPROPERTY()
 	TObjectPtr<AActor> CurrentAttackTarget;

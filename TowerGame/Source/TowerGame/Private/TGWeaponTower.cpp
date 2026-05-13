@@ -2,6 +2,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
+#include "Enemies/TGEnemyBase.h"
 
 ATGWeaponTower::ATGWeaponTower()
 {
@@ -20,6 +21,8 @@ void ATGWeaponTower::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	//	적 탐지
+	DetectingEnemy();
 	//	사거리 그려줄 디버그스피어
 	DrawDebugSphere(GetWorld(), GetActorLocation(), AttackRange, 16, FColor::Green);
 }
@@ -89,4 +92,25 @@ void ATGWeaponTower::Upgrade()
 	// 데미지 1.5배 증가 후 부모 호출로 UpgradeLevel++
 	AttackDamage *= 1.5f;
 	Super::Upgrade();
+}
+
+void ATGWeaponTower::DetectingEnemy()
+{
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ATGEnemyBase::StaticClass(), FoundActors);
+
+	float MinDistance = 500000.f;
+	Target = nullptr;
+	for (AActor* Actor : FoundActors)
+	{
+		FVector MyLocation = GetActorLocation();
+		FVector TargetLocation = Actor->GetActorLocation();
+		float Distance = FVector::Distance(MyLocation, TargetLocation);
+		if (Distance > AttackRange)	continue;
+		if (Distance < MinDistance)
+		{
+			MinDistance = Distance;
+			Target = Actor;
+		}
+	}
 }

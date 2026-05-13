@@ -38,14 +38,16 @@ void ATGInteractiveActor::BeginPlay()
 
 void ATGInteractiveActor::SyncCollisionToMeshBounds() const
 {
-	TArray<UStaticMeshComponent*> MeshComps;
-	GetComponents<UStaticMeshComponent>(MeshComps);
+	//	손자 컴포넌트는 확인하지 않음
+	const TArray<USceneComponent*>& MeshComps = RootComponent->GetAttachChildren();;
 
 	if (MeshComps.IsEmpty()) return;
 
 	FBox CombinedBox(ForceInit);
-	for (UStaticMeshComponent* Mesh : MeshComps)
+	for (USceneComponent* Comp : MeshComps)
 	{
+		UStaticMeshComponent* Mesh = Cast<UStaticMeshComponent>(Comp);
+		if (!IsValid(Mesh))continue;
 		if (!Mesh || !Mesh->GetStaticMesh()) continue;
 		// 메쉬 로컬 바운드에 컴포넌트의 상대 트랜스폼(위치·회전·스케일)을 적용해 액터 로컬 공간으로 변환
 		FBox MeshBox = Mesh->GetStaticMesh()->GetBoundingBox();
@@ -60,8 +62,11 @@ void ATGInteractiveActor::SyncCollisionToMeshBounds() const
 
 void ATGInteractiveActor::DrawDebugCollisionBox()
 {
-	const FVector Extent = InteractionCollision->GetScaledBoxExtent();
-	DrawDebugBox(GetWorld(), GetActorLocation(), Extent, FColor::Yellow, true);
+	//	디버깅용 바운드 박스 그리기 함수입니다.
+	//	사용 안함
+	return;
+	//const FVector Extent = InteractionCollision->GetScaledBoxExtent();
+	//DrawDebugBox(GetWorld(), GetActorLocation(), Extent, FColor::Yellow, true);
 }
 
 void ATGInteractiveActor::OnFocused_Implementation(ATGPlayer* Player) {}

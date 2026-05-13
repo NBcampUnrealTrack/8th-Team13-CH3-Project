@@ -52,7 +52,7 @@ void ATGEnemySpawner::UpdateSpawnLocationOffset(TSubclassOf<ATGEnemyBase> EnemyC
 	SpawnLocationOffset = FVector(0, 0, CapsuleCollision->GetScaledCapsuleHalfHeight());
 
 	// Enemy의 활동 위치(지상, 공중)에 따른 보정
-	SpawnLocationOffset += DefaultEnemy->GetNavigationLocationOffset();
+	SpawnLocationOffset += DefaultEnemy->GetNavigationHeightOffset();
 }
 
 ATGEnemyBase* ATGEnemySpawner::SpawnEnemy(TSubclassOf<ATGEnemyBase> EnemyClass)

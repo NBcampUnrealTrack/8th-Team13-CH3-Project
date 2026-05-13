@@ -6,12 +6,14 @@
 #include "Blueprint/UserWidget.h"
 #include "TGPlayerWidget.generated.h"
 
+class ATGGameMode;
+class ATGNavigationManager;
 class UProgressBar;
 class UButton;
 class UTextBlock;
 
 /**
- * 
+ *
  */
 UCLASS()
 class TOWERGAME_API UTGPlayerWidget : public UUserWidget
@@ -23,6 +25,7 @@ protected:
 
 	virtual void NativeConstruct() override;
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+	virtual void NativeDestruct() override;
 
 	UPROPERTY(meta = (BindWidget))
 	UProgressBar* HP_Bar;
@@ -38,4 +41,24 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<class ATGCoreBase> core;
+
+private:
+	UPROPERTY()
+	TObjectPtr<ATGGameMode> GameMode;
+
+	UPROPERTY()
+	TObjectPtr<ATGNavigationManager> NavigationManager;
+
+private:
+	// 현재 코어 변경 시 호출
+	UFUNCTION()
+	void UpdateCurrentCore(ATGCoreBase* NewCore);
+
+	// Core Hp 변경 시 호출
+	UFUNCTION()
+	void HandleCoreHPChanged(float CurrentHP, float MaxHP);
+
+	// 자원 변경 시 호출
+	UFUNCTION()
+	void HandleEnergyChanged(int32 NewEnergy);
 };

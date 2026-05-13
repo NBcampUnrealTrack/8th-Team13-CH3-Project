@@ -16,7 +16,7 @@ ATGFlyingEnemy::ATGFlyingEnemy()
 	AttackRange = 500;
 	EnergyDropAmount = 40;
 
-	NavigationLocationOffset = FVector(0,0,250);
+	NavigationHeightOffset = FVector(0,0,250);
 
 	GetCharacterMovement()->MaxWalkSpeed = 200;
 

@@ -24,7 +24,7 @@ ATGEnemyBase::ATGEnemyBase() :
 	AttackDamage(0),
 	AttackInterVal(0.5f),
 	AttackRange(200),
-	NavigationLocationOffset(FVector::ZeroVector),
+	NavigationHeightOffset(FVector::ZeroVector),
 	GridSize(300)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -66,9 +66,9 @@ void ATGEnemyBase::InitializeEnemy(ATGNavigationManager* InNavigationManager)
 	RequestRepath();
 }
 
-FVector ATGEnemyBase::GetNavigationLocationOffset() const
+FVector ATGEnemyBase::GetNavigationHeightOffset() const
 {
-	return NavigationLocationOffset;
+	return NavigationHeightOffset;
 }
 
 void ATGEnemyBase::RequestRepath()
@@ -90,7 +90,7 @@ void ATGEnemyBase::RequestRepath()
 	const UCapsuleComponent* CapsuleCollision = GetCapsuleComponent();
 	const float CapsuleHalfHeight = CapsuleCollision ? CapsuleCollision->GetScaledCapsuleHalfHeight() : 0.0f;
 	const FVector CoreLocation = NavigationManager->GetCoreLocation()
-		+ NavigationLocationOffset
+		+ NavigationHeightOffset
 		+ FVector(0, 0, CapsuleHalfHeight);
 
 	//목적지로 이동
@@ -241,25 +241,30 @@ bool ATGEnemyBase::TryRecoverToNearestNavMesh()
 	UNavigationSystemV1* NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(World);
 	if (!NavSystem) return false;
 
+	// 보정된 위치와 거리 비교할 현재 위치
+	const FVector CurrentLocation = GetActorLocation();
+	const UCapsuleComponent* CapsuleCollision = GetCapsuleComponent();
+	if (!CapsuleCollision) return false;
+
+	// enemy 타입별 기준층에서 NavMesh를 탐색한다.
+	FVector QueryLocation = CurrentLocation;
+	QueryLocation.Z = NavigationManager->GetCoreLocation().Z + NavigationHeightOffset.Z;
+
 	// ProjectPointToNavigation의 결과를 저장할 변수
 	FNavLocation ProjectedLocation;
-	const FVector CurrentLocation = GetActorLocation();
 
-	// 검색 범위 (격자 크기)
-	const FVector QueryExtent(GridSize, GridSize, GridSize);
+	// XY는 가까운 위치를 넓게 찾고, Z는 enemy 타입별 NavMesh 층 안에서만 찾는다.
+	const FVector QueryExtent(GridSize, GridSize, GridSize * 0.5f);
 
 	// QueryExtent 범위 안에서 NavMesh 위의 위치를 탐색
-	// 성공 - ProjectedLocation에 NevMesh 위 좌표 반환 / 실패 - 탐색 실패
+	// 성공 - ProjectedLocation에 NavMesh 위 좌표 반환 / 실패 - 탐색 실패
 	const bool bProjected = NavSystem->ProjectPointToNavigation(
-		CurrentLocation,
+		QueryLocation,
 		ProjectedLocation,
 		QueryExtent
 	);
 
 	if (!bProjected) return false;
-
-	const UCapsuleComponent* CapsuleCollision = GetCapsuleComponent();
-	if (!CapsuleCollision) return false;
 
 	// Enemy의 보정 후의 좌표가 바닥과 충돌하지 않도록 HalfHeight을 합산
 	ProjectedLocation.Location.Z += CapsuleCollision->GetScaledCapsuleHalfHeight();
