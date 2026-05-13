@@ -22,9 +22,17 @@ ATGMountedTower::ATGMountedTower()
 
 	//	외곽선 표현을 위한 커스텀 뎁스 스텐실 등록
 	WeaponMesh->SetCustomDepthStencilValue(1);
+	BodyMesh->SetCustomDepthStencilValue(1);
 
 	//	기본적으로 인터랙션을 끕니다
 	SetInteractionEnabled(false);
+}
+
+void ATGMountedTower::BeginPlay()
+{
+	Super::BeginPlay();
+
+	SetInteractionEnabled(true);
 }
 
 void ATGMountedTower::Tick(float DeltaTime)
@@ -55,6 +63,7 @@ void ATGMountedTower::OnFocused_Implementation(ATGPlayer* Player)
 {
 	//	커스텀 뎁스 패스에 등록 -> 포스트 프로세싱 가능
 	WeaponMesh->SetRenderCustomDepth(true);
+	BodyMesh->SetRenderCustomDepth(true);
 }
 
 // 플레이어 시선이 벗어날 때 — 강조 해제
@@ -62,6 +71,7 @@ void ATGMountedTower::OnUnfocused_Implementation(ATGPlayer* Player)
 {
 	//	커스텀 뎁스 패스에서 제외
 	WeaponMesh->SetRenderCustomDepth(false);
+	BodyMesh->SetRenderCustomDepth(false);
 
 	//	위젯 숨기기
 	if (TowerWidget && TowerWidget->IsInViewport())

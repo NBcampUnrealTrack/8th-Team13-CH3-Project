@@ -43,6 +43,13 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	void RestoreEvadeCooldown(float DeltaTime);
 
+	virtual float TakeDamage(
+		float DamageAmount, struct
+		FDamageEvent const& DamageEvent, class
+		AController* EventInstigator,
+		AActor* DamageCauser
+	) override;
+
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
@@ -67,8 +74,14 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "TowerGame|Interaction")
 	ATGInteractiveActor* GetFocusedInteractiveActor() const { return CurrentFocusedActor; }
 
+	// 기존 이름과 동작이 일치하지 않아 이름 변경 (기존 이름: AddPlayerHP)
 	UFUNCTION(BlueprintCallable, Category = "Status")
-	int32 AddPlayerHP(int32 value);
+	int32 ChangePlayerHP(int32 value);
+
+	// Enemy - Debuff 적용
+	UFUNCTION(BlueprintCallable, Category = "Status")
+	void ApplySlowDebuff(float Duration);
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
 	TObjectPtr<class UCameraComponent> Camera;
@@ -96,6 +109,15 @@ protected:
 	FVector2D MoveDir;	// 현재 이동중인 방향, 정규화벡터
 	bool bBuildMode;	// 빌드모드
 
+	// Debuff - Slow 관련 변수
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Status|Debuff")
+	float SlowRate;
+
+	UPROPERTY()
+	float DefaultWalkSpeed;
+
+	FTimerHandle SlowDebuffTimerHandle;
+
 	UPROPERTY()
 	TMap<FString, TObjectPtr<UTGWeaponBase>> OwnedWeapons;	// 소유중인 무기
 	FString CurrentWeaponKey;	// 현재 장착중인 무기의 Key
@@ -105,6 +127,9 @@ protected:
 
 	void OwnWeapon(ETGWeaponTriggerType TriggerType, FName RowName, bool equip);	// 무기를 소유한다. equip을 하면 장착까지 한다.
 	FString GetWeaponKey(ETGWeaponTriggerType TriggerType, FName WeaponName);
+
+	// Debuff - Slow 해제
+	void ClearSlowDebuff();
 private:
 	void InteractiveTrace(bool debug = false);
 	bool CameraLineTrace(FHitResult& TraceHit, ECollisionChannel Channel, float MaxDistance = 5000.0f, bool debug = false);

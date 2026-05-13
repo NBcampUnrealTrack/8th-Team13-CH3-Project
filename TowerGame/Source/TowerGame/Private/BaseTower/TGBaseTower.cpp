@@ -37,6 +37,9 @@ ABaseTower::ABaseTower()
 
 	//	기본적으로 인터랙션을 끕니다
 	SetInteractionEnabled(false);
+
+	//	외곽선 표현을 위한 뎁스 스텐실 등록
+	BaseMesh->SetCustomDepthStencilValue(1);
 }
 
 void ABaseTower::BeginPlay()
@@ -113,11 +116,13 @@ void ABaseTower::FinalizeInstallation()
 void ABaseTower::OnFocused_Implementation(ATGPlayer* Player)
 {
 	Super::OnFocused_Implementation(Player);
+	BaseMesh->SetRenderCustomDepth(true);
 }
 
 void ABaseTower::OnUnfocused_Implementation(ATGPlayer* Player)
 {
 	Super::OnUnfocused_Implementation(Player);
+	BaseMesh->SetRenderCustomDepth(false);
 }
 
 void ABaseTower::OnInteract_Implementation(ATGPlayer* Player)

@@ -3,7 +3,6 @@
 
 #include "Core/Grid/TGSingleGrid.h"
 #include "BaseTower/TGBaseTower.h"
-#include "Components/BoxComponent.h"
 #include "Core/GameFlow/TGGameMode.h"
 #include "Core/Grid/TGGridBase.h"
 #include "Kismet/GameplayStatics.h"

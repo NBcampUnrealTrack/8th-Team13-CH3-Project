@@ -36,7 +36,9 @@ void UTGPlayerWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
 	if (player)
-		HP_Bar->SetPercent(static_cast<int32>(player->GetPlayerHP() / player->GetPlayerMaxHP()));
+	{
+		HP_Bar->SetPercent(player->GetPlayerHP() / player->GetPlayerMaxHP());
+	}
 
 }
 
@@ -49,6 +51,7 @@ void UTGPlayerWidget::NativeDestruct()
 
 	if (core){
 		core->OnCoreHPChanged.RemoveDynamic(this, &UTGPlayerWidget::HandleCoreHPChanged);
+		core = nullptr;
 	}
 
 	if (GameMode){
