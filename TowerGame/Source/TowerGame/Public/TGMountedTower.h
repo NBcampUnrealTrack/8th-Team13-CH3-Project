@@ -5,6 +5,7 @@
 #include "TGMountedTower.generated.h"
 
 class UTGTowerWidget;
+class UWidgetComponent;
 
 UCLASS()
 class TOWERGAME_API ATGMountedTower : public ATGInteractiveActor
@@ -45,7 +46,11 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tower|UI")
 	TSubclassOf<UTGTowerWidget> TowerWidgetClass;
 
-	// 런타임 위젯 인스턴스
+	// 타워 위에 떠있는 월드 위젯 컴포넌트
+	UPROPERTY(VisibleAnywhere, Category = "Tower|UI")
+	UWidgetComponent* FloatingWidgetComp;
+
+	// 런타임 위젯 인스턴스 (FloatingWidgetComp에서 가져옴)
 	UPROPERTY()
 	UTGTowerWidget* TowerWidget;
 
