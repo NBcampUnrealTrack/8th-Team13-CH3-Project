@@ -8,6 +8,7 @@
 #include "Engine/DamageEvents.h"
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystem.h"
+#include "Particles/ParticleSystemComponent.h"
 
 void UTGWeaponSingleShot::Shoot(AActor* Instigator, UMeshComponent* WeaponComponent, FVector TargetPos)
 {
@@ -17,7 +18,7 @@ void UTGWeaponSingleShot::Shoot(AActor* Instigator, UMeshComponent* WeaponCompon
 	QueryParams.AddIgnoredActors(IgnoredActors);
 
 	FVector StartPos = WeaponComponent->GetComponentTransform().TransformPosition(status.Asset.MuzzlePos);
-	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), status.Asset.FireParticle, StartPos);
+	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), status.Asset.FireParticle, StartPos)->SetWorldScale3D(FVector::OneVector * status.Asset.FireParticleScale);
 	UKismetSystemLibrary::LineTraceSingle(
 		GetWorld(), //어느 월드의 소속인가? (this)를 넣어줘도 됨
 		StartPos,
@@ -32,8 +33,10 @@ void UTGWeaponSingleShot::Shoot(AActor* Instigator, UMeshComponent* WeaponCompon
 		FLinearColor::Yellow,	//트레이스 히트 시 색깔
 		5.0f
 	);
-	if (TraceHit.bBlockingHit && TraceHit.GetActor())
+	if (TraceHit.bBlockingHit)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Hit Actor: %s"), *TraceHit.GetActor()->GetName());
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), status.Asset.HitParticle, TargetPos)->SetWorldScale3D(FVector::OneVector * status.Asset.HitParticleScale);
 		ATGEnemyBase* target = Cast<ATGEnemyBase>(TraceHit.GetActor());
 		if (target)
 		{
