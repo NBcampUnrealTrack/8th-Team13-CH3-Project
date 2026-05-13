@@ -15,4 +15,7 @@ protected:
 public:
 	UFUNCTION(BlueprintCallable)
 	void StartGame();
+
+	UFUNCTION(BlueprintCallable)
+	void EndGame();
 };
