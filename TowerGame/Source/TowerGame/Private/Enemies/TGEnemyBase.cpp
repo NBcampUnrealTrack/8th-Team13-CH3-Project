@@ -21,9 +21,9 @@
 ATGEnemyBase::ATGEnemyBase() :
 	HP(1),
 	EnergyDropAmount(0),
-	AttackDamage(0),
-	AttackInterVal(0.5f),
-	AttackRange(200),
+	StructureAttackDamage(0),
+	StructureAttackInterval(0.5f),
+	StructureAttackRange(200),
 	NavigationHeightOffset(FVector::ZeroVector),
 	GridSize(300)
 {
@@ -43,7 +43,7 @@ ATGEnemyBase::ATGEnemyBase() :
 
 void ATGEnemyBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	StopAttack();
+	StopStructureAttack();
 
 	// NavigationManger 등록 해제
 	if (NavigationManager)
@@ -83,7 +83,7 @@ void ATGEnemyBase::RequestRepath()
 	// 이동 완료 콜백 중복 바인딩 방지
 	AIController->ReceiveMoveCompleted.RemoveDynamic(this, &ATGEnemyBase::HandleMoveCompleted);
 	AIController->StopMovement();
-	StopAttack();
+	StopStructureAttack();
 	AIController->ReceiveMoveCompleted.AddDynamic(this, &ATGEnemyBase::HandleMoveCompleted);
 
 	// 목적지 위치 get
@@ -96,7 +96,7 @@ void ATGEnemyBase::RequestRepath()
 	//목적지로 이동
 	EPathFollowingRequestResult::Type MoveResult = AIController->MoveToLocation(
 		CoreLocation,
-		AttackRange,
+		StructureAttackRange,
 		false,
 		true,
 		true,
@@ -121,11 +121,11 @@ void ATGEnemyBase::RequestRepath()
 		//return;
 	}
 
-	CurrentAttackTarget = NavigationManager->GetCurrentCoreActor();
+	CurrentStructureTarget = NavigationManager->GetCurrentCoreActor();
 
 	// 이미 목적지에 도착한 상태
 	if (MoveResult == EPathFollowingRequestResult::AlreadyAtGoal){
-		StartAttack();
+		StartStructureAttack();
 	}
 }
 
@@ -134,32 +134,32 @@ void ATGEnemyBase::SetNavigationManager(ATGNavigationManager* InNavigationManage
 	NavigationManager = InNavigationManager;
 }
 
-void ATGEnemyBase::StartAttack()
+void ATGEnemyBase::StartStructureAttack()
 {
-	if (!CurrentAttackTarget) return;
+	if (!CurrentStructureTarget) return;
 
 	UWorld* World = GetWorld();
 	if (!World) return;
 
-	World->GetTimerManager().ClearTimer(AttackTimerHandle);
+	World->GetTimerManager().ClearTimer(StructureAttackTimerHandle);
 
-	// AttackInterval 마다 Core 공격
+	// StructureAttackInterval 마다 Core 공격
 	World->GetTimerManager().SetTimer(
-		AttackTimerHandle,
+		StructureAttackTimerHandle,
 		this,
-		&ATGEnemyBase::AttackTarget,
-		AttackInterVal,
+		&ATGEnemyBase::AttackStructureTarget,
+		StructureAttackInterval,
 		true
 	);
 }
 
-void ATGEnemyBase::StopAttack()
+void ATGEnemyBase::StopStructureAttack()
 {
 	UWorld* World = GetWorld();
 	if (!World) return;
 
-	World->GetTimerManager().ClearTimer(AttackTimerHandle);
-	CurrentAttackTarget = nullptr;
+	World->GetTimerManager().ClearTimer(StructureAttackTimerHandle);
+	CurrentStructureTarget = nullptr;
 }
 
 float ATGEnemyBase::TakeDamage(float DamageAmount,
@@ -184,28 +184,28 @@ float ATGEnemyBase::TakeDamage(float DamageAmount,
 	return AppliedDamage;
 }
 
-void ATGEnemyBase::AttackTarget()
+void ATGEnemyBase::AttackStructureTarget()
 {
 	// 공격 목표가 없는 경우 중단
-	if (!CurrentAttackTarget){
-		StopAttack();
+	if (!CurrentStructureTarget){
+		StopStructureAttack();
 		return;
 	}
 
 	// 공격 목표가 공격 범위 밖인 경우 공격 중지 및 재탐색
-	if (!IsTargetInAttackRange(CurrentAttackTarget)){
-		StopAttack();
+	if (!IsStructureTargetInAttackRange(CurrentStructureTarget)){
+		StopStructureAttack();
 		RequestRepath();
 		return;
 	}
 
 	UE_LOG(LogTemp, Warning,
-		TEXT("Enemy 공격 - Target: %s /  Damage: %f"), *CurrentAttackTarget->GetName(),AttackDamage);
+		TEXT("Enemy 공격 - Target: %s /  Damage: %f"), *CurrentStructureTarget->GetName(), StructureAttackDamage);
 
 	// Target(CoreBase / BaseTower) 공격
 	UGameplayStatics::ApplyDamage(
-		CurrentAttackTarget,
-		AttackDamage,
+		CurrentStructureTarget,
+		StructureAttackDamage,
 		GetController(),
 		this,
 		nullptr
@@ -216,8 +216,8 @@ void ATGEnemyBase::HandleMoveCompleted(FAIRequestID RequestID, EPathFollowingRes
 {
 	// 이동 성공 시 공격 시작
 	if (Result == EPathFollowingResult::Success){
-		if (CurrentAttackTarget && IsTargetInAttackRange(CurrentAttackTarget)){
-			StartAttack();
+		if (CurrentStructureTarget && IsStructureTargetInAttackRange(CurrentStructureTarget)){
+			StartStructureAttack();
 		}
 		return;
 	}else if (Result == EPathFollowingResult::Aborted){
@@ -279,16 +279,16 @@ bool ATGEnemyBase::TryRecoverToNearestNavMesh()
 	return true;
 }
 
-bool ATGEnemyBase::IsTargetInAttackRange(const AActor* Target) const
+bool ATGEnemyBase::IsStructureTargetInAttackRange(const AActor* Target) const
 {
 	if (!Target) return false;
 
-	return FVector::Dist2D(GetActorLocation(), Target->GetActorLocation()) < AttackRange;
+	return FVector::Dist2D(GetActorLocation(), Target->GetActorLocation()) < StructureAttackRange;
 }
 
 bool ATGEnemyBase::MoveToBlockingBuilding()
 {
-	CurrentAttackTarget = nullptr;
+	CurrentStructureTarget = nullptr;
 
 	UWorld* World = GetWorld();
 	if (!World) return false;
@@ -334,7 +334,7 @@ bool ATGEnemyBase::TryMoveToAttackRangeOfBuilding(ABaseTower* Building)
 	// 목표로 이동
 	const EPathFollowingRequestResult::Type MoveResult = AIController->MoveToLocation(
 		BuildingLocation,
-		AttackRange,
+		StructureAttackRange,
 		false,
 		true,
 		true,
@@ -345,13 +345,13 @@ bool ATGEnemyBase::TryMoveToAttackRangeOfBuilding(ABaseTower* Building)
 
 	// 이미 공격 위치에 있는 경우
 	if (MoveResult == EPathFollowingRequestResult::AlreadyAtGoal){
-		CurrentAttackTarget = Building;
-		StartAttack();
+		CurrentStructureTarget = Building;
+		StartStructureAttack();
 		return true;
 	}
 	// 이동 요청 성공
 	else if (MoveResult == EPathFollowingRequestResult::RequestSuccessful){
-		CurrentAttackTarget = Building;
+		CurrentStructureTarget = Building;
 		return true;
 	}
 

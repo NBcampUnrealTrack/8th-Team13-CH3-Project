@@ -11,13 +11,13 @@
 #include "Player/TGPlayer.h"
 
 ATGAttackEnemyBase::ATGAttackEnemyBase() :
-	PlayerDetectRange(400),
+	PlayerDetectRange(0),
 	PlayerDetectInterval(0.2f),
-	AreaAttackRange(550),
-	AreaAttackDelay(0.8f),
-	AreaAttackDamage(1),
-	KnockbackForce(800),
-	DebuffDuration(2)
+	AreaAttackRange(0),
+	AreaAttackDelay(0),
+	AreaAttackDamage(0),
+	KnockbackForce(0),
+	DebuffDuration(0)
 {
 }
 
@@ -48,14 +48,14 @@ void ATGAttackEnemyBase::RequestRepath()
 	Super::RequestRepath();
 }
 
-void ATGAttackEnemyBase::StartAttack()
+void ATGAttackEnemyBase::StartStructureAttack()
 {
 	if (UWorld* World = GetWorld()){
 		// Core / Tower 공격 중에는 Player 탐지 중단
 		World->GetTimerManager().ClearTimer(PlayerDetectTimerHandle);
 	}
 
-	Super::StartAttack();
+	Super::StartStructureAttack();
 }
 
 void ATGAttackEnemyBase::DetectPlayerInRange()
@@ -83,7 +83,7 @@ void ATGAttackEnemyBase::StartPlayerAttack(AActor* Player)
 	// Player를 발견하면 탐지를 멈춤
 	World->GetTimerManager().ClearTimer(PlayerDetectTimerHandle);
 
-	StopAttack();
+	StopStructureAttack();
 
 	if (AAIController* AIController = Cast<AAIController>(GetController())){
 		// Player 공격 과정에서는 이동 중단
@@ -154,21 +154,21 @@ void ATGAttackEnemyBase::AreaAttack()
 
 bool ATGAttackEnemyBase::CanAreaAttackTarget(AActor* Target) const
 {
-	return Cast<ATGPlayer>(Target) != nullptr;
+	if (!Target) return false;
+
+	return Cast<ATGPlayer>(Target) != nullptr || Cast<ATGMountedTower>(Target) != nullptr;
 }
 
 void ATGAttackEnemyBase::ApplyAreaAttackEffect(AActor* Target)
 {
 	if (!Target) return;
 
-	ATGPlayer* Player = Cast<ATGPlayer>(Target);
-	if (Player){
+	if (ATGPlayer* Player = Cast<ATGPlayer>(Target)){
 		ApplyPlayerAttackEffect(Player);
 		return;
 	}
 
-	ATGMountedTower* Tower = Cast<ATGMountedTower>(Target);
-	if (Tower){
+	if (ATGMountedTower* Tower = Cast<ATGMountedTower>(Target)){
 		ApplyTowerAttackEffect(Tower);
 		return;
 	}

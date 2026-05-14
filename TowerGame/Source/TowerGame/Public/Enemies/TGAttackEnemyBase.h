@@ -52,7 +52,7 @@ public:
 
 public:
 	virtual void RequestRepath() override;
-	virtual void StartAttack() override;
+	virtual void StartStructureAttack() override;
 
 protected:
 	// Player 탐지

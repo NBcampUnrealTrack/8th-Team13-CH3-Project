@@ -33,11 +33,11 @@ public:
 	virtual void RequestRepath();
 	void SetNavigationManager(ATGNavigationManager* InNavigationManager);
 
-	// Enemy 공격
-	virtual void StartAttack();
-	void AttackTarget();
+	// Structure 공격
+	virtual void StartStructureAttack();
+	void AttackStructureTarget();
 
-	void StopAttack();
+	void StopStructureAttack();
 
 	virtual float TakeDamage(
 		float DamageAmount,
@@ -54,24 +54,24 @@ public:
 	int32 EnergyDropAmount = 30;
 
 protected:
-	// Enemy 공격 관련 변수
+	// Structure 공격 관련 변수
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Attack")
-	float AttackDamage;
+	float StructureAttackDamage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Attack")
-	float AttackInterVal;
+	float StructureAttackInterval;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Attack", meta = (ClampMin = "50.0"))
-	float AttackRange;
+	float StructureAttackRange;
 
 	// FlyingEnemy 위치 보정을 위한 FVector
 	UPROPERTY(VisibleAnywhere, Category = "Enemy|Spawn")
 	FVector NavigationHeightOffset;
 
 	UPROPERTY()
-	TObjectPtr<AActor> CurrentAttackTarget;
+	TObjectPtr<AActor> CurrentStructureTarget;
 
-	FTimerHandle AttackTimerHandle;
+	FTimerHandle StructureAttackTimerHandle;
 
 private:
 	int32 GridSize;
@@ -82,7 +82,7 @@ protected:
 
 	bool TryRecoverToNearestNavMesh();
 
-	bool IsTargetInAttackRange(const AActor* Target) const;
+	bool IsStructureTargetInAttackRange(const AActor* Target) const;
 
 private:
 	// 가까운 건물 반환 추후 우선도 고려

@@ -6,8 +6,8 @@ ATGBossBase::ATGBossBase()
 	//	임시적 사용
 	//	추후 패턴별 데미지 or 패턴별 범위 지정 필요할 수도
 	HP             = 500.f;
-	AttackDamage   = 20.f;
-	AttackRange    = 250.f;
+	StructureAttackDamage = 20.f;
+	StructureAttackRange = 250.f;
 	EnergyDropAmount = 100;
 }
 

@@ -8,9 +8,9 @@
 ATGAssaultEnemy::ATGAssaultEnemy()
 {
 	HP = 7;
-	AttackDamage = 1;
-	AttackInterVal = 0.4f;
-	AttackRange = 200;
+	StructureAttackDamage = 1;
+	StructureAttackInterval = 0.4f;
+	StructureAttackRange = 200;
 	EnergyDropAmount = 40;
 
 	GetCharacterMovement()->MaxWalkSpeed = 500;

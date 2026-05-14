@@ -11,9 +11,9 @@
 ATGFlyingEnemy::ATGFlyingEnemy()
 {
 	HP = 10;
-	AttackDamage = 1;
-	AttackInterVal = 0.5f;
-	AttackRange = 500;
+	StructureAttackDamage = 1;
+	StructureAttackInterval = 0.5f;
+	StructureAttackRange = 500;
 	EnergyDropAmount = 40;
 
 	NavigationHeightOffset = FVector(0,0,250);
