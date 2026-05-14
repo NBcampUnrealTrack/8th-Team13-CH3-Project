@@ -11,6 +11,7 @@ class ATGCoreBase;
 class ATGEnemyBase;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCurrentCoreChanged, ATGCoreBase*, CurrentCore);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAliveEnemyCountChanged, int32, AliveEnemyCount);
 
 UCLASS()
 class TOWERGAME_API ATGNavigationManager : public AActor
@@ -41,9 +42,18 @@ public:
 
 	void NotifyBuildingPlaced();
 
+	// Map의 적수 반환  - UI 미반영 결정 시 삭제
+	UFUNCTION(BlueprintPure, Category = "Navigation")
+	int32 GetAliveEnemyCount() const;
+
+public:
 	// 코어 변경 델리게이트
 	UPROPERTY(BlueprintAssignable, Category = "Navigation")
 	FOnCurrentCoreChanged OnCurrentCoreChanged;
+
+	// 남은 적수 변동 델리게이트 - UI 미반영 결정 시 삭제
+	UPROPERTY(BlueprintAssignable, Category = "Navigation")
+	FOnAliveEnemyCountChanged OnAliveEnemyCountChanged;
 
 private:
 	void RepathAllEnemies();

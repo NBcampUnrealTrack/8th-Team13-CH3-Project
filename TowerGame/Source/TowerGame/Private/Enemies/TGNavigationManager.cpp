@@ -98,6 +98,7 @@ void ATGNavigationManager::RegisterEnemy(ATGEnemyBase* Enemy)
 	if (!Enemy) return;
 
 	AliveEnemies.AddUnique(Enemy);
+	OnAliveEnemyCountChanged.Broadcast(AliveEnemies.Num());
 }
 
 void ATGNavigationManager::UnRegisterEnemy(ATGEnemyBase* Enemy)
@@ -105,6 +106,7 @@ void ATGNavigationManager::UnRegisterEnemy(ATGEnemyBase* Enemy)
 	if (!Enemy) return;
 
 	AliveEnemies.Remove(Enemy);
+	OnAliveEnemyCountChanged.Broadcast(AliveEnemies.Num());
 }
 
 FVector ATGNavigationManager::GetCoreLocation() const
@@ -125,6 +127,11 @@ ATGCoreBase* ATGNavigationManager::GetCurrentCoreActor() const
 void ATGNavigationManager::NotifyBuildingPlaced()
 {
 	bPendingRepathAfterNavGeneration = true;
+}
+
+int32 ATGNavigationManager::GetAliveEnemyCount() const
+{
+	return AliveEnemies.Num();
 }
 
 void ATGNavigationManager::RepathAllEnemies()

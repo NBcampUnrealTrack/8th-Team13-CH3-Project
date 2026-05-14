@@ -10,17 +10,30 @@
 #include "Enemies/TGCoreBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "Core/GameFlow/TGGameMode.h"
+#include "Enemies/TGWaveManager.h"
 
 void UTGPlayerWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 	player = Cast<ATGPlayer>(GetWorld()->GetFirstPlayerController()->GetPawn());
 
-	// Core 변경 이벤트를 구독하고, 코어 수동 초기화 1회 진행
+	// Wave 시작 이벤트 구독
+	WaveManager = ATGWaveManager::Get(this);
+	if (WaveManager){
+		WaveManager->OnWaveStarted.AddUniqueDynamic(this, &UTGPlayerWidget::HandleWaveStarted);
+	}
+
 	NavigationManager = ATGNavigationManager::Get(this);
 	if (NavigationManager){
+		// Enemy 수 변경 이벤트를 구독하고, 수동 초기화 1회 진행
+		NavigationManager->OnAliveEnemyCountChanged.AddUniqueDynamic(
+			this, &UTGPlayerWidget::HandleAliveEnemyCountChanged);
+		HandleAliveEnemyCountChanged(NavigationManager->GetAliveEnemyCount());
+
+		// Core 변경 이벤트를 구독하고, 수동 초기화 1회 진행
 		NavigationManager->OnCurrentCoreChanged.AddDynamic(this, &UTGPlayerWidget::UpdateCurrentCore);
 		UpdateCurrentCore(NavigationManager->GetCurrentCoreActor());
+
 	}
 
 	// 자원 변경 이벤트를 구독하고, 자원 수동 초기화 1회 진행
@@ -45,7 +58,12 @@ void UTGPlayerWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 void UTGPlayerWidget::NativeDestruct()
 {
 	// 구독했던 델리게이트들 해제
+	if (WaveManager){
+		WaveManager->OnWaveStarted.RemoveDynamic(this, &UTGPlayerWidget::HandleWaveStarted);
+	}
+
 	if (NavigationManager){
+		NavigationManager->OnAliveEnemyCountChanged.RemoveDynamic(this, &UTGPlayerWidget::HandleAliveEnemyCountChanged);
 		NavigationManager->OnCurrentCoreChanged.RemoveDynamic(this, &UTGPlayerWidget::UpdateCurrentCore);
 	}
 
@@ -59,6 +77,22 @@ void UTGPlayerWidget::NativeDestruct()
 	}
 
 	Super::NativeDestruct();
+}
+
+void UTGPlayerWidget::HandleWaveStarted(int32 WaveIndex)
+{
+	if (!Txt_CurrentWave) return;
+
+	// Text 설정 및 애니메이션 실행
+	Txt_CurrentWave->SetText(FText::FromString(FString::Printf(TEXT("Wave : %d"), WaveIndex+1)));
+	if (Anim_WaveOpacity) PlayAnimation(Anim_WaveOpacity);
+}
+
+void UTGPlayerWidget::HandleAliveEnemyCountChanged(int32 AliveEnemyCount)
+{
+	if (!Txt_RemainEnemy) return;
+
+	Txt_RemainEnemy->SetText(FText::FromString(FString::Printf(TEXT("Remain Enemy : %d"),  AliveEnemyCount)));
 }
 
 void UTGPlayerWidget::UpdateCurrentCore(ATGCoreBase* NewCore)

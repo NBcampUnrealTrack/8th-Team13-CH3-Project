@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "TGPlayerWidget.generated.h"
 
+class ATGWaveManager;
 class ATGGameMode;
 class ATGNavigationManager;
 class UProgressBar;
@@ -27,6 +28,15 @@ protected:
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 	virtual void NativeDestruct() override;
 
+	UPROPERTY(Transient, meta = (BindWidgetAnim))
+	TObjectPtr<UWidgetAnimation> Anim_WaveOpacity;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* Txt_CurrentWave;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* Txt_RemainEnemy;
+
 	UPROPERTY(meta = (BindWidget))
 	UProgressBar* HP_Bar;
 	UPROPERTY(meta = (BindWidget))
@@ -47,9 +57,19 @@ private:
 	TObjectPtr<ATGGameMode> GameMode;
 
 	UPROPERTY()
+	TObjectPtr<ATGWaveManager> WaveManager;
+
+	UPROPERTY()
 	TObjectPtr<ATGNavigationManager> NavigationManager;
 
 private:
+	UFUNCTION()
+	void HandleWaveStarted(int32 WaveIndex);
+
+	// 적 수 변경 시 호출
+	UFUNCTION()
+	void HandleAliveEnemyCountChanged(int32 AliveEnemyCount);
+
 	// 현재 코어 변경 시 호출
 	UFUNCTION()
 	void UpdateCurrentCore(ATGCoreBase* NewCore);
