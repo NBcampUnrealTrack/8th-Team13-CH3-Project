@@ -7,6 +7,7 @@
 #include "Camera/CameraComponent.h"
 #include "InputActionValue.h"
 #include "Core/Grid/TGGridBase.h"
+#include "Core/GameFlow/TGGameMode.h"
 #include "TGInteractiveActor.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -267,6 +268,11 @@ int32 ATGPlayer::ChangePlayerHP(int32 value)
 	if (HP <= 0 && GetWorld()->GetFirstPlayerController())
 	{
 		DisableInput(GetWorld()->GetFirstPlayerController());
+		if (ATGGameMode* GM = Cast<ATGGameMode>(GetWorld()->GetAuthGameMode()))
+		{
+			//	TODO : 게임 오버 처리
+			GM->HandleGameOver();
+		}
 	}
 	return HP;
 }
