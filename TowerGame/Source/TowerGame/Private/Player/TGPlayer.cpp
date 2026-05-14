@@ -43,6 +43,8 @@ ATGPlayer::ATGPlayer() : MaxHP(100), SlowRate(0.5f), DefaultWalkSpeed(0)
 void ATGPlayer::BeginPlay()
 {
 	Super::BeginPlay();
+	Weapon_Skeletal->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	Weapon_Static->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	HP = MaxHP;
 	bMoving = false;
 	bBuildMode = false;
