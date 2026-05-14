@@ -7,15 +7,17 @@
 #include "NavAreas/NavArea_Null.h"
 #include "Components/StaticMeshComponent.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/BoxComponent.h"
 
 ABaseTower::ABaseTower()
 {
 	// 발판은 움직이지 않으니 틱을 끔(최적화)
 	PrimaryActorTick.bCanEverTick = false;
 
-	// 발판메시
+	// 발판메시 — 루트 컴포넌트로 설정
 	BaseMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BaseMesh"));
-	BaseMesh->SetupAttachment(RootComponent);
+	SetRootComponent(BaseMesh);
+	InteractionCollision->SetupAttachment(BaseMesh);
 
 	// 길막 (기본값)
 	BaseMesh->SetCollisionProfileName(TEXT("BlockAll"));
@@ -49,6 +51,9 @@ void ABaseTower::BeginPlay()
 
 	//	투명도 조정용 다이나믹 머티리얼 인스턴스 생성
 	PreviewMaterial = BaseMesh->CreateDynamicMaterialInstance(0);
+
+	//	기본적으로 인터랙션을 끕니다
+	SetInteractionEnabled(false);
 }
 
 void ABaseTower::Disable()

@@ -4,16 +4,17 @@
 #include "BaseTower/TGTowerWidget.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/ArrowComponent.h"
-#include "Kismet/GameplayStatics.h"
+#include "Components/BoxComponent.h"
 #include "Core/GameFlow/TGGameMode.h"
 
 ATGMountedTower::ATGMountedTower()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	//	몸체 메쉬
+	//	몸체 메쉬 — 루트 컴포넌트로 설정
 	BodyMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BodyMesh"));
-	BodyMesh->SetupAttachment(RootComponent);
+	SetRootComponent(BodyMesh);
+	InteractionCollision->SetupAttachment(BodyMesh);
 
 	// 무기 메시
 	WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponMesh"));
