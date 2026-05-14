@@ -7,7 +7,7 @@
 #include "Enemies/TGNavigationManager.h"
 
 // Sets default values
-ATGCoreBase::ATGCoreBase() : MaxHP(100000)
+ATGCoreBase::ATGCoreBase() : MaxHP(100)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;

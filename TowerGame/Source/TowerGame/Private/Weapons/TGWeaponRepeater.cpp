@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Weapons/TGWeaponSingleShot.h"
+#include "Weapons/TGWeaponRepeater.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Enemies/TGEnemyBase.h"
 #include "Engine/DamageEvents.h"
@@ -9,7 +9,7 @@
 #include "Particles/ParticleSystem.h"
 #include "Particles/ParticleSystemComponent.h"
 
-void UTGWeaponSingleShot::Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance)
+void UTGWeaponRepeater::Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance)
 {
 	Super::Shoot(Instigator, WeaponComponent, MuzzlePos, Direction, Distance);
 
@@ -24,10 +24,11 @@ void UTGWeaponSingleShot::Shoot(AActor* Instigator, class UMeshComponent* Weapon
 		EAttachLocation::KeepWorldPosition
 	);
 
+	FVector SpeadDir = FMath::VRandCone(Direction, FMath::DegreesToRadians(status.BulletSpead));	//탄퍼짐 각도
 	UKismetSystemLibrary::LineTraceSingle(
 		GetWorld(), //어느 월드의 소속인가? (this)를 넣어줘도 됨
 		MuzzlePos,
-		MuzzlePos + Direction * Distance,
+		MuzzlePos + SpeadDir * Distance,
 		UEngineTypes::ConvertToTraceType(ECC_Visibility),	// 사용할 트레이스채널
 		QueryParams.bTraceComplex,	// 복합콜리전 사용
 		IgnoredActors,	// 해당 액터는 이 트레이스를 무시
@@ -54,7 +55,7 @@ void UTGWeaponSingleShot::Shoot(AActor* Instigator, class UMeshComponent* Weapon
 		ATGEnemyBase* target = Cast<ATGEnemyBase>(TraceHit.GetActor());
 		if (target)
 		{
-			UGameplayStatics::ApplyDamage(target,status.Power,Instigator->GetInstigatorController(), Instigator, nullptr);
+			UGameplayStatics::ApplyDamage(target, status.Power, Instigator->GetInstigatorController(), Instigator, nullptr);
 		}
 	}
 }

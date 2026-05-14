@@ -10,7 +10,7 @@ UENUM(BlueprintType)
 enum class ETGWeaponTriggerType : uint8
 {
 	/*단발*/ SINGLE_SHOT UMETA(DisplayName = "SingleShot"),
-	/*점사*/ BURST UMETA(DisplayName = "Burst"),
+	/*샷건*/ SHOTGUN UMETA(DisplayName = "Burst"),
 	/*연사*/ REPEATER UMETA(DisplayName = "Repeater"),
 	TRIGGER_COUNT UMETA(Hidden)
 };
@@ -52,8 +52,8 @@ protected:
 	FTGWeaponAsset Asset;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 Power;
-	//int32 Ammo;
-	//int32 Magazine;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 MaxAmmo;
 };
 
 UCLASS()
@@ -61,8 +61,12 @@ class TOWERGAME_API UTGWeaponBase : public UObject
 {
 	GENERATED_BODY()
 protected:
-	ETGWeaponTriggerType TriggerType;
+	int32 CurAmmo;
+protected:	// 라인트레이싱 정보
+	FHitResult TraceHit;
+	FCollisionQueryParams QueryParams;
+	TArray<AActor*> IgnoredActors;
 public:
 	virtual const FTGWeaponAsset* GetAsset() { return nullptr; }
-	virtual void Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector TargetPos) {}
+	virtual void Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance);
 };

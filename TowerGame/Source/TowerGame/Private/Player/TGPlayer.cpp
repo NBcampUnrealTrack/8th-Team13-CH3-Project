@@ -14,6 +14,8 @@
 #include "Components/ChildActorComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Weapons/TGWeaponSingleShot.h"
+#include "Weapons/TGWeaponShotgun.h"
+#include "Weapons/TGWeaponRepeater.h"
 
 // Sets default values
 ATGPlayer::ATGPlayer() : MaxHP(100), SlowRate(0.5f), DefaultWalkSpeed(0)
@@ -55,7 +57,7 @@ void ATGPlayer::BeginPlay()
 	if (GetWorld()->GetFirstPlayerController())
 		EnableInput(GetWorld()->GetFirstPlayerController());
 
-	OwnWeapon(ETGWeaponTriggerType::SINGLE_SHOT, TEXT("TaserPistol"), true);
+	OwnWeapon(ETGWeaponTriggerType::REPEATER, TEXT("AssaultRifle"), true);
 }
 
 void ATGPlayer::Move(const FInputActionValue& value)
@@ -125,6 +127,8 @@ void ATGPlayer::Build(const FInputActionValue& InputValue)
 void ATGPlayer::Shot(const FInputActionValue& InputValue)
 {
 	FHitResult TraceHit;
+	FVector MuzzlePos;
+	FVector ShootDir;
 	float Distance = 50000.f;
 	UMeshComponent* CurrentWeaponComp = nullptr;
 	if (Weapon_Skeletal)
@@ -133,14 +137,14 @@ void ATGPlayer::Shot(const FInputActionValue& InputValue)
 		CurrentWeaponComp = Weapon_Static;
 	else
 		CurrentWeaponComp = GetMesh();
+	MuzzlePos = CurrentWeaponComp->GetComponentTransform().TransformPosition(GetCurrentWeapon()->GetAsset()->MuzzlePos);
+	
 	if (CameraLineTrace(TraceHit, ECC_Visibility, Distance))
-	{
-		GetCurrentWeapon()->Shoot(this, CurrentWeaponComp, TraceHit.ImpactPoint);
-	}
+		ShootDir = (TraceHit.ImpactPoint - MuzzlePos).GetSafeNormal();	// Hit한 지점을 향해 발사
 	else
-	{
-		GetCurrentWeapon()->Shoot(this, CurrentWeaponComp, Camera->GetComponentLocation() + Camera->GetForwardVector() * Distance);
-	}
+		ShootDir = (Camera->GetComponentLocation() + Camera->GetForwardVector() * Distance - MuzzlePos).GetSafeNormal();	// 카메라 정중앙을 향해 발사
+
+	GetCurrentWeapon()->Shoot(this, CurrentWeaponComp, MuzzlePos, ShootDir, Distance);
 }
 
 void ATGPlayer::Interact(const FInputActionValue& InputValue)
@@ -314,7 +318,25 @@ void ATGPlayer::OwnWeapon(ETGWeaponTriggerType TriggerType, FName RowName, bool 
 		}
 		break;
 	}
-	//case ETGWeaponTriggerType::BURST:
+	case ETGWeaponTriggerType::REPEATER:
+	{
+		UTGWeaponRepeater* Repeater;
+		FTGStatusWeaponRepeater* info;
+		DT = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr,
+			TEXT("/Game/Weapons/DT_WeaponTable_Repeater.DT_WeaponTable_Repeater")));
+		if (DT->IsValidLowLevel())
+		{
+			TArray<FName> DTNameArray = DT->GetRowNames();
+			info = DT->FindRow<FTGStatusWeaponRepeater>(RowName, TEXT(""));
+			if (info)
+			{
+				Repeater = NewObject<UTGWeaponRepeater>(this);
+				Repeater->SetStatus(*info);
+				OwnedWeapons.Add(GetWeaponKey(TriggerType, RowName), Repeater);
+			}
+		}
+		break;
+	}
 	}
 
 
