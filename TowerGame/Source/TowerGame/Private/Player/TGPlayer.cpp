@@ -12,6 +12,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/ChildActorComponent.h"
+#include "Enemies/TGEnemyBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Weapons/TGWeaponSingleShot.h"
 #include "Weapons/TGWeaponShotgun.h"
@@ -39,6 +40,7 @@ ATGPlayer::ATGPlayer() : MaxHP(100), SlowRate(0.5f), DefaultWalkSpeed(0)
 	EvadeCooldown = 3.0f;
 	InteractDistance = 300.f;
 	CurrentFocusedActor = nullptr;
+	LastFocusedEnemy = nullptr;
 }
 
 // Called when the game starts or when spawned
@@ -175,12 +177,20 @@ void ATGPlayer::Tick(float DeltaTime)
 	}
 	// 무기가 향하는 방향
 	FHitResult WeaponTrace;
+
 	CameraLineTrace(WeaponTrace, ECC_Visibility, 5000.0f, true);
 	//FVector MuzzlePos = Weapon_Skeletal->GetComponentTransform().TransformPosition(GetCurrentWeapon()->GetAsset()->MuzzlePos);
 	//Weapon_Skeletal->SetWorldRotation(UKismetMathLibrary::FindLookAtRotation(Camera->GetComponentLocation() + InitialLocation + GetCurrentWeapon()->GetAsset()->LocationOffset, WeaponTrace.Location));
 	////Weapon_Skeletal->AddRelativeRotation(GetCurrentWeapon()->GetAsset()->RotationOffset);
 	//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Aim Rot: %s"), *Weapon_Skeletal->GetComponentRotation().ToString()));
 
+	// Trace 결과 중 HitEnemy을 확인하여 기존 값과 다를 경우 Broadcast
+	ATGEnemyBase* HitEnemy = Cast<ATGEnemyBase>(WeaponTrace.GetActor());
+	if (HitEnemy != LastFocusedEnemy){
+		LastFocusedEnemy = HitEnemy;
+		OnFocusedEnemyChanged.Broadcast(LastFocusedEnemy);
+	}
+	
 	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Current Evade Cooldown: %f / %f"), CurrentEvadeCooldown, EvadeCooldown));
 	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Current Evade Count(LSHIFT): %d / %d"), CurrentEvadeCount, EvadeCount));
 	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Aim Target: %s"), WeaponTrace.bBlockingHit ? *WeaponTrace.GetActor()->GetName() : TEXT("None")));

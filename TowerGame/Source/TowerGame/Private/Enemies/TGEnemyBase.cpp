@@ -19,11 +19,13 @@
 
 // Sets default values
 ATGEnemyBase::ATGEnemyBase() :
-	HP(1),
 	EnergyDropAmount(0),
+	EnemyType("Enemy"),
 	StructureAttackDamage(0),
 	StructureAttackInterval(0.5f),
 	StructureAttackRange(200),
+	MaxHP(1),
+	CurrentHP(MaxHP),
 	NavigationHeightOffset(FVector::ZeroVector),
 	GridSize(300)
 {
@@ -41,6 +43,14 @@ ATGEnemyBase::ATGEnemyBase() :
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 }
 
+void ATGEnemyBase::BeginPlay()
+{
+	Super::BeginPlay();
+
+	CurrentHP = MaxHP;
+	OnEnemyHpChanged.Broadcast(CurrentHP, MaxHP);
+}
+
 void ATGEnemyBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	StopStructureAttack();
@@ -50,6 +60,8 @@ void ATGEnemyBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	{
 		NavigationManager->UnRegisterEnemy(this);
 	}
+
+	NotifyEnemyRemoved();
 
 	Super::EndPlay(EndPlayReason);
 }
@@ -169,19 +181,36 @@ float ATGEnemyBase::TakeDamage(float DamageAmount,
 {
 	float AppliedDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
-	HP -= AppliedDamage;
+	CurrentHP -= AppliedDamage;
+	OnEnemyHpChanged.Broadcast(CurrentHP, MaxHP);
 
-	UE_LOG(LogTemp, Warning, TEXT("Enemy 피격 - Damage: %.1f / HP: %.1f"), AppliedDamage, HP);
+	UE_LOG(LogTemp, Warning, TEXT("Enemy 피격 - Damage: %.1f / HP: %.1f"), AppliedDamage, CurrentHP);
 
-	if (HP <= 0){
+	if (CurrentHP <= 0){
 		if (ATGGameMode* GM = Cast<ATGGameMode>(UGameplayStatics::GetGameMode(GetWorld())))
 		{
 			GM->AddEnergy(EnergyDropAmount);
 		}
+		NotifyEnemyRemoved();
 		Destroy();
 	}
 
 	return AppliedDamage;
+}
+
+FString ATGEnemyBase::GetEnemyType()
+{
+	return EnemyType;
+}
+
+float ATGEnemyBase::GetCurrentHP()
+{
+	return CurrentHP;
+}
+
+float ATGEnemyBase::GetMaxHP()
+{
+	return MaxHP;
 }
 
 void ATGEnemyBase::AttackStructureTarget()
@@ -284,6 +313,11 @@ bool ATGEnemyBase::IsStructureTargetInAttackRange(const AActor* Target) const
 	if (!Target) return false;
 
 	return FVector::Dist2D(GetActorLocation(), Target->GetActorLocation()) < StructureAttackRange;
+}
+
+void ATGEnemyBase::NotifyEnemyRemoved()
+{
+
 }
 
 bool ATGEnemyBase::MoveToBlockingBuilding()

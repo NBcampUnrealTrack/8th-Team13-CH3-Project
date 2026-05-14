@@ -7,7 +7,8 @@
 
 ATGNormalEnemy::ATGNormalEnemy()
 {
-	HP = 10;
+	EnemyType = TEXT("침입자");
+	MaxHP = 10;
 	StructureAttackDamage = 1;
 	StructureAttackInterval = 0.5f;
 	StructureAttackRange = 200;

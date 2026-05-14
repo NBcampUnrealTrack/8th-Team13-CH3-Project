@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "TGPlayerWidget.generated.h"
 
+class ATGEnemyBase;
 class ATGWaveManager;
 class ATGGameMode;
 class ATGNavigationManager;
@@ -28,24 +29,6 @@ protected:
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 	virtual void NativeDestruct() override;
 
-	UPROPERTY(Transient, meta = (BindWidgetAnim))
-	TObjectPtr<UWidgetAnimation> Anim_WaveOpacity;
-
-	UPROPERTY(meta = (BindWidget))
-	UTextBlock* Txt_CurrentWave;
-
-	UPROPERTY(meta = (BindWidget))
-	UTextBlock* Txt_RemainEnemy;
-
-	UPROPERTY(meta = (BindWidget))
-	UProgressBar* HP_Bar;
-	UPROPERTY(meta = (BindWidget))
-	UProgressBar* CoreHP_Bar;
-
-	// TODO: UMG 블루프린트(WBP_PlayerWidget)에 TextBlock을 추가하고 이름을 "EnergyText"로 지정하면 자동 바인딩됩니다.
-	UPROPERTY(meta = (BindWidgetOptional))
-	TObjectPtr<UTextBlock> EnergyText;
-
 	UPROPERTY()
 	TObjectPtr<class ATGPlayer> player;
 
@@ -62,7 +45,45 @@ private:
 	UPROPERTY()
 	TObjectPtr<ATGNavigationManager> NavigationManager;
 
+	UPROPERTY()
+	TObjectPtr<ATGEnemyBase> FocusedEnemy;
+
+	FTimerHandle FocusedEnemyHideTimerHandle;
+
 private:
+	// Animation
+	UPROPERTY(Transient, meta = (BindWidgetAnim))
+	TObjectPtr<UWidgetAnimation> Anim_WaveOpacity;
+
+	// TextBlock
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UTextBlock> Txt_EnemyType;
+
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UTextBlock> Txt_CurrentWave;
+
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UTextBlock> Txt_RemainEnemy;
+
+	// TODO: UMG 블루프린트(WBP_PlayerWidget)에 TextBlock을 추가하고 이름을 "EnergyText"로 지정하면 자동 바인딩됩니다.
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UTextBlock> EnergyText;
+
+	// ProgressBar
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UProgressBar> PB_EnemyHP;
+
+	UPROPERTY(meta = (BindWidget))
+	UProgressBar* HP_Bar;
+	UPROPERTY(meta = (BindWidget))
+	UProgressBar* CoreHP_Bar;
+
+private:
+	// Focused Enemy 변경 시 호출
+	UFUNCTION()
+	void HandleFocusedEnemyChanged(ATGEnemyBase* NewEnemy);
+
+	// 각 Wave 시작 시 호출
 	UFUNCTION()
 	void HandleWaveStarted(int32 WaveIndex);
 
@@ -81,4 +102,7 @@ private:
 	// 자원 변경 시 호출
 	UFUNCTION()
 	void HandleEnergyChanged(int32 NewEnergy);
+
+	void HideFocusedEnemyInfo();
+
 };

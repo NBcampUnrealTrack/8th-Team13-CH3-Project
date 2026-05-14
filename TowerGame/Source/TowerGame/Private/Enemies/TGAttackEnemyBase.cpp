@@ -196,8 +196,7 @@ void ATGAttackEnemyBase::ApplyPlayerAttackEffect(ATGPlayer* Player)
 
 	Player->LaunchCharacter(
 		KnockbackDirection * KnockbackForce, true, true);
-
-	// TODO Player Debuff API 연결
+	Player->ApplySlowDebuff(DebuffDuration);
 }
 
 void ATGAttackEnemyBase::ApplyTowerAttackEffect(ATGMountedTower* Tower)

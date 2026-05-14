@@ -17,7 +17,9 @@ public class TowerGame : ModuleRules
 			"EnhancedInput",
 			"AIModule",
 			"NavigationSystem",
-			"UMG"
+			"UMG",
+			"Slate",
+			"SlateCore"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
