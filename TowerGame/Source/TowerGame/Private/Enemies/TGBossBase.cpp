@@ -2,10 +2,11 @@
 
 ATGBossBase::ATGBossBase()
 {
+	EnemyType = TEXT("보스");
 	//	부모클래스에서 가져온 변수들
 	//	임시적 사용
 	//	추후 패턴별 데미지 or 패턴별 범위 지정 필요할 수도
-	HP             = 500.f;
+	CurrentHP= 500.f;
 	StructureAttackDamage = 20.f;
 	StructureAttackRange = 250.f;
 	EnergyDropAmount = 100;
@@ -15,7 +16,7 @@ void ATGBossBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	MaxHP = HP;
+	MaxHP = CurrentHP;
 	StartPattern();
 }
 
@@ -30,7 +31,7 @@ float ATGBossBase::TakeDamage(float DamageAmount, const FDamageEvent& DamageEven
 {
 	const float Applied = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
-	if (HP > 0.f)
+	if (CurrentHP > 0.f)
 	{
 		CheckPhaseTransition();
 	}
@@ -49,7 +50,7 @@ void ATGBossBase::CheckPhaseTransition()
 {
 	if (MaxHP <= 0.f) return;
 
-	const float HPRatio = HP / MaxHP;
+	const float HPRatio = CurrentHP / MaxHP;
 
 	EBossPhase NewPhase = EBossPhase::Phase1;
 	if (HPRatio <= Phase3HPRatio)

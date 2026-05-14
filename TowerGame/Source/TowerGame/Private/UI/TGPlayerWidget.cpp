@@ -10,12 +10,17 @@
 #include "Enemies/TGCoreBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "Core/GameFlow/TGGameMode.h"
+#include "Enemies/TGEnemyBase.h"
 #include "Enemies/TGWaveManager.h"
 
 void UTGPlayerWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 	player = Cast<ATGPlayer>(GetWorld()->GetFirstPlayerController()->GetPawn());
+	// Focus Enemy 변경 이벤트 구독
+	if (player){
+		player->OnFocusedEnemyChanged.AddUniqueDynamic(this, &UTGPlayerWidget::HandleFocusedEnemyChanged);
+	}
 
 	// Wave 시작 이벤트 구독
 	WaveManager = ATGWaveManager::Get(this);
@@ -57,7 +62,16 @@ void UTGPlayerWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 
 void UTGPlayerWidget::NativeDestruct()
 {
+	// 타이머 해제
+	if (UWorld* World = GetWorld()){
+		World->GetTimerManager().ClearTimer(FocusedEnemyHideTimerHandle);
+	}
+
 	// 구독했던 델리게이트들 해제
+	if (player){
+		player->OnFocusedEnemyChanged.RemoveDynamic(this, &UTGPlayerWidget::HandleFocusedEnemyChanged);
+	}
+
 	if (WaveManager){
 		WaveManager->OnWaveStarted.RemoveDynamic(this, &UTGPlayerWidget::HandleWaveStarted);
 	}
@@ -135,6 +149,58 @@ void UTGPlayerWidget::HandleEnergyChanged(int32 NewEnergy)
 
 	EnergyText->SetText(FText::AsNumber(NewEnergy));
 
+}
+
+void UTGPlayerWidget::HandleFocusedEnemyChanged(ATGEnemyBase* NewEnemy)
+{
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	World->GetTimerManager().ClearTimer(FocusedEnemyHideTimerHandle);
+
+	// 0.5초 뒤 UI 숨김
+	if (!NewEnemy){
+		World->GetTimerManager().SetTimer(
+			FocusedEnemyHideTimerHandle,
+			this,
+			&UTGPlayerWidget::HideFocusedEnemyInfo,
+			0.5f,
+			false
+		);
+		return;
+	}
+
+	FocusedEnemy = NewEnemy;
+
+	// EnemyType UI 반영
+	if (Txt_EnemyType){
+		Txt_EnemyType->SetText(FText::FromString(FocusedEnemy->GetEnemyType()));
+		Txt_EnemyType->SetVisibility(ESlateVisibility::Visible);
+	}
+
+	// Enemy 체력 UI 반영
+	if (PB_EnemyHP){
+		float EnemyHPRatio = FMath::Clamp(
+			NewEnemy->GetCurrentHP()/NewEnemy->GetMaxHP(), 0.0f, 1.0f);
+
+		PB_EnemyHP->SetPercent(EnemyHPRatio);
+		PB_EnemyHP->SetVisibility(ESlateVisibility::Visible);
+	}
+
+}
+
+void UTGPlayerWidget::HideFocusedEnemyInfo()
+{
+	FocusedEnemy = nullptr;
+
+	// FocusedEnemy가 없으면 Enemy이름과 HP 숨김처리
+	if (Txt_EnemyType){
+		Txt_EnemyType->SetVisibility(ESlateVisibility::Hidden);
+	}
+
+	if (PB_EnemyHP){
+		PB_EnemyHP->SetVisibility(ESlateVisibility::Hidden);
+	}
 }
 
 void UTGPlayerWidget::HandlePauseClicked()

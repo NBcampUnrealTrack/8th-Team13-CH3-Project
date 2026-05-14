@@ -7,7 +7,8 @@
 
 ATGTankEnemy::ATGTankEnemy()
 {
-	HP = 15;
+	EnemyType = TEXT("철갑병");
+	MaxHP = 15;
 	StructureAttackDamage = 2;
 	StructureAttackInterval = 0.9f;
 	StructureAttackRange = 200;

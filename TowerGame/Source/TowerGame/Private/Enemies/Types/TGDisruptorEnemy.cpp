@@ -5,7 +5,8 @@
 
 ATGDisruptorEnemy::ATGDisruptorEnemy()
 {
-	HP = 8;
+	EnemyType = TEXT("교란병");
+	MaxHP = 8;
 	StructureAttackDamage = 1;
 	StructureAttackInterval = 0.6f;
 	StructureAttackRange = 200;

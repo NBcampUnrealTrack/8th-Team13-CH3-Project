@@ -58,8 +58,6 @@ protected:
 
 private:
 	EBossPhase CurrentPhase = EBossPhase::Phase1;
-	float MaxHP = 0.f;
-
 	FTimerHandle PatternTimerHandle;
 
 	void CheckPhaseTransition();

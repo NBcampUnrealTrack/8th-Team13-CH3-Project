@@ -7,7 +7,8 @@
 
 ATGAssaultEnemy::ATGAssaultEnemy()
 {
-	HP = 7;
+	EnemyType = TEXT("강습병");
+	MaxHP = 7;
 	StructureAttackDamage = 1;
 	StructureAttackInterval = 0.4f;
 	StructureAttackRange = 200;

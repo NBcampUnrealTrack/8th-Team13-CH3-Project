@@ -7,8 +7,11 @@
 #include "Weapons/TGWeaponBase.h"
 #include "TGPlayer.generated.h"
 
+class ATGEnemyBase;
 struct FInputActionValue;
 class ATGInteractiveActor;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFocusedEnemyChanged, ATGEnemyBase*, FocusedEnemy);
 
 UCLASS()
 class TOWERGAME_API ATGPlayer : public ACharacter
@@ -38,6 +41,12 @@ protected:
 	// 상호작용 실행 (입력 바인딩에서 호출) TODO : IA 바인딩 필요
 	UFUNCTION(BlueprintCallable, Category = "TowerGame|Interaction")
 	void Interact(const FInputActionValue& InputValue);
+
+public:
+	// 델리게이트 이벤트
+	UPROPERTY(BlueprintAssignable, Category = "Enemy")
+	FOnFocusedEnemyChanged OnFocusedEnemyChanged;
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -134,8 +143,13 @@ private:
 	void InteractiveTrace(bool debug = false);
 	bool CameraLineTrace(FHitResult& TraceHit, ECollisionChannel Channel, float MaxDistance = 5000.0f, bool debug = false);
 
+
 	//	포커싱된 액터
 	UPROPERTY()
 	TObjectPtr<ATGInteractiveActor> CurrentFocusedActor;
 	const FVector InitialLocation = FVector(25.0f, 25.0f, -25.0f);
+
+	// 감지한 Enemy
+	UPROPERTY()
+	TObjectPtr<ATGEnemyBase> LastFocusedEnemy;
 };
