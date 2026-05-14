@@ -112,8 +112,6 @@ protected:
 
 	bool IsStructureTargetInAttackRange(const AActor* Target) const;
 
-	void NotifyEnemyRemoved();
-
 private:
 	// 가까운 건물 반환 추후 우선도 고려
 	bool MoveToBlockingBuilding();

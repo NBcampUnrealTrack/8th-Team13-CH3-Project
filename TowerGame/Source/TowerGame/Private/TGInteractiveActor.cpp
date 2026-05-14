@@ -25,7 +25,23 @@ void ATGInteractiveActor::BeginPlay()
 {
 	Super::BeginPlay();
 
-	SyncCollisionToMeshBounds();
+	//	블루프린트 CDO가 InteractionCollision의 콜리전 프리셋을 덮어쓸 수 있으므로
+	//	bInteractionEnabled 상태를 BeginPlay에서 강제 적용
+	InteractionCollision->SetCollisionResponseToChannel(
+		ECC_GameTraceChannel1,
+		bInteractionEnabled ? ECR_Block : ECR_Ignore
+	);
+
+	//	메시 컴포넌트가 ECC_GameTraceChannel1을 Block하면 SetInteractionEnabled 로직을 방해하므로 강제로 Ignore
+	TArray<UStaticMeshComponent*> MeshComps;
+	GetComponents<UStaticMeshComponent>(MeshComps);
+	for (UStaticMeshComponent* Mesh : MeshComps)
+	{
+		if (IsValid(Mesh))
+		{
+			Mesh->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);
+		}
+	}
 
 	GetWorldTimerManager().SetTimer(
 		DebugDrawTimerHandle,
@@ -36,38 +52,35 @@ void ATGInteractiveActor::BeginPlay()
 	);
 }
 
-void ATGInteractiveActor::SyncCollisionToMeshBounds() const
-{
-	TArray<UStaticMeshComponent*> MeshComps;
-	GetComponents<UStaticMeshComponent>(MeshComps);
-
-	if (MeshComps.IsEmpty()) return;
-
-	FBox LocalBox(ForceInit);
-	float WorldMaxZ = GetActorLocation().Z;
-
-	for (UStaticMeshComponent* Mesh : MeshComps)
-	{
-		if (!IsValid(Mesh) || !Mesh->GetStaticMesh()) continue;
-
-		if (Mesh->GetAttachParent() == InteractionCollision)
-		{	//	직속 자식은 XY까지 검사
-			// XY: 액터 로컬 공간 기준
-			LocalBox += Mesh->GetStaticMesh()->GetBoundingBox().TransformBy(Mesh->GetRelativeTransform());
-		}
-		//	손자 이하는 Z만 검사
-		// Z: 월드 공간 기준 메쉬 최상단 높이
-		const FBox MeshWorldBox = Mesh->GetStaticMesh()->GetBoundingBox().TransformBy(Mesh->GetComponentTransform());
-		WorldMaxZ = FMath::Max(WorldMaxZ, MeshWorldBox.Max.Z);
-	}
-
-	if (LocalBox.IsValid)
-	{
-		FVector Extent = LocalBox.GetExtent();
-		Extent.Z = WorldMaxZ - GetActorLocation().Z;
-		InteractionCollision->SetBoxExtent(Extent);
-	}
-}
+// void ATGInteractiveActor::SyncCollisionToMeshBounds() const
+// {
+// 	TArray<UStaticMeshComponent*> MeshComps;
+// 	GetComponents<UStaticMeshComponent>(MeshComps);
+//
+// 	if (MeshComps.IsEmpty()) return;
+//
+// 	FBox LocalBox(ForceInit);
+// 	float WorldMaxZ = GetActorLocation().Z;
+//
+// 	for (UStaticMeshComponent* Mesh : MeshComps)
+// 	{
+// 		if (!IsValid(Mesh) || !Mesh->GetStaticMesh()) continue;
+//
+// 		if (Mesh->GetAttachParent() == InteractionCollision)
+// 		{
+// 			LocalBox += Mesh->GetStaticMesh()->GetBoundingBox().TransformBy(Mesh->GetRelativeTransform());
+// 		}
+// 		const FBox MeshWorldBox = Mesh->GetStaticMesh()->GetBoundingBox().TransformBy(Mesh->GetComponentTransform());
+// 		WorldMaxZ = FMath::Max(WorldMaxZ, MeshWorldBox.Max.Z);
+// 	}
+//
+// 	if (LocalBox.IsValid)
+// 	{
+// 		FVector Extent = LocalBox.GetExtent();
+// 		Extent.Z = WorldMaxZ - GetActorLocation().Z;
+// 		InteractionCollision->SetBoxExtent(Extent);
+// 	}
+// }
 
 void ATGInteractiveActor::DrawDebugCollisionBox()
 {
@@ -84,8 +97,6 @@ void ATGInteractiveActor::OnInteract_Implementation(ATGPlayer* Player) {}
 
 void ATGInteractiveActor::SetInteractionEnabled(bool bEnabled)
 {
-	if (bInteractionEnabled == bEnabled) return;
-
 	bInteractionEnabled = bEnabled;
 	InteractionCollision->SetCollisionResponseToChannel(
 		ECC_GameTraceChannel1,

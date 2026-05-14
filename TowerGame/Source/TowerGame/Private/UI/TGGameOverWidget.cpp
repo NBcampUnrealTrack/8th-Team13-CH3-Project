@@ -6,6 +6,8 @@
 
 void UTGGameOverWidget::NativeConstruct()
 {
+	Super::NativeConstruct();
+
 	if (ResultButton)
 	{
 		ResultButton->OnClicked.AddDynamic(this, &UTGGameOverWidget::HandleResultClicked);
@@ -16,6 +18,7 @@ void UTGGameOverWidget::NativeConstruct()
 	}
 
 	HideResult();
+	PlayGameOverAnimation();
 }
 
 void UTGGameOverWidget::HandleResultClicked()
@@ -54,5 +57,13 @@ void UTGGameOverWidget::HideResult()
 	if (ResultPanel)
 	{
 		ResultPanel->SetVisibility(ESlateVisibility::Collapsed);
+	}
+}
+
+void UTGGameOverWidget::PlayGameOverAnimation()
+{
+	if (FadeInDark)
+	{
+		PlayAnimation(FadeInDark);
 	}
 }

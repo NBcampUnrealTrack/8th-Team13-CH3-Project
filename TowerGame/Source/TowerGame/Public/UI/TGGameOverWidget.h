@@ -24,6 +24,9 @@ protected:
 	UPROPERTY(meta = (BindWidgetOptional))
 	UWidget* ResultPanel;
 
+	UPROPERTY(Transient, meta = (BindWidgetAnim))
+	TObjectPtr<UWidgetAnimation> FadeInDark;
+
 	UFUNCTION()
 	void HandleResultClicked();
 
@@ -32,4 +35,6 @@ protected:
 
 	void ShowResult();
 	void HideResult();
+
+	void PlayGameOverAnimation();
 };

@@ -43,8 +43,8 @@ public:
 	bool IsInteractionEnabled() const { return bInteractionEnabled; }
 
 	// 자식 StaticMeshComponent들의 합산 바운드에 맞게 InteractionCollision 크기를 동기화합니다.
-	// BeginPlay에서 자동 호출되며, 동적으로 메쉬 크기가 바뀌는 경우 변경 후 직접 호출하세요.
-	void SyncCollisionToMeshBounds() const;
+	// InteractionCollision 위치는 블루프린트에서 직접 조정하세요.
+	// void SyncCollisionToMeshBounds() const;
 
 protected:
 	// Interactive 트레이스 채널에만 반응하는 콜리전

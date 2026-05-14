@@ -3,6 +3,7 @@
 
 #include "Core/Grid/TGSingleGrid.h"
 #include "BaseTower/TGBaseTower.h"
+#include "Components/BoxComponent.h"
 #include "Core/GameFlow/TGGameMode.h"
 #include "Core/Grid/TGGridBase.h"
 #include "Kismet/GameplayStatics.h"
@@ -13,8 +14,8 @@ ATGSingleGrid::ATGSingleGrid()
 
 	//	ToDo : 헤더를 확인하고 삭제해야 할 때. 함께 삭제해주세요
 	Visualizer = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComponent"));
-	Visualizer->SetupAttachment(RootComponent);
-	Visualizer->SetCanEverAffectNavigation(false);
+	SetRootComponent(Visualizer);
+	InteractionCollision->SetupAttachment(Visualizer);
 
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMesh(TEXT("/Engine/BasicShapes/Cube"));
 	if (CubeMesh.Succeeded())
@@ -45,13 +46,12 @@ void ATGSingleGrid::SetBoxSize(float Size) const
 	const float Scale = Size / 100.0f;
 	const FVector CurrentScale = Visualizer->GetRelativeScale3D();
 	Visualizer->SetRelativeScale3D(FVector(Scale, Scale, CurrentScale.Z));
-
-	SyncCollisionToMeshBounds();
 }
 
 void ATGSingleGrid::OnFocused_Implementation(ATGPlayer* Player)
 {
 	if (bIsPlacedTower)	return;
+	if (!PlacedTower)	return;
 	Super::OnFocused_Implementation(Player);
 	//	커스텀 뎁스 패스에 등록 -> 포스트 프로세싱 가능
 	Visualizer->SetRenderCustomDepth(true);
@@ -62,6 +62,7 @@ void ATGSingleGrid::OnFocused_Implementation(ATGPlayer* Player)
 void ATGSingleGrid::OnUnfocused_Implementation(ATGPlayer* Player)
 {
 	if (bIsPlacedTower)	return;
+	if (!PlacedTower)	return;
 	Super::OnUnfocused_Implementation(Player);
 	//	커스텀 뎁스 패스에서 제외
 	Visualizer->SetRenderCustomDepth(false);
@@ -82,6 +83,7 @@ void ATGSingleGrid::OnUnfocused_Implementation(ATGPlayer* Player)
 void ATGSingleGrid::OnInteract_Implementation(ATGPlayer* Player)
 {
 	Super::OnInteract_Implementation(Player);
+	if (!PlacedTower)	return;
 
 	ATGGameMode* GM = Cast<ATGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
 	if (!GM || !GM->SpendEnergy(50)) return;
@@ -107,6 +109,7 @@ void ATGSingleGrid::BeginPlay()
 	BaseTowerClass = GridBase->GetTowerClassOf();
 	PlacedTower = GetWorld()->SpawnActor<ABaseTower>(BaseTowerClass);
 	if (!IsValid(PlacedTower))	return;
+	SetInteractionEnabled(true);
 	PlacedTower->SetActorLocation(GetActorLocation());
 	PlacedTower->Disable();
 }
