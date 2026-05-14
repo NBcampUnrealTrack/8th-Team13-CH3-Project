@@ -90,6 +90,7 @@ void UTGPlayerWidget::NativeDestruct()
 		GameMode->OnEnergyChanged.RemoveDynamic(this, &UTGPlayerWidget::HandleEnergyChanged);
 	}
 
+	UnbindFocusedEnemy();
 	Super::NativeDestruct();
 }
 
@@ -156,6 +157,7 @@ void UTGPlayerWidget::HandleFocusedEnemyChanged(ATGEnemyBase* NewEnemy)
 	UWorld* World = GetWorld();
 	if (!World) return;
 
+	// 기존 UI 숨김 타이머 제거
 	World->GetTimerManager().ClearTimer(FocusedEnemyHideTimerHandle);
 
 	// 0.5초 뒤 UI 숨김
@@ -170,7 +172,7 @@ void UTGPlayerWidget::HandleFocusedEnemyChanged(ATGEnemyBase* NewEnemy)
 		return;
 	}
 
-	FocusedEnemy = NewEnemy;
+	BindFocusedEnemy(NewEnemy);
 
 	// EnemyType UI 반영
 	if (Txt_EnemyType){
@@ -180,17 +182,34 @@ void UTGPlayerWidget::HandleFocusedEnemyChanged(ATGEnemyBase* NewEnemy)
 
 	// Enemy 체력 UI 반영
 	if (PB_EnemyHP){
-		float EnemyHPRatio = FMath::Clamp(
-			NewEnemy->GetCurrentHP()/NewEnemy->GetMaxHP(), 0.0f, 1.0f);
-
-		PB_EnemyHP->SetPercent(EnemyHPRatio);
+		UpdateFocusedEnemyHPBar(FocusedEnemy->GetCurrentHP(), FocusedEnemy->GetMaxHP());
 		PB_EnemyHP->SetVisibility(ESlateVisibility::Visible);
 	}
 
 }
 
+void UTGPlayerWidget::UpdateFocusedEnemyHPBar(float CurrentHP, float MaxHP)
+{
+	if (!PB_EnemyHP) return;
+
+	const float EnemyRatio = FMath::Clamp(CurrentHP / MaxHP, 0.0f, 1.0f);
+	PB_EnemyHP->SetPercent(EnemyRatio);
+}
+
+void UTGPlayerWidget::HandleFocusedEnemyRemoved(ATGEnemyBase* RemovedEnemy)
+{
+	if (RemovedEnemy != FocusedEnemy) return;
+
+	if (UWorld* World = GetWorld()){
+		World->GetTimerManager().ClearTimer(FocusedEnemyHideTimerHandle);
+	}
+
+	HideFocusedEnemyInfo();
+}
+
 void UTGPlayerWidget::HideFocusedEnemyInfo()
 {
+	UnbindFocusedEnemy();
 	FocusedEnemy = nullptr;
 
 	// FocusedEnemy가 없으면 Enemy이름과 HP 숨김처리
@@ -201,6 +220,31 @@ void UTGPlayerWidget::HideFocusedEnemyInfo()
 	if (PB_EnemyHP){
 		PB_EnemyHP->SetVisibility(ESlateVisibility::Hidden);
 	}
+}
+
+void UTGPlayerWidget::BindFocusedEnemy(ATGEnemyBase* NewEnemy)
+{
+	UnbindFocusedEnemy();
+
+	FocusedEnemy = NewEnemy;
+	if (!FocusedEnemy) return;
+
+	// Enemy 체력 변동, 삭제 델리게이트 구독
+	FocusedEnemy->OnEnemyHpChanged.AddUniqueDynamic(
+		this, &UTGPlayerWidget::UpdateFocusedEnemyHPBar);
+	FocusedEnemy->OnEnemyRemoved.AddUniqueDynamic(
+		this, &UTGPlayerWidget::HandleFocusedEnemyRemoved);
+}
+
+void UTGPlayerWidget::UnbindFocusedEnemy()
+{
+	if (!FocusedEnemy) return;
+
+	// Enemy 체력 변동, 삭제 델리게이트 구독 해제
+	FocusedEnemy->OnEnemyHpChanged.RemoveDynamic(this, &UTGPlayerWidget::UpdateFocusedEnemyHPBar);
+	FocusedEnemy->OnEnemyRemoved.RemoveDynamic(this, &UTGPlayerWidget::HandleFocusedEnemyRemoved);
+
+	FocusedEnemy = nullptr;
 }
 
 void UTGPlayerWidget::HandlePauseClicked()

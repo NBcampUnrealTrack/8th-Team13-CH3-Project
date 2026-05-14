@@ -61,7 +61,7 @@ void ATGEnemyBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		NavigationManager->UnRegisterEnemy(this);
 	}
 
-	NotifyEnemyRemoved();
+	OnEnemyRemoved.Broadcast(this);
 
 	Super::EndPlay(EndPlayReason);
 }
@@ -191,7 +191,6 @@ float ATGEnemyBase::TakeDamage(float DamageAmount,
 		{
 			GM->AddEnergy(EnergyDropAmount);
 		}
-		NotifyEnemyRemoved();
 		Destroy();
 	}
 
@@ -313,11 +312,6 @@ bool ATGEnemyBase::IsStructureTargetInAttackRange(const AActor* Target) const
 	if (!Target) return false;
 
 	return FVector::Dist2D(GetActorLocation(), Target->GetActorLocation()) < StructureAttackRange;
-}
-
-void ATGEnemyBase::NotifyEnemyRemoved()
-{
-
 }
 
 bool ATGEnemyBase::MoveToBlockingBuilding()

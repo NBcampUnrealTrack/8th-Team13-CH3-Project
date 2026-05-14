@@ -83,6 +83,14 @@ private:
 	UFUNCTION()
 	void HandleFocusedEnemyChanged(ATGEnemyBase* NewEnemy);
 
+	// Enemy 체력 UI에 반영
+	UFUNCTION()
+	void UpdateFocusedEnemyHPBar(float CurrentHP, float MaxHP);
+
+	// Enemy 제거 시 호출
+	UFUNCTION()
+	void HandleFocusedEnemyRemoved(ATGEnemyBase* RemovedEnemy);
+
 	// 각 Wave 시작 시 호출
 	UFUNCTION()
 	void HandleWaveStarted(int32 WaveIndex);
@@ -105,4 +113,7 @@ private:
 
 	void HideFocusedEnemyInfo();
 
+	// UI에 연결된 enemy 관리
+	void BindFocusedEnemy(ATGEnemyBase* NewEnemy);
+	void UnbindFocusedEnemy();
 };
