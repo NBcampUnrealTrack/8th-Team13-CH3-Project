@@ -19,8 +19,8 @@ protected:
 		float ShotInterval;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)	// 발당 산탄 수
 		int32 Pellet;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)	// 탄 퍼짐 (낮을 수록 정확도 상승)
-		float BulletSpead;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)	// 탄 퍼짐 각도 (낮을 수록 정확도 상승)
+		float BulletSpread;
 };
 
 UCLASS()

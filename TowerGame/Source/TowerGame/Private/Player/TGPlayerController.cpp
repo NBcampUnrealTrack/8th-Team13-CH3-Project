@@ -54,6 +54,10 @@ ATGPlayerController::ATGPlayerController()
 	if (IA_Interact_Asset.Succeeded())
 		Action_Interact = IA_Interact_Asset.Object;
 
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_Switching_Asset =
+		TEXT("/Game/Player/Input/Actions/IA_Switching.IA_Switching");
+	if (IA_Switching_Asset.Succeeded())
+		Action_Switching = IA_Switching_Asset.Object;
 	static ConstructorHelpers::FObjectFinder<UInputAction> IA_SelectTower_Asset =
 		TEXT("/Game/Player/Input/Actions/IA_SelectTower.IA_SelectTower");
 	if (IA_SelectTower_Asset.Succeeded())
@@ -69,6 +73,7 @@ ATGPlayerController::ATGPlayerController()
 		TEXT("/Game/Player/Input/Actions/IA_Pause.IA_Pause");
 	if (IA_Pause_Asset.Succeeded())
 		Action_Pause = IA_Pause_Asset.Object;
+
 }
 
 void ATGPlayerController::BeginPlay()

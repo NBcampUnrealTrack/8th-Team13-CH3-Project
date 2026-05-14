@@ -6,6 +6,8 @@
 #include "UObject/NoExportTypes.h"
 #include "TGWeaponBase.generated.h"
 
+#define AMMO_UNDEFINED -1	//한번도 쏘지않은 상태
+
 UENUM(BlueprintType)
 enum class ETGWeaponTriggerType : uint8
 {
@@ -61,12 +63,16 @@ class TOWERGAME_API UTGWeaponBase : public UObject
 {
 	GENERATED_BODY()
 protected:
-	int32 CurAmmo;
+	int32 CurAmmo = AMMO_UNDEFINED;
+	bool CanFire = true;
 protected:	// 라인트레이싱 정보
 	FHitResult TraceHit;
 	FCollisionQueryParams QueryParams;
 	TArray<AActor*> IgnoredActors;
+
+	FTimerHandle TimerFireDelay;
 public:
 	virtual const FTGWeaponAsset* GetAsset() { return nullptr; }
 	virtual void Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance);
+	void HandleFireDelay();
 };
