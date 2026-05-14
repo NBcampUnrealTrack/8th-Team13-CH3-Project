@@ -6,6 +6,7 @@
 #include "TGMountedTower.h"
 #include "NavAreas/NavArea_Null.h"
 #include "Components/StaticMeshComponent.h"
+#include "Blueprint/UserWidget.h"
 
 ABaseTower::ABaseTower()
 {
@@ -123,6 +124,12 @@ void ABaseTower::OnUnfocused_Implementation(ATGPlayer* Player)
 {
 	Super::OnUnfocused_Implementation(Player);
 	BaseMesh->SetRenderCustomDepth(false);
+
+	//	포커스 벗어나면 위젯 닫기
+	if (BuildWidget && BuildWidget->IsInViewport())
+	{
+		BuildWidget->RemoveFromParent();
+	}
 }
 
 void ABaseTower::OnInteract_Implementation(ATGPlayer* Player)
@@ -130,22 +137,22 @@ void ABaseTower::OnInteract_Implementation(ATGPlayer* Player)
 	if (bAttached) return;
 
 	ATGGameMode* GM = Cast<ATGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
-	if (!GM || !GM->SpendEnergy(50)) return;
+	if (!GM) return;
 
 	Super::OnInteract_Implementation(Player);
 
-	//	공격 타워 올리기
-	TSubclassOf<ATGMountedTower> TowerClass = GM->GetTowerSubclass(ETGTurretType::WeaponTower);
-	ATGMountedTower* WeaponTower = GetWorld()->SpawnActor<ATGMountedTower>(TowerClass);
-	bAttached = true;
-	AttachedWeapon = WeaponTower;
-	AttachedWeapon->SetActorLocation(GetActorLocation() + MountPoint->GetRelativeLocation());
-
-	//	웨폰타워 인터랙션 활성화
-	WeaponTower->SetInteractionEnabled(true);
-
-
-	//	우선은 인터랙션 비활성화
-	//	TODO : 추후 타워 파괴 기능 생겼을 때 재건축을 위해 활성화 하는 코드 추가해야함
-	SetInteractionEnabled(false);
+	//	BuildWidget 표시 — 타워 선택 및 스폰은 SelectTower에서 처리
+	if (BuildWidgetClass)
+	{
+		APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+		if (PC)
+		{
+			if (!BuildWidget)
+			{
+				BuildWidget = CreateWidget<UTGBuildWidget>(PC, BuildWidgetClass);
+			}
+			BuildWidget->SetOwnerTower(this);
+			BuildWidget->AddToViewport();
+		}
+	}
 }
