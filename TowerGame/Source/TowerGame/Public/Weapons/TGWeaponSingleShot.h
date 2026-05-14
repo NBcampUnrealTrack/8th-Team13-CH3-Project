@@ -20,12 +20,21 @@ protected:
 };
 
 UCLASS()
-class TOWERGAME_API UTGWeaponSingleShot : public UTGWeaponBase
+class TOWERGAME_API UTGWeaponSingleShot : public UTGWeaponBase, public FTickableGameObject
 {
 	GENERATED_BODY()
 private:
 	FTGStatusWeaponSingleShot status;
+	bool IsFire = false;		// 이번 프레임에 발사시도를 했는가?
+	bool IsPrevFire = false;		// 이전 프레임에 발사시도를 했는가?
 public:
+	virtual void Tick(float DeltaTime) override;
+	virtual bool IsTickable() const override;
+	virtual bool IsTickableInEditor() const override;
+	virtual bool IsTickableWhenPaused() const override;
+	virtual TStatId GetStatId() const override;
+	virtual UWorld* GetWorld() const override;
+
 	virtual void Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance) override;
 	virtual const FTGWeaponAsset* GetAsset() override { return &status.Asset; };
 	void SetStatus(const FTGStatusWeaponSingleShot value) { status = value; }

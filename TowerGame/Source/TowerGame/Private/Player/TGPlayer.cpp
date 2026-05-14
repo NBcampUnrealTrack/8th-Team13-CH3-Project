@@ -59,7 +59,9 @@ void ATGPlayer::BeginPlay()
 	if (GetWorld()->GetFirstPlayerController())
 		EnableInput(GetWorld()->GetFirstPlayerController());
 
-	OwnWeapon(ETGWeaponTriggerType::REPEATER, TEXT("AssaultRifle"), true);
+	OwnWeapon(ETGWeaponTriggerType::REPEATER, TEXT("AssaultRifle"), false);
+	OwnWeapon(ETGWeaponTriggerType::SHOTGUN, TEXT("Shotgun"), true);
+	OwnWeapon(ETGWeaponTriggerType::SINGLE_SHOT, TEXT("SniperRifle"), false);
 }
 
 void ATGPlayer::Move(const FInputActionValue& value)
@@ -153,6 +155,29 @@ void ATGPlayer::Interact(const FInputActionValue& InputValue)
 {
 	if (bBuildMode && CurrentFocusedActor)
 		CurrentFocusedActor->OnInteract(this);
+}
+
+void ATGPlayer::SwitchingWeapon(const FInputActionValue& InputValue)
+{
+	const float moveDir = InputValue.Get<float>();
+	if (FMath::IsNearlyZero(moveDir))
+		return;
+
+	TArray<TPair<FString, TObjectPtr<UTGWeaponBase>>> Arr = OwnedWeapons.Array();
+	int32 Idx = Arr.IndexOfByPredicate([this](TPair<FString, TObjectPtr<UTGWeaponBase>> element) {return CurrentWeaponKey == element.Key; });
+	if (moveDir > 0)
+		Idx++;
+	else
+		Idx--;
+
+	if (!Arr.IsValidIndex(Idx))
+	{
+		if (moveDir > 0)
+			Idx = 0;
+		else
+			Idx = Arr.Num() - 1;
+	}
+	EquipWeapon(Arr[Idx].Key);
 }
 
 // Called every frame
@@ -255,6 +280,8 @@ void ATGPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 				EnhancedInputComponent->BindAction(PlayerController->Action_Shot, ETriggerEvent::Triggered, this, &ATGPlayer::Shot);
 			if (PlayerController->Action_Interact)
 				EnhancedInputComponent->BindAction(PlayerController->Action_Interact, ETriggerEvent::Triggered, this, &ATGPlayer::Interact);
+			if (PlayerController->Action_Switching)
+				EnhancedInputComponent->BindAction(PlayerController->Action_Switching, ETriggerEvent::Triggered, this, &ATGPlayer::SwitchingWeapon);
 		}
 	}
 }
@@ -328,6 +355,25 @@ void ATGPlayer::OwnWeapon(ETGWeaponTriggerType TriggerType, FName RowName, bool 
 		}
 		break;
 	}
+	case ETGWeaponTriggerType::SHOTGUN:
+	{
+		UTGWeaponShotgun* Shotgun;
+		FTGStatusWeaponShotgun* info;
+		DT = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr,
+			TEXT("/Game/Weapons/DT_WeaponTable_Shotgun.DT_WeaponTable_Shotgun")));
+		if (DT->IsValidLowLevel())
+		{
+			TArray<FName> DTNameArray = DT->GetRowNames();
+			info = DT->FindRow<FTGStatusWeaponShotgun>(RowName, TEXT(""));
+			if (info)
+			{
+				Shotgun = NewObject<UTGWeaponShotgun>(this);
+				Shotgun->SetStatus(*info);
+				OwnedWeapons.Add(GetWeaponKey(TriggerType, RowName), Shotgun);
+			}
+		}
+		break;
+	}
 	case ETGWeaponTriggerType::REPEATER:
 	{
 		UTGWeaponRepeater* Repeater;
@@ -349,26 +395,27 @@ void ATGPlayer::OwnWeapon(ETGWeaponTriggerType TriggerType, FName RowName, bool 
 	}
 	}
 
-
-
 	if (equip)
+		EquipWeapon(GetWeaponKey(TriggerType, RowName));
+}
+
+void ATGPlayer::EquipWeapon(FString Key)
+{
+	CurrentWeaponKey = Key;
+	FTGWeaponAsset AssetInfo = *GetCurrentWeapon()->GetAsset();
+	if (AssetInfo.SkeletalMesh)
 	{
-		CurrentWeaponKey = GetWeaponKey(TriggerType, RowName);
-		FTGWeaponAsset AssetInfo = *OwnedWeapons.Find(CurrentWeaponKey)->Get()->GetAsset();
-		if (AssetInfo.SkeletalMesh)
-		{
-			Weapon_Static->SetStaticMesh(nullptr);
-			Weapon_Skeletal->SetSkeletalMeshAsset(AssetInfo.SkeletalMesh);
-			Weapon_Skeletal->SetRelativeLocation(InitialLocation + AssetInfo.LocationOffset);
-			Weapon_Skeletal->SetRelativeRotation(AssetInfo.RotationOffset);
-		}
-		else if (AssetInfo.StaticMesh)
-		{
-			Weapon_Skeletal->SetSkeletalMeshAsset(nullptr);
-			Weapon_Static->SetStaticMesh(AssetInfo.StaticMesh);
-			Weapon_Static->SetRelativeLocation(InitialLocation + AssetInfo.LocationOffset);
-			Weapon_Static->SetRelativeRotation(AssetInfo.RotationOffset);
-		}
+		Weapon_Static->SetStaticMesh(nullptr);
+		Weapon_Skeletal->SetSkeletalMeshAsset(AssetInfo.SkeletalMesh);
+		Weapon_Skeletal->SetRelativeLocation(InitialLocation + AssetInfo.LocationOffset);
+		Weapon_Skeletal->SetRelativeRotation(AssetInfo.RotationOffset);
+	}
+	else if (AssetInfo.StaticMesh)
+	{
+		Weapon_Skeletal->SetSkeletalMeshAsset(nullptr);
+		Weapon_Static->SetStaticMesh(AssetInfo.StaticMesh);
+		Weapon_Static->SetRelativeLocation(InitialLocation + AssetInfo.LocationOffset);
+		Weapon_Static->SetRelativeRotation(AssetInfo.RotationOffset);
 	}
 }
 

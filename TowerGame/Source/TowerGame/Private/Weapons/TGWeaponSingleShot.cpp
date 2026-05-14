@@ -9,8 +9,45 @@
 #include "Particles/ParticleSystem.h"
 #include "Particles/ParticleSystemComponent.h"
 
+void UTGWeaponSingleShot::Tick(float DeltaTime)
+{
+	IsPrevFire = IsFire;
+	IsFire = false;
+}
+
+bool UTGWeaponSingleShot::IsTickable() const
+{
+	return IsFire || IsPrevFire;
+}
+
+bool UTGWeaponSingleShot::IsTickableInEditor() const
+{
+	return false;
+}
+
+bool UTGWeaponSingleShot::IsTickableWhenPaused() const
+{
+	return false;
+}
+
+TStatId UTGWeaponSingleShot::GetStatId() const
+{
+	return TStatId();
+}
+
+UWorld* UTGWeaponSingleShot::GetWorld() const
+{
+	return GetOuter()->GetWorld();
+}
+
 void UTGWeaponSingleShot::Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance)
 {
+	IsFire = true;
+	if (!CanFire || IsPrevFire)
+		return;
+
+	CanFire = false;
+	GetWorld()->GetTimerManager().SetTimer(TimerFireDelay, this, &UTGWeaponBase::HandleFireDelay, status.ShotCoolTime, false);
 	Super::Shoot(Instigator, WeaponComponent, MuzzlePos, Direction, Distance);
 
 	// 발포 이펙트

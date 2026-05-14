@@ -11,5 +11,59 @@
 
 void UTGWeaponShotgun::Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance)
 {
+	if (!CanFire)
+		return;
+
+	CanFire = false;
+	GetWorld()->GetTimerManager().SetTimer(TimerFireDelay, this, &UTGWeaponBase::HandleFireDelay, status.ShotInterval, false);
 	Super::Shoot(Instigator, WeaponComponent, MuzzlePos, Direction, Distance);
+
+	// 발포 이펙트
+	UParticleSystemComponent* FireParticle = UGameplayStatics::SpawnEmitterAttached(
+		status.Asset.FireParticle,
+		WeaponComponent,
+		NAME_None,
+		MuzzlePos,
+		FRotator::ZeroRotator,
+		FVector::OneVector * status.Asset.FireParticleScale,
+		EAttachLocation::KeepWorldPosition
+	);
+
+	for (int i = 0; i < status.Pellet; i++)
+	{
+		FVector SpeadDir = FMath::VRandCone(Direction, FMath::DegreesToRadians(status.BulletSpread));	//탄퍼짐 각도
+		UKismetSystemLibrary::LineTraceSingle(
+			GetWorld(), //어느 월드의 소속인가? (this)를 넣어줘도 됨
+			MuzzlePos,
+			MuzzlePos + SpeadDir * Distance,
+			UEngineTypes::ConvertToTraceType(ECC_Visibility),	// 사용할 트레이스채널
+			QueryParams.bTraceComplex,	// 복합콜리전 사용
+			IgnoredActors,	// 해당 액터는 이 트레이스를 무시
+			EDrawDebugTrace::ForDuration,	//디버그(그리기 타입 적용),
+			TraceHit,
+			true,	// 자기자신을 Ignore
+			FLinearColor::Blue,	//디버그 색깔
+			FLinearColor::Yellow,	//트레이스 히트 시 색깔
+			5.0f
+		);
+		if (TraceHit.bBlockingHit)
+		{
+			// 착탄 이펙트
+			UParticleSystemComponent* HitParticle = UGameplayStatics::SpawnEmitterAttached(
+				status.Asset.HitParticle,
+				TraceHit.GetActor()->GetRootComponent(),
+				NAME_None,
+				TraceHit.Location,
+				FRotator::ZeroRotator,
+				FVector::OneVector * status.Asset.HitParticleScale,
+				EAttachLocation::KeepWorldPosition
+			);
+
+			ATGEnemyBase* target = Cast<ATGEnemyBase>(TraceHit.GetActor());
+			if (target)
+			{
+				UGameplayStatics::ApplyDamage(target, status.Power, Instigator->GetInstigatorController(), Instigator, nullptr);
+			}
+		}
+	}
 }

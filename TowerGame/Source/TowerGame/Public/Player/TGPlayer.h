@@ -41,6 +41,8 @@ protected:
 	// 상호작용 실행 (입력 바인딩에서 호출) TODO : IA 바인딩 필요
 	UFUNCTION(BlueprintCallable, Category = "TowerGame|Interaction")
 	void Interact(const FInputActionValue& InputValue);
+	UFUNCTION()
+	void SwitchingWeapon(const FInputActionValue& InputValue);
 
 public:
 	// 델리게이트 이벤트
@@ -135,6 +137,7 @@ protected:
 	UTGWeaponBase* GetCurrentWeapon();	// 현재 장착중인 무기를 가져온다.
 
 	void OwnWeapon(ETGWeaponTriggerType TriggerType, FName RowName, bool equip);	// 무기를 소유한다. equip을 하면 장착까지 한다.
+	void EquipWeapon(FString Key);	// 무기를 장착한다.
 	FString GetWeaponKey(ETGWeaponTriggerType TriggerType, FName WeaponName);
 
 	// Debuff - Slow 해제

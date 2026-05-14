@@ -9,8 +9,56 @@
 #include "Particles/ParticleSystem.h"
 #include "Particles/ParticleSystemComponent.h"
 
+void UTGWeaponRepeater::Tick(float DeltaTime)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Red, FString::Printf(TEXT("SpreadTime: %f/%f"), CurSpreadTime, status.MaxSpreadTime));
+	if (IsFire)
+		IsFire = false;
+	else
+	{
+		CurSpreadTime -= status.MaxSpreadTime * DeltaTime * 2.0f;
+		if (CurSpreadTime <= 0.0f)
+			CurSpreadTime = 0.0f;
+	}
+}
+
+bool UTGWeaponRepeater::IsTickable() const
+{
+	return CurSpreadTime > 0.0f;
+}
+
+bool UTGWeaponRepeater::IsTickableInEditor() const
+{
+	return false;
+}
+
+bool UTGWeaponRepeater::IsTickableWhenPaused() const
+{
+	return false;
+}
+
+TStatId UTGWeaponRepeater::GetStatId() const
+{
+	return TStatId();
+}
+
+UWorld* UTGWeaponRepeater::GetWorld() const
+{
+	return GetOuter()->GetWorld();
+}
+
 void UTGWeaponRepeater::Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance)
 {
+	IsFire = true;
+	CurSpreadTime += GetWorld()->GetDeltaSeconds();
+	if (CurSpreadTime > status.MaxSpreadTime)
+		CurSpreadTime = status.MaxSpreadTime;
+
+	if (!CanFire)
+		return;
+
+	CanFire = false;
+	GetWorld()->GetTimerManager().SetTimer(TimerFireDelay, this, &UTGWeaponBase::HandleFireDelay, status.ShotInterval, false);
 	Super::Shoot(Instigator, WeaponComponent, MuzzlePos, Direction, Distance);
 
 	// 발포 이펙트
@@ -23,8 +71,8 @@ void UTGWeaponRepeater::Shoot(AActor* Instigator, class UMeshComponent* WeaponCo
 		FVector::OneVector * status.Asset.FireParticleScale,
 		EAttachLocation::KeepWorldPosition
 	);
-
-	FVector SpeadDir = FMath::VRandCone(Direction, FMath::DegreesToRadians(status.BulletSpead));	//탄퍼짐 각도
+	
+	FVector SpeadDir = FMath::VRandCone(Direction, FMath::DegreesToRadians(FMath::Lerp(0.0f,status.MaxBulletSpread,(CurSpreadTime/status.MaxSpreadTime))));	//탄퍼짐 각도
 	UKismetSystemLibrary::LineTraceSingle(
 		GetWorld(), //어느 월드의 소속인가? (this)를 넣어줘도 됨
 		MuzzlePos,

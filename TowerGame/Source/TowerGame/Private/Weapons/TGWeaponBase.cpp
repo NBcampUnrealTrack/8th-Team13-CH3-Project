@@ -6,6 +6,13 @@
 void UTGWeaponBase::Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance)
 {
 	QueryParams.bTraceComplex = true;
-	Instigator = { Instigator };
+	QueryParams.ClearIgnoredActors();
+	IgnoredActors = { Instigator };
 	QueryParams.AddIgnoredActors(IgnoredActors);
+}
+
+void UTGWeaponBase::HandleFireDelay()
+{
+	GetWorld()->GetTimerManager().ClearTimer(TimerFireDelay);
+	CanFire = true;
 }
