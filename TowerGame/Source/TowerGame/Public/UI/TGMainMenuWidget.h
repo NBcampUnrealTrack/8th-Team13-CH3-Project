@@ -6,6 +6,10 @@
 
 class UButton;
 class UWidget;
+class UImage;
+class UTexture2D;
+class UTextBlock;
+class UHorizontalBox;
 
 UCLASS()
 class TOWERGAME_API UTGMainMenuWidget : public UUserWidget
@@ -15,25 +19,45 @@ class TOWERGAME_API UTGMainMenuWidget : public UUserWidget
 protected:
 	virtual void NativeConstruct() override;
 
-protected:
 	UPROPERTY(meta = (BindWidget))
-	UButton* StartButton;
-
-	UPROPERTY(meta = (BindWidget))
-	UButton* EndButton;
+	TObjectPtr<UButton> StartButton;
 
 	UPROPERTY(meta = (BindWidget))
-	UButton* GuideButton;
+	TObjectPtr<UButton> EndButton;
 
-	UPROPERTY(meta = (BindWidgetOptional))
-	UButton* BackButton;
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UButton> GuideButton;
 
-	// 블루프린트에서 이름을 정확히 맞춰서 배치
-	UPROPERTY(meta = (BindWidgetOptional))
-	UWidget* MainMenuPanel;
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UWidget> MainMenuPanel;
 
-	UPROPERTY(meta = (BindWidgetOptional))
-	UWidget* GuidePanel;
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UWidget> GuidePanel;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UImage> GuideImage;
+
+	// 가이드 화면 전체 클릭용 투명 버튼
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UButton> GuideClickButton;
+
+	// 밑에 동그라미 표시용 HorizontalBox
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UHorizontalBox> GuideDotPanel;
+
+	// 가이드 이미지 배열
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Guide")
+	TArray<TObjectPtr<UTexture2D>> GuideTextures;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Guide")
+	FLinearColor ActiveDotColor = FLinearColor::Black;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Guide")
+	FLinearColor InactiveDotColor = FLinearColor(0.35f, 0.35f, 0.35f, 1.0f);
+
+	int32 CurrentGuideIndex = 0;
+
+	TArray<TObjectPtr<UTextBlock>> GuideDotTexts;
 
 	UFUNCTION()
 	void HandleStartClicked();
@@ -45,8 +69,12 @@ protected:
 	void HandleGuideClicked();
 
 	UFUNCTION()
-	void HandleBackClicked();
+	void HandleGuidePageClicked();
 
 	void ShowGuide();
 	void HideGuide();
+
+	void UpdateGuideImage();
+	void RebuildGuideDots();
+	void UpdateGuideDots();
 };

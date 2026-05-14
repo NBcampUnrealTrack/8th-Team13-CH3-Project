@@ -1,6 +1,12 @@
 #include "UI/TGMainMenuWidget.h"
 #include "Components/Button.h"
 #include "Components/Widget.h"
+#include "Components/Image.h"
+#include "Components/HorizontalBox.h"
+#include "Components/HorizontalBoxSlot.h"
+#include "Components/TextBlock.h"
+#include "Blueprint/WidgetTree.h"
+#include "Engine/Texture2D.h"
 #include "Kismet/GameplayStatics.h"
 #include "Core/GameFlow/TGMenuGameMode.h"
 
@@ -23,10 +29,16 @@ void UTGMainMenuWidget::NativeConstruct()
 		GuideButton->OnClicked.AddDynamic(this, &UTGMainMenuWidget::HandleGuideClicked);
 	}
 
-	if (BackButton)
+	if (GuideClickButton)
 	{
-		BackButton->OnClicked.AddDynamic(this, &UTGMainMenuWidget::HandleBackClicked);
+		GuideClickButton->OnClicked.AddDynamic(this, &UTGMainMenuWidget::HandleGuidePageClicked);
 	}
+
+	CurrentGuideIndex = 0;
+
+	RebuildGuideDots();
+	UpdateGuideImage();
+	UpdateGuideDots();
 
 	HideGuide();
 }
@@ -54,13 +66,36 @@ void UTGMainMenuWidget::HandleEndClicked()
 void UTGMainMenuWidget::HandleGuideClicked()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Guide Button Clicked"));
+
+	CurrentGuideIndex = 0;
+
+	RebuildGuideDots();
+	UpdateGuideImage();
+	UpdateGuideDots();
+
 	ShowGuide();
 }
 
-void UTGMainMenuWidget::HandleBackClicked()
+void UTGMainMenuWidget::HandleGuidePageClicked()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Back Button Clicked"));
-	HideGuide();
+	if (GuideTextures.Num() == 0)
+	{
+		HideGuide();
+		return;
+	}
+
+	// 마지막 페이지에서 클릭하면 메인메뉴로 복귀
+	if (CurrentGuideIndex >= GuideTextures.Num() - 1)
+	{
+		HideGuide();
+		return;
+	}
+
+	// 아직 마지막 페이지가 아니면 다음 페이지로 이동
+	CurrentGuideIndex++;
+
+	UpdateGuideImage();
+	UpdateGuideDots();
 }
 
 void UTGMainMenuWidget::ShowGuide()
@@ -86,5 +121,83 @@ void UTGMainMenuWidget::HideGuide()
 	if (GuidePanel)
 	{
 		GuidePanel->SetVisibility(ESlateVisibility::Collapsed);
+	}
+}
+
+void UTGMainMenuWidget::UpdateGuideImage()
+{
+	if (!GuideImage)
+	{
+		return;
+	}
+
+	if (!GuideTextures.IsValidIndex(CurrentGuideIndex))
+	{
+		return;
+	}
+
+	UTexture2D* CurrentTexture = GuideTextures[CurrentGuideIndex];
+
+	if (!CurrentTexture)
+	{
+		return;
+	}
+
+	GuideImage->SetBrushFromTexture(CurrentTexture, false);
+}
+
+void UTGMainMenuWidget::RebuildGuideDots()
+{
+	if (!GuideDotPanel)
+	{
+		return;
+	}
+
+	GuideDotPanel->ClearChildren();
+	GuideDotTexts.Empty();
+
+	for (int32 i = 0; i < GuideTextures.Num(); i++)
+	{
+		UTextBlock* DotText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+
+		if (!DotText)
+		{
+			continue;
+		}
+
+		DotText->SetText(FText::FromString(TEXT("●")));
+		DotText->SetColorAndOpacity(FSlateColor(InactiveDotColor));
+		DotText->SetRenderScale(FVector2D(1.5f, 1.5f));
+
+		UHorizontalBoxSlot* DotSlot = GuideDotPanel->AddChildToHorizontalBox(DotText);
+
+		if (DotSlot)
+		{
+			DotSlot->SetPadding(FMargin(6.0f, 0.0f));
+			DotSlot->SetHorizontalAlignment(HAlign_Center);
+			DotSlot->SetVerticalAlignment(VAlign_Center);
+		}
+
+		GuideDotTexts.Add(DotText);
+	}
+}
+
+void UTGMainMenuWidget::UpdateGuideDots()
+{
+	for (int32 i = 0; i < GuideDotTexts.Num(); i++)
+	{
+		if (!GuideDotTexts[i])
+		{
+			continue;
+		}
+
+		if (i == CurrentGuideIndex)
+		{
+			GuideDotTexts[i]->SetColorAndOpacity(FSlateColor(ActiveDotColor));
+		}
+		else
+		{
+			GuideDotTexts[i]->SetColorAndOpacity(FSlateColor(InactiveDotColor));
+		}
 	}
 }
