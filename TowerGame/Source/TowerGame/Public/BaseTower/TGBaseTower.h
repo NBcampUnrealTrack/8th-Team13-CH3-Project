@@ -1,8 +1,8 @@
 #pragma once
-
 #include "CoreMinimal.h"
 #include "TGInteractiveActor.h"
 #include "BaseTower/TGBuildWidget.h"
+#include "BaseTower/TGTurretType.h"
 #include "TGBaseTower.generated.h"
 
 class ATGMountedTower;
@@ -16,7 +16,6 @@ class TOWERGAME_API ABaseTower : public ATGInteractiveActor
 
 public:
 	ABaseTower();
-
 	virtual void BeginPlay() override;
 
 	// 기본 메시 (몸통)
@@ -45,6 +44,9 @@ public:
 	// 클릭 후 최종 배치 완료 처리 (활성화, 바디 활성화)
 	void FinalizeInstallation();
 
+	// TGPlayer에서 숫자키로 선택한 타워 타입 전달받음
+	void SetSelectedTurretType(ETGTurretType InType) { SelectedTurretType = InType; }
+
 	// 플레이어 시선이 닿을 때
 	virtual void OnFocused_Implementation(ATGPlayer* Player) override;
 	// 플레이어 시선이 벗어날 때
@@ -68,4 +70,7 @@ protected:
 	// 런타임 위젯 인스턴스
 	UPROPERTY()
 	UTGBuildWidget* BuildWidget;
+
+	// 선택된 타워 타입 — TGPlayer에서 SetSelectedTurretType으로 전달받음
+	ETGTurretType SelectedTurretType = ETGTurretType::None;
 };

@@ -1,10 +1,10 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Weapons/TGWeaponBase.h"
+#include "BaseTower/TGTurretType.h"
+#include "BaseTower/TGBuildWidget.h"
 #include "TGPlayer.generated.h"
 
 class ATGEnemyBase;
@@ -36,6 +36,8 @@ protected:
 	void Evade(const FInputActionValue& value);
 	UFUNCTION()
 	void Build(const FInputActionValue& InputValue);
+	UFUNCTION()
+	void SelectTower(const FInputActionValue& InputValue);	// 숫자키로 타워 타입 선택
 	UFUNCTION()
 	void Shot(const FInputActionValue& InputValue);
 	// 상호작용 실행 (입력 바인딩에서 호출) TODO : IA 바인딩 필요
@@ -117,6 +119,15 @@ protected:
 	bool bMoving;
 	FVector2D MoveDir;	// 현재 이동중인 방향, 정규화벡터
 	bool bBuildMode;	// 빌드모드
+	ETGTurretType SelectedTurretType = ETGTurretType::None;	// 숫자키로 선택한 타워 타입
+
+	// 빌드모드 진입 시 표시할 위젯 클래스 — 에디터에서 WBP_BuildWidget 설정
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tower|UI")
+	TSubclassOf<UTGBuildWidget> BuildWidgetClass;
+
+	// 런타임 위젯 인스턴스
+	UPROPERTY()
+	UTGBuildWidget* BuildWidget;
 
 	// Debuff - Slow 관련 변수
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Status|Debuff")

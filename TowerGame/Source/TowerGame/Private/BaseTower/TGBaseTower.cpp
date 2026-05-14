@@ -144,20 +144,31 @@ void ABaseTower::OnInteract_Implementation(ATGPlayer* Player)
 	ATGGameMode* GM = Cast<ATGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
 	if (!GM) return;
 
+	// 선택된 타입이 없으면 무시
+	if (SelectedTurretType == ETGTurretType::None) return;
+
+	// 자원 차감
+	if (!GM->SpendEnergy(50)) return;
+
 	Super::OnInteract_Implementation(Player);
 
-	//	BuildWidget 표시 — 타워 선택 및 스폰은 SelectTower에서 처리
-	if (BuildWidgetClass)
+	// 선택된 타입으로 타워 스폰
+	TSubclassOf<ATGMountedTower> TowerClass = GM->GetTowerSubclass(SelectedTurretType);
+	if (!TowerClass) return;
+
+	ATGMountedTower* MountedTower = GetWorld()->SpawnActor<ATGMountedTower>(TowerClass);
+	if (MountedTower)
 	{
-		APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
-		if (PC)
+		bAttached = true;
+		AttachedWeapon = MountedTower;
+		MountedTower->SetActorLocation(GetActorLocation() + MountPoint->GetRelativeLocation());
+		MountedTower->SetInteractionEnabled(true);
+		SetInteractionEnabled(false);
+
+		//	타워 설치 후 위젯 닫기
+		if (BuildWidget && BuildWidget->IsInViewport())
 		{
-			if (!BuildWidget)
-			{
-				BuildWidget = CreateWidget<UTGBuildWidget>(PC, BuildWidgetClass);
-			}
-			BuildWidget->SetOwnerTower(this);
-			BuildWidget->AddToViewport();
+			BuildWidget->RemoveFromParent();
 		}
 	}
 }

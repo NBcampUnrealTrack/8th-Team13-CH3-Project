@@ -54,6 +54,11 @@ ATGPlayerController::ATGPlayerController()
 	if (IA_Interact_Asset.Succeeded())
 		Action_Interact = IA_Interact_Asset.Object;
 
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_SelectTower_Asset =
+		TEXT("/Game/Player/Input/Actions/IA_SelectTower.IA_SelectTower");
+	if (IA_SelectTower_Asset.Succeeded())
+		Action_SelectTower = IA_SelectTower_Asset.Object;
+
 	// 메뉴 조작
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext> IMCMenu_Asset =
 		TEXT("/Game/Player/Input/IMC_Menu.IMC_Menu");

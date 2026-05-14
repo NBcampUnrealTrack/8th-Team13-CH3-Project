@@ -18,6 +18,7 @@
 #include "Weapons/TGWeaponSingleShot.h"
 #include "Weapons/TGWeaponShotgun.h"
 #include "Weapons/TGWeaponRepeater.h"
+#include "BaseTower/TGBaseTower.h"
 
 // Sets default values
 ATGPlayer::ATGPlayer() : MaxHP(100), SlowRate(0.5f), DefaultWalkSpeed(0)
@@ -125,6 +126,39 @@ void ATGPlayer::Evade(const FInputActionValue& value)
 void ATGPlayer::Build(const FInputActionValue& InputValue)
 {
 	bBuildMode = !bBuildMode;
+
+	// 빌드모드 진입 시 위젯 표시, 해제 시 위젯 닫기
+	if (BuildWidgetClass)
+	{
+		APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+		if (PC)
+		{
+			if (!BuildWidget)
+			{
+				BuildWidget = CreateWidget<UTGBuildWidget>(PC, BuildWidgetClass);
+			}
+			if (bBuildMode)
+				BuildWidget->AddToViewport();
+			else
+				BuildWidget->RemoveFromParent();
+		}
+	}
+}
+
+void ATGPlayer::SelectTower(const FInputActionValue& InputValue)
+{
+	// 빌드모드일 때만 타워 선택 가능
+	if (!bBuildMode) return;
+
+	int32 SlotIndex = FMath::RoundToInt(InputValue.Get<float>());
+	switch (SlotIndex)
+	{
+	case 1: SelectedTurretType = ETGTurretType::BaseTower;   break;	// 1번 : BaseTower
+	case 2: SelectedTurretType = ETGTurretType::WeaponTower; break;	// 2번 : WeaponTower
+	case 3: SelectedTurretType = ETGTurretType::DebuffTower; break;	// 3번 : DebuffTower
+	case 4: SelectedTurretType = ETGTurretType::BuffTower;   break;	// 4번 : BuffTower
+	default: break;
+	}
 }
 
 void ATGPlayer::Shot(const FInputActionValue& InputValue)
@@ -141,7 +175,7 @@ void ATGPlayer::Shot(const FInputActionValue& InputValue)
 	else
 		CurrentWeaponComp = GetMesh();
 	MuzzlePos = CurrentWeaponComp->GetComponentTransform().TransformPosition(GetCurrentWeapon()->GetAsset()->MuzzlePos);
-	
+
 	if (CameraLineTrace(TraceHit, ECC_Visibility, Distance))
 		ShootDir = (TraceHit.ImpactPoint - MuzzlePos).GetSafeNormal();	// Hit한 지점을 향해 발사
 	else
@@ -153,7 +187,14 @@ void ATGPlayer::Shot(const FInputActionValue& InputValue)
 void ATGPlayer::Interact(const FInputActionValue& InputValue)
 {
 	if (bBuildMode && CurrentFocusedActor)
+	{
+		// 선택된 타워 타입을 BaseTower에 전달 후 상호작용
+		if (ABaseTower* BaseTower = Cast<ABaseTower>(CurrentFocusedActor))
+		{
+			BaseTower->SetSelectedTurretType(SelectedTurretType);
+		}
 		CurrentFocusedActor->OnInteract(this);
+	}
 }
 
 // Called every frame
@@ -187,11 +228,11 @@ void ATGPlayer::Tick(float DeltaTime)
 
 	// Trace 결과 중 HitEnemy을 확인하여 기존 값과 다를 경우 Broadcast
 	ATGEnemyBase* HitEnemy = Cast<ATGEnemyBase>(WeaponTrace.GetActor());
-	if (HitEnemy != LastFocusedEnemy){
+	if (HitEnemy != LastFocusedEnemy) {
 		LastFocusedEnemy = HitEnemy;
 		OnFocusedEnemyChanged.Broadcast(LastFocusedEnemy);
 	}
-	
+
 	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Current Evade Cooldown: %f / %f"), CurrentEvadeCooldown, EvadeCooldown));
 	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Current Evade Count(LSHIFT): %d / %d"), CurrentEvadeCount, EvadeCount));
 	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Aim Target: %s"), WeaponTrace.bBlockingHit ? *WeaponTrace.GetActor()->GetName() : TEXT("None")));
@@ -256,6 +297,8 @@ void ATGPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 				EnhancedInputComponent->BindAction(PlayerController->Action_Shot, ETriggerEvent::Triggered, this, &ATGPlayer::Shot);
 			if (PlayerController->Action_Interact)
 				EnhancedInputComponent->BindAction(PlayerController->Action_Interact, ETriggerEvent::Triggered, this, &ATGPlayer::Interact);
+			if (PlayerController->Action_SelectTower)
+				EnhancedInputComponent->BindAction(PlayerController->Action_SelectTower, ETriggerEvent::Triggered, this, &ATGPlayer::SelectTower);
 		}
 	}
 }
@@ -284,7 +327,7 @@ void ATGPlayer::ApplySlowDebuff(float Duration)
 	UCharacterMovementComponent* MovementComponent = GetCharacterMovement();
 	if (!MovementComponent) return;
 
-	if (DefaultWalkSpeed <= 0){
+	if (DefaultWalkSpeed <= 0) {
 		DefaultWalkSpeed = MovementComponent->MaxWalkSpeed;
 	}
 
