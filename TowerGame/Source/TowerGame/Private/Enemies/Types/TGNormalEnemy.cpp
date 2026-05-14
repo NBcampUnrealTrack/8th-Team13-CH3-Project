@@ -8,9 +8,9 @@
 ATGNormalEnemy::ATGNormalEnemy()
 {
 	HP = 10;
-	AttackDamage = 1;
-	AttackInterVal = 0.5f;
-	AttackRange = 200;
+	StructureAttackDamage = 1;
+	StructureAttackInterval = 0.5f;
+	StructureAttackRange = 200;
 	EnergyDropAmount = 30;
 
 	GetCharacterMovement()->MaxWalkSpeed = 300;

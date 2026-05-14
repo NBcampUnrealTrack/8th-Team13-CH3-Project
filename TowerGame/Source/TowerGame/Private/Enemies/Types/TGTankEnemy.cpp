@@ -8,9 +8,9 @@
 ATGTankEnemy::ATGTankEnemy()
 {
 	HP = 15;
-	AttackDamage = 2;
-	AttackInterVal = 0.9f;
-	AttackRange = 200;
+	StructureAttackDamage = 2;
+	StructureAttackInterval = 0.9f;
+	StructureAttackRange = 200;
 	EnergyDropAmount = 50;
 
 	GetCharacterMovement()->MaxWalkSpeed = 200;
