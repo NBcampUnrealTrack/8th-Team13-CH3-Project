@@ -178,7 +178,7 @@ void ATGPlayer::Shot(const FInputActionValue& InputValue)
 		CurrentWeaponComp = GetMesh();
 	MuzzlePos = CurrentWeaponComp->GetComponentTransform().TransformPosition(GetCurrentWeapon()->GetAsset()->MuzzlePos);
 
-	if (CameraLineTrace(TraceHit, ECC_Visibility, CurrentWeaponComp->GetRelativeLocation().X + GetCurrentWeapon()->GetAsset()->MuzzlePos.Length(), ShootDistance))
+	if (CameraLineTrace(TraceHit, ECC_Visibility, CurrentWeaponComp->GetRelativeLocation().Length() + GetCurrentWeapon()->GetAsset()->MuzzlePos.Length(), ShootDistance))
 		ShootDir = (TraceHit.ImpactPoint - MuzzlePos).GetSafeNormal();	// Hit한 지점을 향해 발사
 	else
 		ShootDir = (Camera->GetComponentLocation() + Camera->GetForwardVector() * ShootDistance - MuzzlePos).GetSafeNormal();	// 카메라 정중앙을 향해 발사
@@ -245,7 +245,7 @@ void ATGPlayer::Tick(float DeltaTime)
 	// 무기가 향하는 방향
 	FHitResult WeaponTrace;
 
-	CameraLineTrace(WeaponTrace, ECC_Visibility, Weapon_Skeletal->GetRelativeLocation().X + GetCurrentWeapon()->GetAsset()->MuzzlePos.Length(), ShootDistance, true);
+	CameraLineTrace(WeaponTrace, ECC_Visibility, Weapon_Skeletal->GetRelativeLocation().Length() + GetCurrentWeapon()->GetAsset()->MuzzlePos.Length(), ShootDistance, true);
 	//FVector MuzzlePos = Weapon_Skeletal->GetComponentTransform().TransformPosition(GetCurrentWeapon()->GetAsset()->MuzzlePos);
 	//Weapon_Skeletal->SetWorldRotation(UKismetMathLibrary::FindLookAtRotation(Camera->GetComponentLocation() + InitialLocation + GetCurrentWeapon()->GetAsset()->LocationOffset, WeaponTrace.Location));
 	////Weapon_Skeletal->AddRelativeRotation(GetCurrentWeapon()->GetAsset()->RotationOffset);
