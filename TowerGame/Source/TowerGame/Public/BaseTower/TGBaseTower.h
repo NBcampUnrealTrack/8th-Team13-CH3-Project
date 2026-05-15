@@ -44,6 +44,9 @@ public:
 	// 클릭 후 최종 배치 완료 처리 (활성화, 바디 활성화)
 	void FinalizeInstallation();
 
+	// Interact 이전 상태로 복구 (MountedTower 제거, BaseTower 비활성화)
+	void ResetTower();
+
 	// TGPlayer에서 숫자키로 선택한 타워 타입 전달받음
 	void SetSelectedTurretType(ETGTurretType InType) { SelectedTurretType = InType; }
 

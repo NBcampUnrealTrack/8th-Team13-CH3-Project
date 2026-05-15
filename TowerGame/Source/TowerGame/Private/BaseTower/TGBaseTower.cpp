@@ -119,6 +119,18 @@ void ABaseTower::FinalizeInstallation()
 	SetInteractionEnabled(true);
 }
 
+void ABaseTower::ResetTower()
+{
+	if (AttachedWeapon)
+	{
+		AttachedWeapon->Destroy();
+		AttachedWeapon = nullptr;
+	}
+	bAttached = false;
+	Disable();
+	SetInteractionEnabled(false);
+}
+
 void ABaseTower::OnFocused_Implementation(ATGPlayer* Player)
 {
 	Super::OnFocused_Implementation(Player);
