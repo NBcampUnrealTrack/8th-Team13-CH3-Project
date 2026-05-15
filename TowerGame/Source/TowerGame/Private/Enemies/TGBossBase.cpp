@@ -1,99 +1,40 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
 #include "Enemies/TGBossBase.h"
 
-ATGBossBase::ATGBossBase()
+// Sets default values
+ATGBossBase::ATGBossBase() : MaxHP(1000), CurrentHP(0), CurrentPhase(nullptr), CurrentPhaseIndex(INDEX_NONE)
 {
-	EnemyType = TEXT("보스");
-	//	부모클래스에서 가져온 변수들
-	//	임시적 사용
-	//	추후 패턴별 데미지 or 패턴별 범위 지정 필요할 수도
-	CurrentHP= 500.f;
-	StructureAttackDamage = 20.f;
-	StructureAttackRange = 250.f;
-	EnergyDropAmount = 100;
+ 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	PrimaryActorTick.bCanEverTick = false;
+
 }
 
+// Called when the game starts or when spawned
 void ATGBossBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	MaxHP = CurrentHP;
-	StartPattern();
+	CurrentHP = MaxHP;
 }
 
 void ATGBossBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	StopPattern();
+	CurrentPhase = nullptr;
+	Phases.Reset();
+
 	Super::EndPlay(EndPlayReason);
 }
 
-float ATGBossBase::TakeDamage(float DamageAmount, const FDamageEvent& DamageEvent,
-	AController* EventInstigator, AActor* DamageCauser)
+float ATGBossBase::GetCurrentHP() const
 {
-	const float Applied = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-
-	if (CurrentHP > 0.f)
-	{
-		CheckPhaseTransition();
-	}
-
-	return Applied;
+	return CurrentHP;
 }
 
-void ATGBossBase::ForcePhaseChange(EBossPhase Phase)
+float ATGBossBase::GetMaxHP() const
 {
-	CurrentPhase = Phase;
-	OnPhaseChanged(Phase);
+	return MaxHP;
 }
 
-//	체력 단계별 패턴 진화
-void ATGBossBase::CheckPhaseTransition()
-{
-	if (MaxHP <= 0.f) return;
 
-	const float HPRatio = CurrentHP / MaxHP;
-
-	EBossPhase NewPhase = EBossPhase::Phase1;
-	if (HPRatio <= Phase3HPRatio)
-		NewPhase = EBossPhase::Phase3;
-	else if (HPRatio <= Phase2HPRatio)
-		NewPhase = EBossPhase::Phase2;
-
-	if (NewPhase != CurrentPhase)
-	{
-		CurrentPhase = NewPhase;
-		OnPhaseChanged(CurrentPhase);
-	}
-}
-
-void ATGBossBase::OnPhaseChanged(EBossPhase NewPhase)
-{
-	// 행동패턴 변경
-}
-
-void ATGBossBase::ExecuteCurrentPattern()
-{
-	// 패턴 실행
-}
-
-void ATGBossBase::StartPattern()
-{
-	UWorld* World = GetWorld();
-	if (!World) return;
-
-	World->GetTimerManager().SetTimer(
-		PatternTimerHandle,
-		this,
-		&ATGBossBase::ExecuteCurrentPattern,
-		PatternInterval,
-		true,
-		10	//	시작전 10초 여유
-	);
-}
-
-void ATGBossBase::StopPattern()
-{
-	UWorld* World = GetWorld();
-	if (!World) return;
-
-	World->GetTimerManager().ClearTimer(PatternTimerHandle);
-}

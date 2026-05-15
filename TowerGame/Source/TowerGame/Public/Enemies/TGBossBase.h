@@ -1,66 +1,53 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Enemies/TGAttackEnemyBase.h"
+#include "GameFramework/Actor.h"
 #include "TGBossBase.generated.h"
 
-UENUM(BlueprintType)
-enum class EBossPhase : uint8
-{
-	Phase1 UMETA(DisplayName = "Phase 1"),
-	Phase2 UMETA(DisplayName = "Phase 2"),
-	Phase3 UMETA(DisplayName = "Phase 3"),
-};
+class UTGBossPhaseBase;
 
 UCLASS()
-class TOWERGAME_API ATGBossBase : public ATGAttackEnemyBase
+class TOWERGAME_API ATGBossBase : public AActor
 {
 	GENERATED_BODY()
 
 public:
+	// Sets default values for this actor's properties
 	ATGBossBase();
 
+protected:
+	// Unreal LifeCycle
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-	virtual float TakeDamage(
-		float DamageAmount,
-		const FDamageEvent& DamageEvent,
-		AController* EventInstigator,
-		AActor* DamageCauser
-	) override;
+public:
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Boss|Stat")
+	float GetCurrentHP() const;
 
-	UFUNCTION(BlueprintPure, Category = "TowerGame|Boss")
-	EBossPhase GetCurrentPhase() const { return CurrentPhase; }
-
-	//	Phase 강제 전환
-	UFUNCTION(BlueprintCallable, Category = "TowerGame|Boss")
-	void ForcePhaseChange(EBossPhase Phase);
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Boss|Stat")
+	float GetMaxHP() const;
 
 protected:
-	// Phase2 진입 HP 비율 (0~1)
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TowerGame|Boss")
-	float Phase2HPRatio = 0.6f;
+	// HP
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Stat")
+	float MaxHP;
 
-	// Phase3 진입 HP 비율 (0~1)
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TowerGame|Boss")
-	float Phase3HPRatio = 0.3f;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Stat")
+	float CurrentHP;
 
-	// 패턴 실행 주기 (초)
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TowerGame|Boss")
-	float PatternInterval = 5.0f;
+	// BP / Editor에서 지정하는 Phase
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Phase")
+	TArray<TSubclassOf<UTGBossPhaseBase>> PhaseClasses;
 
-	// 페이즈 전환 시 호출
-	virtual void OnPhaseChanged(EBossPhase NewPhase);
+	// PhaseClasses을 기반으로 Runtime에 생성된 Instance 목록
+	UPROPERTY()
+	TArray<TObjectPtr<UTGBossPhaseBase>> Phases;
 
-	// 현재 페이즈 패턴 실행
-	virtual void ExecuteCurrentPattern();
+	UPROPERTY()
+	TObjectPtr<UTGBossPhaseBase> CurrentPhase;
 
-private:
-	EBossPhase CurrentPhase = EBossPhase::Phase1;
-	FTimerHandle PatternTimerHandle;
-
-	void CheckPhaseTransition();
-	void StartPattern();
-	void StopPattern();
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Phase")
+	int32 CurrentPhaseIndex;
 };
