@@ -23,11 +23,27 @@ protected:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
+	virtual float TakeDamage(
+		float DamageAmount,
+		const FDamageEvent& DamageEvent,
+		AController* EventInstigator,
+		AActor* DamageCauser
+	) override;
+
+public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Boss|Stat")
 	float GetCurrentHP() const;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Boss|Stat")
 	float GetMaxHP() const;
+
+protected:
+	// 페이즈 전환
+	void ChangePhase(int32 NewPhaseIndex);
+	void CheckPhaseTransition();
+
+	// 데미지 적용
+	void ApplyBossDamage(float DamageAmount);
 
 protected:
 	// HP
@@ -37,17 +53,16 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Stat")
 	float CurrentHP;
 
-	// BP / Editor에서 지정하는 Phase
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Phase")
+	// 사용할 Phase
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Phase")
 	TArray<TSubclassOf<UTGBossPhaseBase>> PhaseClasses;
-
-	// PhaseClasses을 기반으로 Runtime에 생성된 Instance 목록
-	UPROPERTY()
-	TArray<TObjectPtr<UTGBossPhaseBase>> Phases;
 
 	UPROPERTY()
 	TObjectPtr<UTGBossPhaseBase> CurrentPhase;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Phase")
 	int32 CurrentPhaseIndex;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Phase")
+	TArray<float> PhaseHPRatio;
 };
