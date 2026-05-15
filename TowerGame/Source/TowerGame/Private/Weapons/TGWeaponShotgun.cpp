@@ -3,6 +3,7 @@
 
 #include "Weapons/TGWeaponShotgun.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Enemies/TGBossBase.h"
 #include "Enemies/TGEnemyBase.h"
 #include "Engine/DamageEvents.h"
 #include "Kismet/GameplayStatics.h"
@@ -59,10 +60,14 @@ void UTGWeaponShotgun::Shoot(AActor* Instigator, class UMeshComponent* WeaponCom
 				EAttachLocation::KeepWorldPosition
 			);
 
-			ATGEnemyBase* target = Cast<ATGEnemyBase>(TraceHit.GetActor());
-			if (target)
+			AActor* HitActor = TraceHit.GetActor();
+			if (ATGEnemyBase* Enemy = Cast<ATGEnemyBase>(HitActor))
 			{
-				UGameplayStatics::ApplyDamage(target, status.Power, Instigator->GetInstigatorController(), Instigator, nullptr);
+				UGameplayStatics::ApplyDamage(Enemy, status.Power, Instigator->GetInstigatorController(), Instigator, nullptr);
+			}
+			else if (ATGBossBase* Boss = Cast<ATGBossBase>(HitActor))
+			{
+				UGameplayStatics::ApplyDamage(Boss, status.Power, Instigator->GetInstigatorController(), Instigator, nullptr);
 			}
 		}
 	}

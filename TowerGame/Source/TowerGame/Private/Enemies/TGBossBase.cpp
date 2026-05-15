@@ -4,21 +4,26 @@
 #include "Enemies/TGBossBase.h"
 
 #include "Enemies/TGBossPhaseBase.h"
+#include "Kismet/GameplayStatics.h"
+#include "Player/TGPlayer.h"
 
-// Sets default values
-ATGBossBase::ATGBossBase() : MaxHP(1), CurrentHP(0), CurrentPhase(nullptr), CurrentPhaseIndex(INDEX_NONE)
+ATGBossBase::ATGBossBase() :
+	MaxHP(1.f),
+	CurrentHP(0.f),
+	CurrentPhase(nullptr),
+	CurrentPhaseIndex(INDEX_NONE),
+	TargetPlayer(nullptr)
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
-
 }
 
-// Called when the game starts or when spawned
 void ATGBossBase::BeginPlay()
 {
 	Super::BeginPlay();
 
 	CurrentHP = MaxHP;
+	TargetPlayer = Cast<ATGPlayer>(UGameplayStatics::GetPlayerPawn(this, 0));
+
 	ChangePhase(0);
 }
 
@@ -55,6 +60,11 @@ float ATGBossBase::GetMaxHP() const
 	return MaxHP;
 }
 
+ATGPlayer* ATGBossBase::GetPlayer() const
+{
+	return TargetPlayer;
+}
+
 void ATGBossBase::ChangePhase(int32 NewPhaseIndex)
 {
 	if (CurrentPhaseIndex == NewPhaseIndex) return;
@@ -69,7 +79,7 @@ void ATGBossBase::ChangePhase(int32 NewPhaseIndex)
 		CurrentPhase = nullptr;
 	}
 
-	// UObject 기반 페이즈 생성
+	// 페이즈 생성
 	UTGBossPhaseBase* NewPhase = NewObject<UTGBossPhaseBase>(this, NewPhaseClass);
 	if (!NewPhase) return;
 
@@ -84,7 +94,7 @@ void ATGBossBase::ChangePhase(int32 NewPhaseIndex)
 void ATGBossBase::CheckPhaseTransition()
 {
 	const int32 NextPhaseIndex = CurrentPhaseIndex + 1;
-	if (!PhaseClasses.IsValidIndex(NextPhaseIndex) || !PhaseClasses.IsValidIndex(CurrentPhaseIndex)) return;
+	if (!PhaseClasses.IsValidIndex(NextPhaseIndex) || !PhaseHPRatio.IsValidIndex(CurrentPhaseIndex)) return;
 
 	// HP 비율이 현재 페이즈의 전환 기준 이하로 내려가면 다음 페이즈로 전환
 	const float HPRatio = CurrentHP / MaxHP;
@@ -95,7 +105,7 @@ void ATGBossBase::CheckPhaseTransition()
 
 void ATGBossBase::ApplyBossDamage(float DamageAmount)
 {
-	if (DamageAmount <= 0 || CurrentHP <= 0) return;
+	if (DamageAmount <= 0.f || CurrentHP <= 0.f) return;
 
 	CurrentHP = FMath::Clamp(CurrentHP - DamageAmount, 0.0f, MaxHP);
 

@@ -9,7 +9,7 @@
 
 ATGSentinelBoss::ATGSentinelBoss()
 {
-	MaxHP = 1000;
+	MaxHP = 100;
 
 	PhaseHPRatio.Add(0.6f);
 	PhaseHPRatio.Add(0.3f);
