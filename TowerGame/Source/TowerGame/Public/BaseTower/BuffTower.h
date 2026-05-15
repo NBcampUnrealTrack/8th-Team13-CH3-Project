@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "TGMountedTower.h"
-#include "BaseTower/TGBuffTower.h"
+#include "BuffTower.generated.h"
 
 UCLASS()
 class TOWERGAME_API ATGBuffTower : public ATGMountedTower
