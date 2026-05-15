@@ -155,7 +155,7 @@ void ATGPlayer::SelectTower(const FInputActionValue& InputValue)
 	int32 SlotIndex = FMath::RoundToInt(InputValue.Get<float>());
 	switch (SlotIndex)
 	{
-	case 1: SelectedTurretType = ETGTurretType::BaseTower;   break;	// 1번 : BaseTower
+	//case 1: SelectedTurretType = ETGTurretType::BaseTower;   break;	// 1번 : BaseTower
 	case 2: SelectedTurretType = ETGTurretType::WeaponTower; break;	// 2번 : WeaponTower
 	case 3: SelectedTurretType = ETGTurretType::DebuffTower; break;	// 3번 : DebuffTower
 	case 4: SelectedTurretType = ETGTurretType::BuffTower;   break;	// 4번 : BuffTower
