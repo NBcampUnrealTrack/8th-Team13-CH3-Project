@@ -29,9 +29,24 @@ void UTGMainMenuWidget::NativeConstruct()
 		GuideButton->OnClicked.AddDynamic(this, &UTGMainMenuWidget::HandleGuideClicked);
 	}
 
-	if (GuideClickButton)
+	//if (GuideClickButton)
+	//{
+	//	GuideClickButton->OnClicked.AddDynamic(this, &UTGMainMenuWidget::HandleGuidePageClicked);
+	//}
+
+	if (PrevGuideButton)
 	{
-		GuideClickButton->OnClicked.AddDynamic(this, &UTGMainMenuWidget::HandleGuidePageClicked);
+		PrevGuideButton->OnClicked.AddDynamic(this, &UTGMainMenuWidget::HandlePrevGuideClicked);
+	}
+
+	if (NextGuideButton)
+	{
+		NextGuideButton->OnClicked.AddDynamic(this, &UTGMainMenuWidget::HandleNextGuideClicked);
+	}
+
+	if (ExitGuideButton)
+	{
+		ExitGuideButton->OnClicked.AddDynamic(this, &UTGMainMenuWidget::HandleExitGuideClicked);
 	}
 
 	CurrentGuideIndex = 0;
@@ -76,26 +91,69 @@ void UTGMainMenuWidget::HandleGuideClicked()
 	ShowGuide();
 }
 
-void UTGMainMenuWidget::HandleGuidePageClicked()
+//void UTGMainMenuWidget::HandleGuidePageClicked()
+//{
+//	if (GuideTextures.Num() == 0)
+//	{
+//		HideGuide();
+//		return;
+//	}
+//
+//	// 마지막 페이지에서 클릭하면 메인메뉴로 복귀
+//	if (CurrentGuideIndex >= GuideTextures.Num() - 1)
+//	{
+//		HideGuide();
+//		return;
+//	}
+//
+//	// 아직 마지막 페이지가 아니면 다음 페이지로 이동
+//	CurrentGuideIndex++;
+//
+//	UpdateGuideImage();
+//	UpdateGuideDots();
+//}
+
+void UTGMainMenuWidget::HandlePrevGuideClicked()
 {
 	if (GuideTextures.Num() == 0)
 	{
-		HideGuide();
 		return;
 	}
 
-	// 마지막 페이지에서 클릭하면 메인메뉴로 복귀
-	if (CurrentGuideIndex >= GuideTextures.Num() - 1)
+	if (CurrentGuideIndex <= 0)
 	{
-		HideGuide();
 		return;
 	}
 
-	// 아직 마지막 페이지가 아니면 다음 페이지로 이동
-	CurrentGuideIndex++;
+	CurrentGuideIndex--;
 
 	UpdateGuideImage();
 	UpdateGuideDots();
+	UpdateGuideButton();
+}
+
+void UTGMainMenuWidget::HandleNextGuideClicked()
+{
+	if (GuideTextures.Num() == 0)
+	{
+		return;
+	}
+
+	if (CurrentGuideIndex >= GuideTextures.Num() - 1)
+	{
+		return;
+	}
+	
+	CurrentGuideIndex++;
+	
+	UpdateGuideImage();
+	UpdateGuideDots();
+	UpdateGuideButton();
+}
+
+void UTGMainMenuWidget::HandleExitGuideClicked()
+{
+	HideGuide();
 }
 
 void UTGMainMenuWidget::ShowGuide()
@@ -199,5 +257,22 @@ void UTGMainMenuWidget::UpdateGuideDots()
 		{
 			GuideDotTexts[i]->SetColorAndOpacity(FSlateColor(InactiveDotColor));
 		}
+	}
+}
+
+void UTGMainMenuWidget::UpdateGuideButton()
+{
+	const bool bHasGuidePages = GuideTextures.Num() > 0;
+	const bool bIsFirstPage = CurrentGuideIndex <= 0;
+	const bool bIsLastPage = CurrentGuideIndex >= GuideTextures.Num() - 1;
+
+	if (PrevGuideButton)
+	{
+		PrevGuideButton->SetIsEnabled(bHasGuidePages && !bIsFirstPage);
+	}
+
+	if (NextGuideButton)
+	{
+		NextGuideButton->SetIsEnabled(bHasGuidePages && !bIsLastPage);
 	}
 }

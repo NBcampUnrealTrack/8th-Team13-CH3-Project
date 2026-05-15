@@ -38,8 +38,17 @@ protected:
 	TObjectPtr<UImage> GuideImage;
 
 	// 가이드 화면 전체 클릭용 투명 버튼
+	//UPROPERTY(meta = (BindWidget))
+	//TObjectPtr<UButton> GuideClickButton;
+
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UButton> GuideClickButton;
+	TObjectPtr<UButton> PrevGuideButton;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UButton> NextGuideButton;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UButton> ExitGuideButton;
 
 	// 밑에 동그라미 표시용 HorizontalBox
 	UPROPERTY(meta = (BindWidget))
@@ -68,8 +77,17 @@ protected:
 	UFUNCTION()
 	void HandleGuideClicked();
 
+	//UFUNCTION()
+	//void HandleGuidePageClicked();
+
 	UFUNCTION()
-	void HandleGuidePageClicked();
+	void HandlePrevGuideClicked();
+
+	UFUNCTION()
+	void HandleNextGuideClicked();
+
+	UFUNCTION()
+	void HandleExitGuideClicked();
 
 	void ShowGuide();
 	void HideGuide();
@@ -77,4 +95,5 @@ protected:
 	void UpdateGuideImage();
 	void RebuildGuideDots();
 	void UpdateGuideDots();
+	void UpdateGuideButton();
 };
