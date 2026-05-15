@@ -166,7 +166,7 @@ void ABaseTower::OnInteract_Implementation(ATGPlayer* Player)
 	{
 		bAttached = true;
 		AttachedWeapon = MountedTower;
-		MountedTower->SetActorLocation(GetActorLocation() + MountPoint->GetRelativeLocation());
+		MountedTower->SetActorLocation(GetActorLocation() + (MountPoint->GetRelativeLocation() * GetActorRelativeScale3D().Z));
 		MountedTower->SetInteractionEnabled(true);
 		SetInteractionEnabled(false);
 	}

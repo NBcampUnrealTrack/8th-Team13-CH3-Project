@@ -59,7 +59,7 @@ ATGPlayerController::ATGPlayerController()
 	if (IA_Switching_Asset.Succeeded())
 		Action_Switching = IA_Switching_Asset.Object;
 	static ConstructorHelpers::FObjectFinder<UInputAction> IA_SelectTower_Asset =
-		TEXT("/Game/Player/Input/Actions/IA_SelectTower.IA_SelectTower");
+		TEXT("/Game/Player/Input/Actions/IA_SelectTower.IA_BuildTowerSelect");
 	if (IA_SelectTower_Asset.Succeeded())
 		Action_SelectTower = IA_SelectTower_Asset.Object;
 

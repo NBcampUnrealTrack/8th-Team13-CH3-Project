@@ -162,6 +162,9 @@ void ATGPlayer::SelectTower(const FInputActionValue& InputValue)
 	case 4: SelectedTurretType = ETGTurretType::BuffTower;   break;	// 4번 : BuffTower
 	default: break;
 	}
+
+	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow,
+		FString::Printf(TEXT("[SelectTower] Slot %d → %s"), SlotIndex, *UEnum::GetValueAsString(SelectedTurretType)));
 }
 
 void ATGPlayer::Shot(const FInputActionValue& InputValue)
