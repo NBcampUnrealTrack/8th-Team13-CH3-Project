@@ -48,6 +48,22 @@ void ATGSingleGrid::SetBoxSize(float Size) const
 	Visualizer->SetRelativeScale3D(FVector(Scale, Scale, CurrentScale.Z));
 }
 
+void ATGSingleGrid::ResetGrid()
+{
+	if (PlacedTower)
+	{
+		PlacedTower->ResetTower();
+	}
+	bIsPlacedTower = false;
+	Visualizer->SetRenderCustomDepth(false);
+	SetInteractionEnabled(true);
+
+	if (GridBase)
+	{
+		GridBase->RemoveBuilding(MyPoint);
+	}
+}
+
 void ATGSingleGrid::OnFocused_Implementation(ATGPlayer* Player)
 {
 	if (bIsPlacedTower)	return;
