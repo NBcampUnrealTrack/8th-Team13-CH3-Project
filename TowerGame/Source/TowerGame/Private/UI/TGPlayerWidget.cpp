@@ -30,15 +30,9 @@ void UTGPlayerWidget::NativeConstruct()
 
 	NavigationManager = ATGNavigationManager::Get(this);
 	if (NavigationManager){
-		// Enemy 수 변경 이벤트를 구독하고, 수동 초기화 1회 진행
-		NavigationManager->OnAliveEnemyCountChanged.AddUniqueDynamic(
-			this, &UTGPlayerWidget::HandleAliveEnemyCountChanged);
-		HandleAliveEnemyCountChanged(NavigationManager->GetAliveEnemyCount());
-
 		// Core 변경 이벤트를 구독하고, 수동 초기화 1회 진행
 		NavigationManager->OnCurrentCoreChanged.AddDynamic(this, &UTGPlayerWidget::UpdateCurrentCore);
 		UpdateCurrentCore(NavigationManager->GetCurrentCoreActor());
-
 	}
 
 	// 자원 변경 이벤트를 구독하고, 자원 수동 초기화 1회 진행
@@ -77,7 +71,6 @@ void UTGPlayerWidget::NativeDestruct()
 	}
 
 	if (NavigationManager){
-		NavigationManager->OnAliveEnemyCountChanged.RemoveDynamic(this, &UTGPlayerWidget::HandleAliveEnemyCountChanged);
 		NavigationManager->OnCurrentCoreChanged.RemoveDynamic(this, &UTGPlayerWidget::UpdateCurrentCore);
 	}
 
@@ -101,13 +94,6 @@ void UTGPlayerWidget::HandleWaveStarted(int32 WaveIndex)
 	// Text 설정 및 애니메이션 실행
 	Txt_CurrentWave->SetText(FText::FromString(FString::Printf(TEXT("Wave : %d"), WaveIndex+1)));
 	if (Anim_WaveOpacity) PlayAnimation(Anim_WaveOpacity);
-}
-
-void UTGPlayerWidget::HandleAliveEnemyCountChanged(int32 AliveEnemyCount)
-{
-	if (!Txt_RemainEnemy) return;
-
-	Txt_RemainEnemy->SetText(FText::FromString(FString::Printf(TEXT("Remain Enemy : %d"),  AliveEnemyCount)));
 }
 
 void UTGPlayerWidget::UpdateCurrentCore(ATGCoreBase* NewCore)
