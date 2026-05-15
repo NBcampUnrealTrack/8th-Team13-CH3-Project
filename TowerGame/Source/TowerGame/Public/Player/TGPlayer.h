@@ -120,6 +120,7 @@ protected:
 	float EvadeCooldown;	// 회피기동 회복시간
 	UPROPERTY()
 	float CurrentEvadeCooldown;	// 현재 남은 회피기동 회복시간
+	float ShootDistance;
 	bool bMoving;
 	FVector2D MoveDir;	// 현재 이동중인 방향, 정규화벡터
 	bool bBuildMode;	// 빌드모드
@@ -157,7 +158,7 @@ protected:
 	void ClearSlowDebuff();
 private:
 	void InteractiveTrace(bool debug = false);
-	bool CameraLineTrace(FHitResult& TraceHit, ECollisionChannel Channel, float MaxDistance = 5000.0f, bool debug = false);
+	bool CameraLineTrace(FHitResult& TraceHit, ECollisionChannel Channel, float StartDistance = 0.0f, float MaxDistance = 5000.0f, bool debug = false);
 
 
 	//	포커싱된 액터

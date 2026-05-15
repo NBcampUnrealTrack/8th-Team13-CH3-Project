@@ -43,6 +43,7 @@ ATGPlayer::ATGPlayer() : MaxHP(100), SlowRate(0.5f), DefaultWalkSpeed(0)
 	InteractDistance = 300.f;
 	CurrentFocusedActor = nullptr;
 	LastFocusedEnemy = nullptr;
+	ShootDistance = 50000.f;
 }
 
 // Called when the game starts or when spawned
@@ -168,7 +169,6 @@ void ATGPlayer::Shot(const FInputActionValue& InputValue)
 	FHitResult TraceHit;
 	FVector MuzzlePos;
 	FVector ShootDir;
-	float Distance = 50000.f;
 	UMeshComponent* CurrentWeaponComp = nullptr;
 	if (Weapon_Skeletal)
 		CurrentWeaponComp = Weapon_Skeletal;
@@ -178,12 +178,12 @@ void ATGPlayer::Shot(const FInputActionValue& InputValue)
 		CurrentWeaponComp = GetMesh();
 	MuzzlePos = CurrentWeaponComp->GetComponentTransform().TransformPosition(GetCurrentWeapon()->GetAsset()->MuzzlePos);
 
-	if (CameraLineTrace(TraceHit, ECC_Visibility, Distance))
+	if (CameraLineTrace(TraceHit, ECC_Visibility, CurrentWeaponComp->GetRelativeLocation().X + GetCurrentWeapon()->GetAsset()->MuzzlePos.Length(), ShootDistance))
 		ShootDir = (TraceHit.ImpactPoint - MuzzlePos).GetSafeNormal();	// Hit한 지점을 향해 발사
 	else
-		ShootDir = (Camera->GetComponentLocation() + Camera->GetForwardVector() * Distance - MuzzlePos).GetSafeNormal();	// 카메라 정중앙을 향해 발사
+		ShootDir = (Camera->GetComponentLocation() + Camera->GetForwardVector() * ShootDistance - MuzzlePos).GetSafeNormal();	// 카메라 정중앙을 향해 발사
 
-	GetCurrentWeapon()->Shoot(this, CurrentWeaponComp, MuzzlePos, ShootDir, Distance);
+	GetCurrentWeapon()->Shoot(this, CurrentWeaponComp, MuzzlePos, ShootDir, ShootDistance);
 }
 
 void ATGPlayer::Interact(const FInputActionValue& InputValue)
@@ -245,7 +245,7 @@ void ATGPlayer::Tick(float DeltaTime)
 	// 무기가 향하는 방향
 	FHitResult WeaponTrace;
 
-	CameraLineTrace(WeaponTrace, ECC_Visibility, 5000.0f, true);
+	CameraLineTrace(WeaponTrace, ECC_Visibility, Weapon_Skeletal->GetRelativeLocation().X + GetCurrentWeapon()->GetAsset()->MuzzlePos.Length(), ShootDistance, true);
 	//FVector MuzzlePos = Weapon_Skeletal->GetComponentTransform().TransformPosition(GetCurrentWeapon()->GetAsset()->MuzzlePos);
 	//Weapon_Skeletal->SetWorldRotation(UKismetMathLibrary::FindLookAtRotation(Camera->GetComponentLocation() + InitialLocation + GetCurrentWeapon()->GetAsset()->LocationOffset, WeaponTrace.Location));
 	////Weapon_Skeletal->AddRelativeRotation(GetCurrentWeapon()->GetAsset()->RotationOffset);
@@ -485,7 +485,7 @@ void ATGPlayer::ClearSlowDebuff()
 void ATGPlayer::InteractiveTrace(bool debug)
 {
 	FHitResult HitResult;
-	const bool bHit = CameraLineTrace(HitResult, ECC_GameTraceChannel1, InteractDistance);
+	const bool bHit = CameraLineTrace(HitResult, ECC_GameTraceChannel1, 0.0f, InteractDistance);
 
 	ATGInteractiveActor* HitActor = nullptr;
 	if (bHit)
@@ -507,14 +507,14 @@ void ATGPlayer::InteractiveTrace(bool debug)
 	}
 }
 
-bool ATGPlayer::CameraLineTrace(FHitResult& TraceHit, ECollisionChannel Channel, float MaxDistance, bool debug)
+bool ATGPlayer::CameraLineTrace(FHitResult& TraceHit, ECollisionChannel Channel, float StartDistance, float MaxDistance, bool debug)
 {
 	FCollisionQueryParams QueryParams;
 	QueryParams.bTraceComplex = true;
 	TArray<AActor*> IgnoredActors = { this };
 	QueryParams.AddIgnoredActors(IgnoredActors);
 
-	const FVector Start = Camera->GetComponentLocation();
+	const FVector Start = Camera->GetComponentLocation() + Camera->GetForwardVector() * StartDistance;
 	const FVector End = Start + Camera->GetForwardVector() * MaxDistance;
 
 	if (debug)
