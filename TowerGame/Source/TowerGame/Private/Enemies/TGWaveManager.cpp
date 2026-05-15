@@ -199,8 +199,11 @@ void ATGWaveManager::InitializeSpawnState(int32 WaveIndex)
 	for (const FTGEnemySpawnGroup& SpawnGroup : WaveData->SpawnGroups){
 		if (!SpawnGroup.IsValid()) continue;
 
+		TSubclassOf<ATGEnemyBase> EnemyClass = SpawnGroup.EnemyClass.LoadSynchronous();
+		if (!EnemyClass) continue;
+
 		for (int32 i = 0; i < SpawnGroup.SpawnCount; ++i){
-			PendingSpawnQueue.Add(SpawnGroup.EnemyClass);
+			PendingSpawnQueue.Add(EnemyClass);
 		}
 	}
 }

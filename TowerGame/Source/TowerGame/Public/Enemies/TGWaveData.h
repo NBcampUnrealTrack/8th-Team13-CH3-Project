@@ -16,7 +16,7 @@ struct FTGEnemySpawnGroup
 	FTGEnemySpawnGroup();
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wave")
-	TSubclassOf<ATGEnemyBase> EnemyClass;
+	TSoftClassPtr<ATGEnemyBase> EnemyClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wave", meta = (ClampMin = 0))
 	int32 SpawnCount;

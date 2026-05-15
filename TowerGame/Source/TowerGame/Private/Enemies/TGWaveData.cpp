@@ -11,5 +11,5 @@ FTGEnemySpawnGroup::FTGEnemySpawnGroup() : EnemyClass(nullptr), SpawnCount(0)
 
 bool FTGEnemySpawnGroup::IsValid() const
 {
-	return EnemyClass != nullptr && SpawnCount > 0;
+	return !EnemyClass.IsNull() && SpawnCount > 0;
 }
