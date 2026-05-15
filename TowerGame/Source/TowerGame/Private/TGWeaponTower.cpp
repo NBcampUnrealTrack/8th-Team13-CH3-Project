@@ -15,6 +15,7 @@ ATGWeaponTower::ATGWeaponTower()
 void ATGWeaponTower::BeginPlay()
 {
 	Super::BeginPlay();
+	StartAttack();
 }
 
 void ATGWeaponTower::Tick(float DeltaTime)
@@ -68,6 +69,7 @@ void ATGWeaponTower::ApplyRangeDamage()
 
 	if (bHasOverlap)
 	{
+		// TODO: 공격 시작 이펙트 (머즐 플래시 등) — Arrow->GetComponentLocation() / Arrow->GetComponentRotation() 기준으로 스폰
 		for (AActor* HitActor : OutActors)
 		{
 			// 2초마다 AttackDamage만큼 데미지
@@ -78,6 +80,7 @@ void ATGWeaponTower::ApplyRangeDamage()
 				this,
 				UDamageType::StaticClass()
 			);
+			// TODO: 피격 이펙트 — HitActor->GetActorLocation() 기준으로 스폰
 		}
 	}
 }

@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "TGInteractiveActor.h"
-#include "BaseTower/TGBuildWidget.h"
 #include "BaseTower/TGTurretType.h"
 #include "TGBaseTower.generated.h"
 
@@ -66,14 +65,6 @@ protected:
 	// PBR 머티리얼 (설치 완료 후 사용)
 	UPROPERTY(EditAnywhere, Category = "Tower|Base")
 	class UMaterialInterface* PBRMaterial;
-
-	// 위젯 클래스 — 에디터에서 WBP_BuildWidget 설정
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tower|UI")
-	TSubclassOf<UTGBuildWidget> BuildWidgetClass;
-
-	// 런타임 위젯 인스턴스
-	UPROPERTY()
-	UTGBuildWidget* BuildWidget;
 
 	// 선택된 타워 타입 — TGPlayer에서 SetSelectedTurretType으로 전달받음
 	ETGTurretType SelectedTurretType = ETGTurretType::None;

@@ -6,7 +6,6 @@
 #include "TGMountedTower.h"
 #include "NavAreas/NavArea_Null.h"
 #include "Components/StaticMeshComponent.h"
-#include "Blueprint/UserWidget.h"
 #include "Components/BoxComponent.h"
 
 ABaseTower::ABaseTower()
@@ -141,12 +140,6 @@ void ABaseTower::OnUnfocused_Implementation(ATGPlayer* Player)
 {
 	Super::OnUnfocused_Implementation(Player);
 	BaseMesh->SetRenderCustomDepth(false);
-
-	//	포커스 벗어나면 위젯 닫기
-	if (BuildWidget && BuildWidget->IsInViewport())
-	{
-		BuildWidget->RemoveFromParent();
-	}
 }
 
 void ABaseTower::OnInteract_Implementation(ATGPlayer* Player)
@@ -176,11 +169,5 @@ void ABaseTower::OnInteract_Implementation(ATGPlayer* Player)
 		MountedTower->SetActorLocation(GetActorLocation() + MountPoint->GetRelativeLocation());
 		MountedTower->SetInteractionEnabled(true);
 		SetInteractionEnabled(false);
-
-		//	타워 설치 후 위젯 닫기
-		if (BuildWidget && BuildWidget->IsInViewport())
-		{
-			BuildWidget->RemoveFromParent();
-		}
 	}
 }
