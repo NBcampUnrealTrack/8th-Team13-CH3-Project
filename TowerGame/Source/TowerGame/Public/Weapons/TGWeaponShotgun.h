@@ -16,11 +16,11 @@ struct FTGStatusWeaponShotgun : public FTGStatusWeaponBase
 	friend class UTGWeaponShotgun;
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)	// 사격주기
-		float ShotInterval;
+		float ShotInterval = 0.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)	// 발당 산탄 수
-		int32 Pellet;
+		int32 Pellet = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)	// 탄 퍼짐 각도 (낮을 수록 정확도 상승)
-		float BulletSpread;
+		float BulletSpread = 0.f;
 };
 
 UCLASS()

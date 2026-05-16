@@ -16,7 +16,7 @@ struct FTGStatusWeaponSingleShot : public FTGStatusWeaponBase
 	friend class UTGWeaponSingleShot;
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)	// 사격쿨타임
-		float ShotCoolTime;
+		float ShotCoolTime = 0.f;
 };
 
 UCLASS()

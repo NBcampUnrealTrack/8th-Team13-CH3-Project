@@ -17,11 +17,11 @@ struct FTGStatusWeaponRepeater : public FTGStatusWeaponBase
 	friend class UTGWeaponRepeater;
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)	// 사격주기
-		float ShotInterval;
+		float ShotInterval = 0.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)	// 탄 퍼짐 최대각도 (낮을 수록 정확도 상승)
-		float MaxBulletSpread;
+		float MaxBulletSpread = 0.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)	// 탄 퍼짐이 최대치에 도달하기까지의 시간(초)
-		float MaxSpreadTime;
+		float MaxSpreadTime = 0.f;
 };
 
 UCLASS()
