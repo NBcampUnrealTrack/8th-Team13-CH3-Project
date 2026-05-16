@@ -6,6 +6,7 @@
 #include "UI/TGPauseWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "Core/GameFlow/TGGameMode.h"
+#include "Core/Grid/TGGridBase.h"
 
 ATGHUD::ATGHUD()
 	: CachedGameMode(nullptr),
@@ -72,6 +73,22 @@ void ATGHUD::UpdateUIByState(ETGGameFlowState NewState)
 		if (PlayerWidget)
 		{
 			PlayerWidget->AddToViewport();
+
+			AActor* FoundActor = UGameplayStatics::GetActorOfClass(
+				GetWorld(),
+				ATGGridBase::StaticClass()
+			);
+
+			ATGGridBase* GridBase = Cast<ATGGridBase>(FoundActor);
+
+			if (GridBase)
+			{
+				PlayerWidget->SetGridBase(GridBase);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("HUD: GridBase not found"));
+			}
 		}
 
 		PC->bShowMouseCursor = false;

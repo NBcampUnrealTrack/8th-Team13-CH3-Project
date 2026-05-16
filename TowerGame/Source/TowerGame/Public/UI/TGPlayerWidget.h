@@ -13,6 +13,9 @@ class ATGNavigationManager;
 class UProgressBar;
 class UButton;
 class UTextBlock;
+//미니맵 위젯 수정사항
+class UTGMiniMapWidget;
+class ATGGridBase;
 
 /**
  *
@@ -109,4 +112,11 @@ private:
 	// UI에 연결된 enemy 관리
 	void BindFocusedEnemy(ATGEnemyBase* NewEnemy);
 	void UnbindFocusedEnemy();
+//미니맵 위젯
+public:
+	void SetGridBase(ATGGridBase* InGridBase);
+
+protected:
+	UPROPERTY(meta = (BindWidget))
+	UTGMiniMapWidget* MiniMapWidget;
 };

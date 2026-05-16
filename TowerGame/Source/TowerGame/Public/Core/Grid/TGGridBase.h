@@ -61,6 +61,9 @@ public:
 
 	TSubclassOf<ABaseTower> GetTowerClassOf()	{return TowerBaseClass;};
 
+	int GetGridX() const;
+	int GetGridY() const;
+	float GetGridSize() const;
 protected:
 	virtual void BeginPlay() override;
 

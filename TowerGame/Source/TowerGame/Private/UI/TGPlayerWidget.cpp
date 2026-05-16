@@ -10,6 +10,8 @@
 #include "Enemies/TGCoreBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "Core/GameFlow/TGGameMode.h"
+#include "Core/Grid/TGGridBase.h"
+#include "UI/TGMiniMapWidget.h"
 #include "Enemies/TGEnemyBase.h"
 #include "Enemies/TGWaveManager.h"
 
@@ -239,4 +241,21 @@ void UTGPlayerWidget::HandlePauseClicked()
 	{
 		GM->PauseGameFlow();
 	}
+}
+
+void UTGPlayerWidget::SetGridBase(ATGGridBase* InGridBase)
+{
+	if (!IsValid(InGridBase))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PlayerWidget: GridBase is invalid"));
+		return;
+	}
+
+	if (!MiniMapWidget)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PlayerWidget: MiniMapWidget is null"));
+		return;
+	}
+
+	MiniMapWidget->SetGridBase(InGridBase);
 }

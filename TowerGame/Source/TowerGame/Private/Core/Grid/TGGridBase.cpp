@@ -144,6 +144,21 @@ FVector ATGGridBase::ConvertIndexToVector(FIntPoint Point)
 	);
 }
 
+int ATGGridBase::GetGridX() const
+{
+	return GridX;
+}
+
+int ATGGridBase::GetGridY() const
+{
+	return GridY;
+}
+
+float ATGGridBase::GetGridSize() const
+{
+	return GridSize;
+}
+
 void ATGGridBase::BeginPlay()
 {
 	Super::BeginPlay();
