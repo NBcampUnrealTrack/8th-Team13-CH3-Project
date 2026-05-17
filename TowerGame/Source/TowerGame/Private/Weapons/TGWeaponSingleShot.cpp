@@ -7,8 +7,6 @@
 #include "Enemies/TGEnemyBase.h"
 #include "Engine/DamageEvents.h"
 #include "Kismet/GameplayStatics.h"
-#include "Particles/ParticleSystem.h"
-#include "Particles/ParticleSystemComponent.h"
 
 void UTGWeaponSingleShot::Tick(float DeltaTime)
 {
@@ -52,15 +50,7 @@ void UTGWeaponSingleShot::Shoot(AActor* Instigator, class UMeshComponent* Weapon
 	Super::Shoot(Instigator, WeaponComponent, MuzzlePos, Direction, Distance);
 
 	// 발포 이펙트
-	UParticleSystemComponent* FireParticle = UGameplayStatics::SpawnEmitterAttached(
-		status.Asset.FireParticle,
-		WeaponComponent,
-		NAME_None,
-		MuzzlePos,
-		FRotator::ZeroRotator,
-		FVector::OneVector * status.Asset.FireParticleScale,
-		EAttachLocation::KeepWorldPosition
-	);
+	SpawnAttachedEffects(status.Asset.FireParticle, WeaponComponent, MuzzlePos, status.Asset.FireParticleScale);
 
 	UKismetSystemLibrary::LineTraceSingle(
 		GetWorld(), //어느 월드의 소속인가? (this)를 넣어줘도 됨
@@ -79,15 +69,7 @@ void UTGWeaponSingleShot::Shoot(AActor* Instigator, class UMeshComponent* Weapon
 	if (TraceHit.bBlockingHit)
 	{
 		// 착탄 이펙트
-		UParticleSystemComponent* HitParticle = UGameplayStatics::SpawnEmitterAttached(
-			status.Asset.HitParticle,
-			TraceHit.GetActor()->GetRootComponent(),
-			NAME_None,
-			TraceHit.Location,
-			FRotator::ZeroRotator,
-			FVector::OneVector * status.Asset.HitParticleScale,
-			EAttachLocation::KeepWorldPosition
-		);
+		SpawnAttachedEffects(status.Asset.HitParticle, TraceHit.GetActor()->GetRootComponent(), TraceHit.Location, status.Asset.HitParticleScale);
 
 		AActor* HitActor = TraceHit.GetActor();
 		if (ATGEnemyBase* Enemy = Cast<ATGEnemyBase>(HitActor))

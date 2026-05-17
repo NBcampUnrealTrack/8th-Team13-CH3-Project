@@ -7,8 +7,6 @@
 #include "Enemies/TGEnemyBase.h"
 #include "Engine/DamageEvents.h"
 #include "Kismet/GameplayStatics.h"
-#include "Particles/ParticleSystem.h"
-#include "Particles/ParticleSystemComponent.h"
 
 void UTGWeaponShotgun::Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance)
 {
@@ -20,15 +18,7 @@ void UTGWeaponShotgun::Shoot(AActor* Instigator, class UMeshComponent* WeaponCom
 	Super::Shoot(Instigator, WeaponComponent, MuzzlePos, Direction, Distance);
 
 	// 발포 이펙트
-	UParticleSystemComponent* FireParticle = UGameplayStatics::SpawnEmitterAttached(
-		status.Asset.FireParticle,
-		WeaponComponent,
-		NAME_None,
-		MuzzlePos,
-		FRotator::ZeroRotator,
-		FVector::OneVector * status.Asset.FireParticleScale,
-		EAttachLocation::KeepWorldPosition
-	);
+	SpawnAttachedEffects(status.Asset.FireParticle, WeaponComponent, MuzzlePos, status.Asset.FireParticleScale);
 
 	for (int i = 0; i < status.Pellet; i++)
 	{
@@ -50,15 +40,7 @@ void UTGWeaponShotgun::Shoot(AActor* Instigator, class UMeshComponent* WeaponCom
 		if (TraceHit.bBlockingHit)
 		{
 			// 착탄 이펙트
-			UParticleSystemComponent* HitParticle = UGameplayStatics::SpawnEmitterAttached(
-				status.Asset.HitParticle,
-				TraceHit.GetActor()->GetRootComponent(),
-				NAME_None,
-				TraceHit.Location,
-				FRotator::ZeroRotator,
-				FVector::OneVector * status.Asset.HitParticleScale,
-				EAttachLocation::KeepWorldPosition
-			);
+			SpawnAttachedEffects(status.Asset.HitParticle, TraceHit.GetActor()->GetRootComponent(), TraceHit.Location, status.Asset.HitParticleScale);
 
 			AActor* HitActor = TraceHit.GetActor();
 			if (ATGEnemyBase* Enemy = Cast<ATGEnemyBase>(HitActor))

@@ -62,8 +62,8 @@ void ATGPlayer::BeginPlay()
 	if (GetWorld()->GetFirstPlayerController())
 		EnableInput(GetWorld()->GetFirstPlayerController());
 
-	OwnWeapon(ETGWeaponTriggerType::REPEATER, TEXT("AssaultRifle"), false);
-	OwnWeapon(ETGWeaponTriggerType::SHOTGUN, TEXT("Shotgun"), true);
+	OwnWeapon(ETGWeaponTriggerType::REPEATER, TEXT("AssaultRifle"), true);
+	OwnWeapon(ETGWeaponTriggerType::SHOTGUN, TEXT("Shotgun"), false);
 	OwnWeapon(ETGWeaponTriggerType::SINGLE_SHOT, TEXT("SniperRifle"), false);
 }
 
