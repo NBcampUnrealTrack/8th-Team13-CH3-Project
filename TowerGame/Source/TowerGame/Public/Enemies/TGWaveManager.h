@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "TGWaveManager.generated.h"
 
+class ATGGridBase;
+class ATGBossBase;
 class ATGEnemySpawner;
 class ATGEnemyBase;
 class UTGWaveData;
@@ -13,6 +15,9 @@ class UTGWaveData;
 // 웨이브 진행 상태 이벤트
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWaveStarted, int32, WaveIndex);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWaveSpawnCompleted, int32, WaveIndex, bool, bCanStartNextWave);
+
+//보스 생성 이벤트
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBossSpawned, ATGBossBase*, SpawnedBoss);
 
 UCLASS()
 class TOWERGAME_API ATGWaveManager : public AActor
@@ -28,6 +33,10 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wave")
 	TArray<TObjectPtr<UTGWaveData>> WaveDataList;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss")
+	TSubclassOf<ATGBossBase> BossClass;
+
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Wave")
 	TArray<TObjectPtr<ATGEnemySpawner>> EnemySpawners;
@@ -46,6 +55,8 @@ private:
 	TArray<TSubclassOf<ATGEnemyBase>> PendingSpawnQueue;
 	int32 PendingSpawnIndex;
 	int32 NextSpawnerIndex;
+
+	int32 AliveEnemyCount;
 
 public:
 	ATGWaveManager();
@@ -79,6 +90,10 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Wave")
 	FOnWaveSpawnCompleted OnWaveSpawnCompleted;
 
+	// Boss Spawn Event
+	UPROPERTY(BlueprintAssignable, Category = "Boss")
+	FOnBossSpawned OnBossSpawned;
+
 private:
 	// Wave 관리
 	void SpawnNextEnemy();
@@ -86,4 +101,16 @@ private:
 	void HandleNextWaveDelayFinished();
 	void InitializeSpawnState(int32 WaveIndex);
 	bool HasNextWave() const;
+
+	// Enemy 제거 Delegate
+	UFUNCTION()
+	void HandleEnemyRemoved(ATGEnemyBase* RemoveEnemy);
+
+	// Boss Spawn 처리
+	void SpawnBoss();
+
+	// 보스 생성 시 중앙 기준 Grid 초기화
+	ATGGridBase* FindGridBase() const;
+	FVector GetGridCenterLocation(const ATGGridBase* GridBase) const;
+	void ResetGridsForBossSpawn(ATGGridBase* GridBase, FVector CenterLocation, float ClearRadius);
 };

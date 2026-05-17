@@ -9,6 +9,10 @@
 class ATGPlayer;
 class UTGBossPhaseBase;
 
+// 보스 체력, 삭제 이벤트
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnBossHpChanged, float, CurrentHP, float, MaxHP);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBossRemoved, ATGBossBase*, RemovedBoss);
+
 UCLASS()
 class TOWERGAME_API ATGBossBase : public AActor
 {
@@ -38,9 +42,19 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Boss|Stat")
 	float GetMaxHP() const;
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Boss|Spawn")
+	float GetSpawnClearRadius() const;
+
 	// 코드 책임 상 Player는 Phase보다 BossBase가 들고 있는게 바람직함
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Boss|Target")
 	ATGPlayer* GetPlayer() const;
+
+public:
+	UPROPERTY(BlueprintAssignable, Category = "Boss|Stat")
+	FOnBossHpChanged OnBossHpChanged;
+
+	UPROPERTY(BlueprintAssignable, Category = "Boss")
+	FOnBossRemoved OnBossRemoved;
 
 protected:
 	// PhaseClasses[Index]를 현재 State 객체로 생성하고 전환한다.
@@ -57,6 +71,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Stat")
 	float CurrentHP;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Spawn")
+	float SpawnClearRadius;
 
 	// 파생 Boss가 사용할 Phase 클래스를 순서대로 등록한다.
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Phase")

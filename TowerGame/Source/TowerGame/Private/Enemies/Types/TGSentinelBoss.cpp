@@ -10,6 +10,7 @@
 ATGSentinelBoss::ATGSentinelBoss()
 {
 	MaxHP = 100;
+	SpawnClearRadius = 600.f;
 
 	PhaseHPRatio.Add(0.6f);
 	PhaseHPRatio.Add(0.3f);

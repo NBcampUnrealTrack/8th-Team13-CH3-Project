@@ -3,7 +3,6 @@
 
 #include "UI/TGPlayerWidget.h"
 #include "Components/ProgressBar.h"
-#include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "Player/TGPlayer.h"
 #include "Enemies/TGNavigationManager.h"
@@ -11,6 +10,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Core/GameFlow/TGGameMode.h"
 #include "Core/Grid/TGGridBase.h"
+#include "Enemies/TGBossBase.h"
 #include "UI/TGMiniMapWidget.h"
 #include "Enemies/TGEnemyBase.h"
 #include "Enemies/TGWaveManager.h"
@@ -24,10 +24,11 @@ void UTGPlayerWidget::NativeConstruct()
 		player->OnFocusedEnemyChanged.AddUniqueDynamic(this, &UTGPlayerWidget::HandleFocusedEnemyChanged);
 	}
 
-	// Wave 시작 이벤트 구독
+	// Wave 시작 이벤트, Boss Spawn 이벤트 구독
 	WaveManager = ATGWaveManager::Get(this);
 	if (WaveManager){
 		WaveManager->OnWaveStarted.AddUniqueDynamic(this, &UTGPlayerWidget::HandleWaveStarted);
+		WaveManager->OnBossSpawned.AddDynamic(this, &UTGPlayerWidget::BindBoss);
 	}
 
 	NavigationManager = ATGNavigationManager::Get(this);
@@ -70,6 +71,8 @@ void UTGPlayerWidget::NativeDestruct()
 
 	if (WaveManager){
 		WaveManager->OnWaveStarted.RemoveDynamic(this, &UTGPlayerWidget::HandleWaveStarted);
+		WaveManager->OnBossSpawned.RemoveDynamic(this, &UTGPlayerWidget::BindBoss);
+		UnbindBoss();
 	}
 
 	if (NavigationManager){
@@ -96,6 +99,31 @@ void UTGPlayerWidget::HandleWaveStarted(int32 WaveIndex)
 	// Text 설정 및 애니메이션 실행
 	Txt_CurrentWave->SetText(FText::FromString(FString::Printf(TEXT("Wave : %d"), WaveIndex+1)));
 	if (Anim_WaveOpacity) PlayAnimation(Anim_WaveOpacity);
+}
+
+void UTGPlayerWidget::UpdateBossHPBar(float CurrentHP, float MaxHP)
+{
+	if (!PB_EnemyHP) return;
+
+	// Temp PB_Enemy 재사용으로 인한 Hidden 방어 코드 PB_Boss 제작/변경 후 삭제
+	if (PB_EnemyHP->GetVisibility() != ESlateVisibility::Visible){
+		PB_EnemyHP->SetVisibility(ESlateVisibility::Visible);
+	}
+
+	// Boss HP 반영
+	// TODO Phase 별 비율 적용 & 전용 PB로 변경
+	const float BossRatio = MaxHP > 0.f ? FMath::Clamp(CurrentHP / MaxHP, 0.0f, 1.0f) : 0.f;
+	PB_EnemyHP->SetPercent(BossRatio);
+}
+
+void UTGPlayerWidget::HandleBossRemoved(ATGBossBase* RemovedBoss)
+{
+	if (RemovedBoss != Boss) return;
+
+	UnbindBoss();
+
+	if (!PB_EnemyHP) return;
+	PB_EnemyHP->SetVisibility(ESlateVisibility::Hidden);
 }
 
 void UTGPlayerWidget::UpdateCurrentCore(ATGCoreBase* NewCore)
@@ -233,6 +261,36 @@ void UTGPlayerWidget::UnbindFocusedEnemy()
 	FocusedEnemy->OnEnemyRemoved.RemoveDynamic(this, &UTGPlayerWidget::HandleFocusedEnemyRemoved);
 
 	FocusedEnemy = nullptr;
+}
+
+void UTGPlayerWidget::BindBoss(ATGBossBase* NewBoss)
+{
+	UnbindBoss();
+
+	Boss = NewBoss;
+	if (!Boss) return;
+
+	// 보스 HP, Boss 제거 이벤트 등록
+	Boss->OnBossHpChanged.AddDynamic(this, &UTGPlayerWidget::UpdateBossHPBar);
+	Boss->OnBossRemoved.AddDynamic(this, &UTGPlayerWidget::HandleBossRemoved);
+
+	UpdateBossHPBar(Boss->GetCurrentHP(), Boss->GetMaxHP());
+
+	// 임시로 EnemyHP ProgressBar 재활용
+	if (PB_EnemyHP){
+		PB_EnemyHP->SetVisibility(ESlateVisibility::Visible);
+	}
+}
+
+void UTGPlayerWidget::UnbindBoss()
+{
+	if (!Boss) return;
+
+	// 보스 HP 변동 및 제거 이벤트 해제
+	Boss->OnBossHpChanged.RemoveDynamic(this, &UTGPlayerWidget::UpdateBossHPBar);
+	Boss->OnBossRemoved.RemoveDynamic(this, &UTGPlayerWidget::HandleBossRemoved);
+
+	Boss = nullptr;
 }
 
 void UTGPlayerWidget::HandlePauseClicked()

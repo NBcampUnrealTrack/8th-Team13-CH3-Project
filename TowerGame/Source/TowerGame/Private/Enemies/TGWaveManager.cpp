@@ -4,6 +4,9 @@
 #include "Enemies/TGWaveManager.h"
 
 #include "EngineUtils.h"
+#include "Core/Grid/TGGridBase.h"
+#include "Core/Grid/TGSingleGrid.h"
+#include "Enemies/TGBossBase.h"
 #include "Enemies/TGEnemyBase.h"
 #include "Enemies/TGEnemySpawner.h"
 #include "Enemies/TGWaveData.h"
@@ -18,7 +21,8 @@ ATGWaveManager::ATGWaveManager():
 	ActiveWaveIndex(0),
 	bIsSpawning(false),
 	PendingSpawnIndex(0),
-	NextSpawnerIndex(0)
+	NextSpawnerIndex(0),
+	AliveEnemyCount(0)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
@@ -150,8 +154,13 @@ void ATGWaveManager::SpawnNextEnemy()
 	ATGEnemySpawner* Spawner = EnemySpawners[NextSpawnerIndex];
 	NextSpawnerIndex++;
 
-	// Spawn 성공 시에만 다음 Enmey로 넘어감
-	if (Spawner && Spawner->SpawnEnemy(EnemyClass)) PendingSpawnIndex++;
+
+	// Spawn 성공 시 제거되지 않은 Enemy 수 증가시키고 제거 Delegate 구독
+	if (ATGEnemyBase* SpawnedEnemy = Spawner ? Spawner->SpawnEnemy(EnemyClass) : nullptr){
+		AliveEnemyCount++;
+		SpawnedEnemy->OnEnemyRemoved.AddDynamic(this, &ATGWaveManager::HandleEnemyRemoved);
+		PendingSpawnIndex++;
+	}
 }
 
 void ATGWaveManager::FinishCurrentWaveSpawn()
@@ -211,4 +220,92 @@ void ATGWaveManager::InitializeSpawnState(int32 WaveIndex)
 bool ATGWaveManager::HasNextWave() const
 {
 	return WaveDataList.IsValidIndex(NextWaveIndex);
+}
+
+void ATGWaveManager::HandleEnemyRemoved(ATGEnemyBase* RemoveEnemy)
+{
+	if (!RemoveEnemy) return;
+
+	RemoveEnemy->OnEnemyRemoved.RemoveDynamic(this, &ATGWaveManager::HandleEnemyRemoved);
+	AliveEnemyCount = FMath::Max(AliveEnemyCount - 1, 0);
+
+	// 마지막 Wave에서 모든 적이 제거 되었을 때 보스 생성
+	if (!HasNextWave() && !bIsSpawning && AliveEnemyCount == 0){
+		SpawnBoss();
+	}
+}
+
+void ATGWaveManager::SpawnBoss()
+{
+	if (!BossClass) return;
+
+	// Stage GridBase 탐색
+	ATGGridBase* GridBase = FindGridBase();
+	if (!GridBase) return;
+
+	const ATGBossBase* BossDefault = BossClass->GetDefaultObject<ATGBossBase>();
+	const float ClearRadius = BossDefault->GetSpawnClearRadius();
+	const FVector SpawnLocation = GetGridCenterLocation(GridBase);
+
+	// Boss Spawn 전 중앙 반경 내 Gird을 초기화
+	ResetGridsForBossSpawn(GridBase, SpawnLocation, ClearRadius);
+
+	// 충돌이 있어도 BossSPawn을 보장
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride =
+		ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+	ATGBossBase* Boss = GetWorld()->SpawnActor<ATGBossBase>(
+		BossClass, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
+
+	if (Boss){
+		OnBossSpawned.Broadcast(Boss);
+	}
+}
+
+ATGGridBase* ATGWaveManager::FindGridBase() const
+{
+	UWorld* World = GetWorld();
+	if (!World) return nullptr;
+
+	for (TActorIterator<ATGGridBase> It(World); It; ++It) return *It;
+	return nullptr;
+}
+
+FVector ATGWaveManager::GetGridCenterLocation(const ATGGridBase* GridBase) const
+{
+	if (!GridBase) return FVector::ZeroVector;
+
+	const FVector Origin = GridBase->GetActorLocation();
+	const float GridSize = GridBase->GetGridSize();
+
+	// 전체 그리드 기준 중앙 위치 계산
+	return (FVector(
+		Origin.X + GridBase->GetGridX() * GridSize * 0.5f,
+		Origin.Y + GridBase->GetGridY() * GridSize * 0.5f,
+		Origin.Z
+	));
+}
+
+void ATGWaveManager::ResetGridsForBossSpawn(ATGGridBase* GridBase, FVector CenterLocation, float ClearRadius)
+{
+	if (!GridBase) return;
+	if (ClearRadius <= 0.0f) return;
+
+	// 전체 GridMap을 순회하며 BossSpawn 범위 안의 Grid을 찾음
+	for (int32 Y = 0; Y < GridBase->GetGridY(); ++Y){
+		for (int32 X = 0; X < GridBase->GetGridX(); ++X){
+			// Grid 좌표의 World 위치
+			const FIntPoint Point(X, Y);
+			const FVector GridLocation = GridBase->ConvertIndexToVector(Point);
+
+			// 삭제 범위 안인지 확인
+			if (FVector::Dist2D(CenterLocation, GridLocation) > ClearRadius) continue;
+
+			ATGSingleGrid* SingleGrid = GridBase->GetSingleGridFromPoint(Point);
+			if (!SingleGrid) continue;
+
+			SingleGrid->ResetGrid();
+		}
+	}
 }

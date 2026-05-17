@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "TGPlayerWidget.generated.h"
 
+class ATGBossBase;
 class ATGEnemyBase;
 class ATGWaveManager;
 class ATGGameMode;
@@ -51,6 +52,9 @@ private:
 	UPROPERTY()
 	TObjectPtr<ATGEnemyBase> FocusedEnemy;
 
+	UPROPERTY()
+	TObjectPtr<ATGBossBase> Boss;
+
 	FTimerHandle FocusedEnemyHideTimerHandle;
 
 private:
@@ -95,6 +99,18 @@ private:
 	UFUNCTION()
 	void HandleWaveStarted(int32 WaveIndex);
 
+	// 보스 생성 시 호출
+	UFUNCTION()
+	void BindBoss(ATGBossBase* NewBoss);
+
+	// Boss HP 변동 시 호출
+	UFUNCTION()
+	void UpdateBossHPBar(float CurrentHP, float MaxHP);
+
+	// Boss 제거 시 호출
+	UFUNCTION()
+	void HandleBossRemoved(ATGBossBase* RemovedBoss);
+
 	// 현재 코어 변경 시 호출
 	UFUNCTION()
 	void UpdateCurrentCore(ATGCoreBase* NewCore);
@@ -112,6 +128,9 @@ private:
 	// UI에 연결된 enemy 관리
 	void BindFocusedEnemy(ATGEnemyBase* NewEnemy);
 	void UnbindFocusedEnemy();
+
+	// UI에 연결된 Boss 관리
+	void UnbindBoss();
 //미니맵 위젯
 public:
 	void SetGridBase(ATGGridBase* InGridBase);

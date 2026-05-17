@@ -3,6 +3,7 @@
 
 #include "Enemies/TGBossBase.h"
 
+#include "Core/GameFlow/TGGameMode.h"
 #include "Enemies/TGBossPhaseBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "Player/TGPlayer.h"
@@ -10,6 +11,7 @@
 ATGBossBase::ATGBossBase() :
 	MaxHP(1.f),
 	CurrentHP(0.f),
+	SpawnClearRadius(0),
 	CurrentPhase(nullptr),
 	CurrentPhaseIndex(INDEX_NONE),
 	TargetPlayer(nullptr)
@@ -22,6 +24,7 @@ void ATGBossBase::BeginPlay()
 	Super::BeginPlay();
 
 	CurrentHP = MaxHP;
+	OnBossHpChanged.Broadcast(CurrentHP, MaxHP);
 	TargetPlayer = Cast<ATGPlayer>(UGameplayStatics::GetPlayerPawn(this, 0));
 
 	ChangePhase(0);
@@ -33,6 +36,7 @@ void ATGBossBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		CurrentPhase->ExitPhase();
 		CurrentPhase = nullptr;
 	}
+	OnBossRemoved.Broadcast(this);
 
 	Super::EndPlay(EndPlayReason);
 }
@@ -58,6 +62,11 @@ float ATGBossBase::GetCurrentHP() const
 float ATGBossBase::GetMaxHP() const
 {
 	return MaxHP;
+}
+
+float ATGBossBase::GetSpawnClearRadius() const
+{
+	return SpawnClearRadius;
 }
 
 ATGPlayer* ATGBossBase::GetPlayer() const
@@ -108,13 +117,15 @@ void ATGBossBase::ApplyBossDamage(float DamageAmount)
 	if (DamageAmount <= 0.f || CurrentHP <= 0.f) return;
 
 	CurrentHP = FMath::Clamp(CurrentHP - DamageAmount, 0.0f, MaxHP);
+	OnBossHpChanged.Broadcast(CurrentHP, MaxHP);
 
 	UE_LOG(LogTemp, Warning, TEXT("[BossBase]BossDamaged - Damage: %.1f / HP: %.1f / %.1f "),
 		DamageAmount, CurrentHP, MaxHP);
 
 	if (CurrentHP <= 0){
+		if (ATGGameMode* GameMode = Cast<ATGGameMode>(UGameplayStatics::GetGameMode(this))){
+			GameMode->HandleGameClear();
+		}
 		Destroy();
 	}
 }
-
-
