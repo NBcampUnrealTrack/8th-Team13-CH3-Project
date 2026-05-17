@@ -3,7 +3,9 @@
 
 #include "Enemies/Phase/TGSentinelBossPhase2.h"
 
+#include "TGMountedTower.h"
 #include "Enemies/TGBossBase.h"
+#include "Enemies/TGCoreBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "Player/TGPlayer.h"
 
@@ -67,23 +69,42 @@ void UTGSentinelBossPhase2::ExecutePattern()
 
 void UTGSentinelBossPhase2::ExecuteDelayedAttack()
 {
-	if (!OwnerBoss) return;
+	UWorld* World = OwnerBoss->GetWorld();
+	if (!World) return;
 
-	ATGPlayer* Player = OwnerBoss->GetPlayer();
-	if (!Player) return;
+	TArray<AActor*> OverlapActors;
+	TArray<AActor*> IgnoreActors;
+	IgnoreActors.Add(OwnerBoss);
 
-	// 구형 범위 - Dist
-	const float Distance = FVector::Dist(PendingAttackLocation, Player->GetActorLocation());
-	if (Distance > WarningRadius) return;
+	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Pawn));
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldDynamic));
 
-	// 범위 내 Player에게 피해를 적용 (Core 도 적용 받도록 추가 예정)
-	UGameplayStatics::ApplyDamage(
-		Player,
-		AttackDamage,
+	UKismetSystemLibrary::SphereOverlapActors(
+		World,
+		PendingAttackLocation,
+		WarningRadius,
+		ObjectTypes,
 		nullptr,
-		OwnerBoss,
-		nullptr
+		IgnoreActors,
+		OverlapActors
 	);
 
-	UE_LOG(LogTemp, Warning, TEXT("Sentinel Boss Phase 2 Hit Player - Damage: %.1f"), AttackDamage);
+	for (AActor* OverlapActor : OverlapActors){
+		if (!OverlapActor) continue;
+
+		if (!Cast<ATGPlayer>(OverlapActor) && !Cast<ATGCoreBase>(OverlapActor) && !Cast<ATGMountedTower>(OverlapActor)){
+			continue;
+		}
+
+		UGameplayStatics::ApplyDamage(
+			OverlapActor,
+			AttackDamage,
+			nullptr,
+			OwnerBoss,
+			nullptr
+		);
+
+		UE_LOG(LogTemp, Error, TEXT("Apply Damage %s"), *OverlapActor->GetName());
+	}
 }
