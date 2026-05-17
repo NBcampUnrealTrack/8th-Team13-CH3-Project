@@ -116,4 +116,24 @@ private:
 	// 가까운 건물 반환 추후 우선도 고려
 	bool MoveToBlockingBuilding();
 	bool TryMoveToAttackRangeOfBuilding(ABaseTower* Building);
+
+
+protected:
+	//	사망시 파츠 파괴용
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="TowerGame|BodyParts")
+	TArray<TObjectPtr<UStaticMeshComponent>> BodyParts;
+
+	bool bIsDestroyed = false;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="TowerGame|BodyParts")
+	float PartsLifeSpan = 5.f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="TowerGame|BodyParts")
+	float ExplodeRadius = 100.f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="TowerGame|BodyParts")
+	float ExplodeForce = 500.f;
+
+	FTimerHandle ExplodeTimerHandle;
+
+	//	파츠를 분리합니다
+	UFUNCTION(BlueprintCallable, Category="TowerGame|BodyParts")
+	void DestroyUnit();
 };

@@ -12,6 +12,7 @@
 #include "Enemies/TGEnemyAIController.h"
 
 #include "Enemies/TGNavigationManager.h"
+#include "Field/FieldSystemNodes.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -49,6 +50,21 @@ void ATGEnemyBase::BeginPlay()
 
 	CurrentHP = MaxHP;
 	OnEnemyHpChanged.Broadcast(CurrentHP, MaxHP);
+	//	하위 스태틱 메쉬 컴포넌트 모두 가져오기
+	TArray<UStaticMeshComponent*> Components;
+	GetComponents<UStaticMeshComponent>(Components);
+	for (UStaticMeshComponent* Component : Components)
+	{
+		if (Component == RootComponent || !Component->GetStaticMesh())
+		{
+			continue;
+		}
+
+		//Component->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		Component->SetCanEverAffectNavigation(false);
+		Component->SetSimulatePhysics(false);
+		BodyParts.Add(Component);
+	}
 }
 
 void ATGEnemyBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -191,7 +207,8 @@ float ATGEnemyBase::TakeDamage(float DamageAmount,
 		{
 			GM->AddEnergy(EnergyDropAmount);
 		}
-		Destroy();
+		//Destroy();
+		DestroyUnit();
 	}
 
 	return AppliedDamage;
@@ -384,4 +401,28 @@ bool ATGEnemyBase::TryMoveToAttackRangeOfBuilding(ABaseTower* Building)
 	}
 
 	return false;
+}
+
+void ATGEnemyBase::DestroyUnit()
+{	//	사망을 이 함수로 대체해야합니다.
+	bIsDestroyed = true;
+
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	for (UStaticMeshComponent* BodyPart : BodyParts)
+	{
+		BodyPart->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+		BodyPart->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+		BodyPart->SetSimulatePhysics(true);
+		BodyPart->AddRadialImpulse(GetActorLocation(), ExplodeRadius, ExplodeForce, RIF_Linear, true);
+		BodyPart->AddTorqueInDegrees(
+			FVector(FMath::FRandRange(-180.f,180.f),
+				FMath::FRandRange(-180.f,180.f),
+				FMath::FRandRange(-180.f,180.f))
+			);
+	}
+
+	//	파괴 이펙트 출력
+	//	파괴 사운드 출력
+
+	SetLifeSpan(5.0f);
 }
