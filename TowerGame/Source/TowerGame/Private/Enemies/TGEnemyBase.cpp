@@ -111,7 +111,7 @@ void ATGEnemyBase::RequestRepath()
 		StructureAttackRange,
 		false,
 		true,
-		true,
+		false,
 		true,
 		nullptr,
 		false
