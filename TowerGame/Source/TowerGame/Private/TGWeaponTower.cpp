@@ -15,7 +15,8 @@ ATGWeaponTower::ATGWeaponTower()
 void ATGWeaponTower::BeginPlay()
 {
 	Super::BeginPlay();
-	StartAttack();
+	//	공격 로직 변경을 위해 주석처리
+	//StartAttack();
 }
 
 void ATGWeaponTower::Tick(float DeltaTime)
@@ -24,8 +25,26 @@ void ATGWeaponTower::Tick(float DeltaTime)
 
 	//	적 탐지
 	DetectingEnemy();
+	AttackTarget(DeltaTime);
+
 	//	사거리 그려줄 디버그스피어
 	DrawDebugSphere(GetWorld(), GetActorLocation(), AttackRange, 16, FColor::Green);
+}
+
+void ATGWeaponTower::AttackTarget(float& DeltaTime)
+{
+	AttackPrepareTime -= DeltaTime;
+	if (AttackPrepareTime > 0.0f)	return;
+	if (Target == nullptr)	return;
+
+	UGameplayStatics::ApplyDamage(
+		Target,
+		AttackDamage,
+		nullptr,
+		this,
+		UDamageType::StaticClass()
+	);
+	AttackPrepareTime = DamageInterval;
 }
 
 void ATGWeaponTower::StartAttack()
@@ -99,6 +118,7 @@ void ATGWeaponTower::Upgrade()
 
 void ATGWeaponTower::DetectingEnemy()
 {
+	//	가장 가까운 적을 찾습니다.
 	TArray<AActor*> FoundActors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ATGEnemyBase::StaticClass(), FoundActors);
 

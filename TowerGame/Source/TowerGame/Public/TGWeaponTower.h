@@ -27,6 +27,9 @@ protected:
 	// 공격 간격 (초) — 기획: 2초당 1번
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tower Settings")
 	float DamageInterval = 2.0f;
+	float AttackPrepareTime = 0.0f;
+
+	void AttackTarget(float& DeltaTime);
 
 	// 공격 반복 타이머 핸들
 	FTimerHandle AttackTimerHandle;
