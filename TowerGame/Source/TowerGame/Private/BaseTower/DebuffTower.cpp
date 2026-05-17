@@ -20,8 +20,7 @@ void ATGDebuffTower::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// DebuffInterval(초)마다 ApplyRangeDebuff 무한 반복
-	StartDebuff();
+
 }
 
 void ATGDebuffTower::Tick(float DeltaTime)
@@ -30,20 +29,17 @@ void ATGDebuffTower::Tick(float DeltaTime)
 
 	//	적 탐지
 	DetectingEnemy();
+
 	//	사거리 그려줄 디버그스피어
 	DrawDebugSphere(GetWorld(), GetActorLocation(), DebuffRange, 16, FColor::Purple);
+
+	// 범위 내 적 슬로우 적용
+	ApplyRangeDebuff();
 }
 
 void ATGDebuffTower::StartDebuff()
 {
-	// DebuffInterval(초)마다 ApplyRangeDebuff 무한 반복
-	GetWorld()->GetTimerManager().SetTimer(
-		DebuffTimerHandle,
-		this,
-		&ATGDebuffTower::ApplyRangeDebuff,
-		DebuffInterval,
-		true
-	);
+
 }
 
 void ATGDebuffTower::ApplyRangeDebuff()
@@ -59,53 +55,61 @@ void ATGDebuffTower::ApplyRangeDebuff()
 	IgnoreActors.Add(this);
 
 	TArray<AActor*> OutActors;
-
-	bool bHasOverlap = UKismetSystemLibrary::SphereOverlapActors(
-		GetWorld(),
-		Center,
-		DebuffRange,
-		ObjectTypes,
-		nullptr,
-		IgnoreActors,
-		OutActors
+	UKismetSystemLibrary::SphereOverlapActors(
+		GetWorld(), Center, DebuffRange,
+		ObjectTypes, nullptr, IgnoreActors, OutActors
 	);
 
-	// 디버그용 구체 (개발 완료 후 삭제 가능)
-	DrawDebugSphere(GetWorld(), Center, DebuffRange, 12, FColor::Purple, false, DebuffInterval);
-
-	if (bHasOverlap)
+	// 이번 틱에 범위 내에 있는 적 목록
+	TArray<ATGEnemyBase*> EnemiesInRange;
+	for (AActor* Actor : OutActors)
 	{
-		for (AActor* Actor : OutActors)
+		if (ATGEnemyBase* Enemy = Cast<ATGEnemyBase>(Actor))
 		{
-			if (ATGEnemyBase* Enemy = Cast<ATGEnemyBase>(Actor))
-			{
-				// 적 이동속도를 SlowRate 비율만큼 감소
-				if (UCharacterMovementComponent* Movement = Enemy->GetCharacterMovement())
-				{
-					float OriginalSpeed = Movement->MaxWalkSpeed;
-					Movement->MaxWalkSpeed = OriginalSpeed * SlowRate;
+			EnemiesInRange.Add(Enemy);
 
-					// SlowDuration 후 원래 속도로 복구
-					FTimerHandle RestoreHandle;
-					GetWorld()->GetTimerManager().SetTimer(
-						RestoreHandle,
-						[Movement, OriginalSpeed]()
-						{
-							if (Movement)
-								Movement->MaxWalkSpeed = OriginalSpeed;
-						},
-						SlowDuration,
-						false
-					);
+			if (UCharacterMovementComponent* Movement = Enemy->GetCharacterMovement())
+			{
+				// 기본속도 기준으로 SlowRate 적용
+				// 이미 슬로우 중이면 중복 적용 방지
+				float DefaultSpeed = Movement->GetMaxSpeed();
+				if (Movement->MaxWalkSpeed > DefaultSpeed * SlowRate)
+				{
+					// 기본속도 저장 후 슬로우 적용
+					SlowedEnemies.Add(Enemy, DefaultSpeed);
+					Movement->MaxWalkSpeed = DefaultSpeed * SlowRate;
 				}
 			}
+		}
+	}
+
+	// 범위 벗어난 적 원래 속도로 복구
+	for (auto It = SlowedEnemies.CreateIterator(); It; ++It)
+	{
+		ATGEnemyBase* Enemy = It->Key;
+		if (!EnemiesInRange.Contains(Enemy))
+		{
+			// 범위 밖으로 나간 적 — 원래 속도 복구
+			if (Enemy && Enemy->GetCharacterMovement())
+			{
+				Enemy->GetCharacterMovement()->MaxWalkSpeed = It->Value;
+			}
+			It.RemoveCurrent();
 		}
 	}
 }
 
 void ATGDebuffTower::StopDebuff()
 {
-	GetWorld()->GetTimerManager().ClearTimer(DebuffTimerHandle);
+	// 타워 파괴 시 슬로우된 모든 적 속도 복구
+	for (auto& Pair : SlowedEnemies)
+	{
+		if (Pair.Key && Pair.Key->GetCharacterMovement())
+		{
+			Pair.Key->GetCharacterMovement()->MaxWalkSpeed = Pair.Value;
+		}
+	}
+	SlowedEnemies.Empty();
 }
 
 void ATGDebuffTower::Upgrade()

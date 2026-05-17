@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "TGMountedTower.h"
+#include "Enemies/TGEnemyBase.h"
 #include "DebuffTower.generated.h"
 
 UCLASS()
@@ -22,27 +23,16 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tower Settings")
 	float DebuffRange = 500.f;
 
-	// 슬로우 지속시간 (초)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tower Settings")
-	float SlowDuration = 2.0f;
-
-	// 슬로우 적용 간격 (초)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tower Settings")
-	float DebuffInterval = 1.0f;
-
 	// 슬로우 비율 (0.5 = 이동속도 50% 감소)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tower Settings")
 	float SlowRate = 0.5f;
 
-	// 슬로우 반복 타이머 핸들
-	FTimerHandle DebuffTimerHandle;
+	// 슬로우된 적과 원래 속도를 저장하는 맵 — 범위 벗어나면 복구에 사용
+	UPROPERTY()
+	TMap<ATGEnemyBase*, float> SlowedEnemies;
 
 public:
-	// 슬로우 시작 (타워 설치 완료 시 호출)
-	UFUNCTION(BlueprintCallable, Category = "Tower Logic")
-	void StartDebuff();
-
-	// 슬로우 중지 (타워 파괴 시 호출)
+	// 슬로우 중지 및 모든 적 속도 복구 (타워 파괴 시 호출)
 	UFUNCTION(BlueprintCallable, Category = "Tower Logic")
 	void StopDebuff();
 
