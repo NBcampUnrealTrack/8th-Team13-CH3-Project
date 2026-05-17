@@ -40,7 +40,7 @@ void UTGWeaponShotgun::Shoot(AActor* Instigator, class UMeshComponent* WeaponCom
 		if (TraceHit.bBlockingHit)
 		{
 			// 착탄 이펙트
-			SpawnAttachedEffects(status.Asset.HitParticle, TraceHit.GetActor()->GetRootComponent(), TraceHit.Location, status.Asset.HitParticleScale);
+			SpawnAttachedEffects(status.Asset.HitParticle, TraceHit.GetActor()->GetRootComponent(), TraceHit.Location, status.Asset.HitParticleScale, true);
 
 			AActor* HitActor = TraceHit.GetActor();
 			if (ATGEnemyBase* Enemy = Cast<ATGEnemyBase>(HitActor))

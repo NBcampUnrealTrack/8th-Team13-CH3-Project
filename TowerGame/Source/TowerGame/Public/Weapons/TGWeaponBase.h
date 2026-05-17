@@ -40,6 +40,10 @@ public:
 		TObjectPtr<class UParticleSystem> HitParticle = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VisualEffects")	// 착탄 이펙트 스케일
 		float HitParticleScale = 1.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VisualEffects")	// 착탄 데칼
+		TObjectPtr<UMaterialInterface> BulletMarks = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VisualEffects")	// 착탄 데칼 스케일
+		float BulletMarksScale = 1.f;
 };
 
 USTRUCT(BlueprintType)
@@ -74,6 +78,6 @@ protected:	// 라인트레이싱 정보
 public:
 	virtual const FTGWeaponAsset* GetAsset() { return nullptr; }
 	virtual void Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance);
-	void SpawnAttachedEffects(class UParticleSystem* particle, USceneComponent* AttachToComponent, FVector Location, float ParticleScale, bool bSpawnDecal = false, float DecalScale = 1.0f);
+	void SpawnAttachedEffects(class UParticleSystem* Particle, USceneComponent* AttachToComponent, FVector Location, float ParticleScale, bool bSpawnDecal = false, float DecalLifeSpan = 120.0f);
 	void HandleFireDelay();
 };
