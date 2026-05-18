@@ -22,7 +22,8 @@ ATGWaveManager::ATGWaveManager():
 	bIsSpawning(false),
 	PendingSpawnIndex(0),
 	NextSpawnerIndex(0),
-	AliveEnemyCount(0)
+	AliveEnemyCount(0),
+	CurrentBoss(nullptr)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
@@ -42,6 +43,11 @@ void ATGWaveManager::BeginPlay()
 
 void ATGWaveManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	if (CurrentBoss){
+		CurrentBoss->OnBossRemoved.RemoveDynamic(this, &ATGWaveManager::HandleBossRemoved);
+		CurrentBoss = nullptr;
+	}
+
 	if (Instance.Get() == this){
 		Instance.Reset();
 	}
@@ -235,9 +241,18 @@ void ATGWaveManager::HandleEnemyRemoved(ATGEnemyBase* RemoveEnemy)
 	}
 }
 
+void ATGWaveManager::HandleBossRemoved(ATGBossBase* RemovedBoss)
+{
+	if (RemovedBoss != CurrentBoss) return;
+
+	CurrentBoss->OnBossRemoved.RemoveDynamic(this, &ATGWaveManager::HandleBossRemoved);
+	CurrentBoss = nullptr;
+}
+
 void ATGWaveManager::SpawnBoss()
 {
 	if (!BossClass) return;
+	if (CurrentBoss) return;
 
 	// Stage GridBase 탐색
 	ATGGridBase* GridBase = FindGridBase();
@@ -259,6 +274,8 @@ void ATGWaveManager::SpawnBoss()
 		BossClass, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
 
 	if (Boss){
+		CurrentBoss = Boss;
+		CurrentBoss->OnBossRemoved.AddDynamic(this, &ATGWaveManager::HandleBossRemoved);
 		OnBossSpawned.Broadcast(Boss);
 	}
 }
@@ -308,4 +325,9 @@ void ATGWaveManager::ResetGridsForBossSpawn(ATGGridBase* GridBase, FVector Cente
 			SingleGrid->ResetGrid();
 		}
 	}
+}
+
+ATGBossBase* ATGWaveManager::GetBoss() const
+{
+	return CurrentBoss;
 }
