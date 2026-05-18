@@ -38,8 +38,15 @@ public:
 
 	// Structure 공격
 	virtual void StartStructureAttack();
-	void AttackStructureTarget();
 
+	// 공격 범위 기준 경로 이동
+	void StopStructureAttackRangeCheck();
+	void CheckStructureAttackRange();
+
+	// 공격 범위 X 경로 이동
+	void MoveToStructureTargetWithoutAttackRange();
+
+	void AttackStructureTarget();
 	void StopStructureAttack();
 
 	virtual float TakeDamage(
@@ -99,6 +106,7 @@ protected:
 	TObjectPtr<AActor> CurrentStructureTarget;
 
 	FTimerHandle StructureAttackTimerHandle;
+	FTimerHandle StructureAttackRangeCheckTimerHandle;
 
 private:
 	int32 GridSize;

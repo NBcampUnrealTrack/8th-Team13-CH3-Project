@@ -23,8 +23,6 @@ float ATGCoreBase::TakeDamage(float DamageAmount, const FDamageEvent& DamageEven
 {
 	const float AppliedDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
-	UE_LOG(LogTemp, Warning, TEXT("CoreBase 피격 - Damage: %.1f"), AppliedDamage);
-
 	// 체력 변동 전달
 	CurrentHP = FMath::Clamp(CurrentHP - AppliedDamage, 0.0f, MaxHP);
 	OnCoreHPChanged.Broadcast(CurrentHP, MaxHP);
