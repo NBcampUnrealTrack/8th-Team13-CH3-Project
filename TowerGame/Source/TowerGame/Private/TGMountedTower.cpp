@@ -6,6 +6,7 @@
 #include "Components/ArrowComponent.h"
 #include "Components/BoxComponent.h"
 #include "Core/GameFlow/TGGameMode.h"
+#include "Enemies/TGNavigationManager.h"
 
 ATGMountedTower::ATGMountedTower()
 {
@@ -43,7 +44,8 @@ void ATGMountedTower::BeginPlay()
 	Super::BeginPlay();
 
 	SetInteractionEnabled(true);
-
+	ATGNavigationManager::Get(this)->NotifyBuildingPlaced();
+	
 	if (TowerWidgetClass)
 	{
 		FloatingWidgetComp->SetWidgetClass(TowerWidgetClass);
