@@ -2,9 +2,7 @@
 
 
 #include "BaseTower/BuffTower.h"
-#include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
-#include "DrawDebugHelpers.h"
 #include "Player/TGPlayer.h"
 
 ATGBuffTower::ATGBuffTower()
@@ -19,6 +17,9 @@ void ATGBuffTower::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// 생성 시 플레이어 한 번만 탐색해서 저장
+	CachedPlayer = Cast<ATGPlayer>(UGameplayStatics::GetPlayerPawn(this, 0));
+
 	// HealInterval(초)마다 ApplyRangeHeal 무한 반복
 	StartHeal();
 }
@@ -26,9 +27,6 @@ void ATGBuffTower::BeginPlay()
 void ATGBuffTower::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	//	사거리 그려줄 디버그스피어
-	//DrawDebugSphere(GetWorld(), GetActorLocation(), BuffRange, 16, FColor::Green);
 }
 
 void ATGBuffTower::StartHeal()
@@ -45,41 +43,14 @@ void ATGBuffTower::StartHeal()
 
 void ATGBuffTower::ApplyRangeHeal()
 {
-	FVector Center = GetActorLocation();
+	// 플레이어가 없으면 무시
+	if (!IsValid(CachedPlayer)) return;
 
-	// 감지 대상: Pawn 타입 (플레이어)
-	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn));
-
-	// 자기 자신은 제외
-	TArray<AActor*> IgnoreActors;
-	IgnoreActors.Add(this);
-
-	TArray<AActor*> OutActors;
-
-	bool bHasOverlap = UKismetSystemLibrary::SphereOverlapActors(
-		GetWorld(),
-		Center,
-		BuffRange,
-		ObjectTypes,
-		nullptr,
-		IgnoreActors,
-		OutActors
-	);
-
-	// 디버그용 구체 (개발 완료 후 삭제 가능)
-	//DrawDebugSphere(GetWorld(), Center, BuffRange, 12, FColor::Green, false, HealInterval);
-
-	if (bHasOverlap)
+	// 플레이어까지 거리 계산 후 범위 안에 있으면 힐 적용
+	float Distance = FVector::Distance(GetActorLocation(), CachedPlayer->GetActorLocation());
+	if (Distance <= BuffRange)
 	{
-		for (AActor* Actor : OutActors)
-		{
-			// 범위 내 플레이어에게 체력 회복
-			if (ATGPlayer* Player = Cast<ATGPlayer>(Actor))
-			{
-				Player->ChangePlayerHP(HealAmount);
-			}
-		}
+		CachedPlayer->ChangePlayerHP(HealAmount);
 	}
 }
 
