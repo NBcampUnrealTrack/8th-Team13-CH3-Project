@@ -182,7 +182,13 @@ void ATGWaveManager::FinishCurrentWaveSpawn()
 	// Wave Spawn 종료 이벤트
 	OnWaveSpawnCompleted.Broadcast(ActiveWaveIndex, bCanStartNextWave);
 
-	if (!bCanStartNextWave) return;
+	// Wave 종료 시점에서 Boss 소환 시도 (Spawn 완료 반영 시점 전 모든 Enemy 제거 방어)
+	if (!bCanStartNextWave){
+		if (AliveEnemyCount == 0 && !CurrentBoss){
+			SpawnBoss();
+		}
+		return;
+	}
 
 	// 웨이브 대기 시간 적용
 	GetWorldTimerManager().SetTimer(
