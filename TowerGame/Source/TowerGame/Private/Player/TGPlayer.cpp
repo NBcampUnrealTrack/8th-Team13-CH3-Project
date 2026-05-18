@@ -9,7 +9,7 @@
 #include "Core/Grid/TGGridBase.h"
 #include "Core/GameFlow/TGGameMode.h"
 #include "TGInteractiveActor.h"
-#include "Kismet/KismetSystemLibrary.h"
+//#include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/ChildActorComponent.h"
@@ -163,8 +163,8 @@ void ATGPlayer::SelectTower(const FInputActionValue& InputValue)
 	default: break;
 	}
 
-	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow,
-		FString::Printf(TEXT("[SelectTower] Slot %d → %s"), SlotIndex, *UEnum::GetValueAsString(SelectedTurretType)));
+	//GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow,
+	//	FString::Printf(TEXT("[SelectTower] Slot %d → %s"), SlotIndex, *UEnum::GetValueAsString(SelectedTurretType)));
 }
 
 void ATGPlayer::Shot(const FInputActionValue& InputValue)
@@ -261,10 +261,10 @@ void ATGPlayer::Tick(float DeltaTime)
 		OnFocusedEnemyChanged.Broadcast(LastFocusedEnemy);
 	}
 
-	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Current Evade Cooldown: %f / %f"), CurrentEvadeCooldown, EvadeCooldown));
-	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Current Evade Count(LSHIFT): %d / %d"), CurrentEvadeCount, EvadeCount));
-	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Aim Target: %s"), WeaponTrace.bBlockingHit ? *WeaponTrace.GetActor()->GetName() : TEXT("None")));
-	GEngine->AddOnScreenDebugMessage(-1, 0.0f, bBuildMode ? FColor::Emerald : FColor::Orange, FString::Printf(TEXT("Current Mode: %s"), bBuildMode ? TEXT("Build") : TEXT("Combat")));
+	//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Current Evade Cooldown: %f / %f"), CurrentEvadeCooldown, EvadeCooldown));
+	//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Current Evade Count(LSHIFT): %d / %d"), CurrentEvadeCount, EvadeCount));
+	//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Aim Target: %s"), WeaponTrace.bBlockingHit ? *WeaponTrace.GetActor()->GetName() : TEXT("None")));
+	//GEngine->AddOnScreenDebugMessage(-1, 0.0f, bBuildMode ? FColor::Emerald : FColor::Orange, FString::Printf(TEXT("Current Mode: %s"), bBuildMode ? TEXT("Build") : TEXT("Combat")));
 
 	// 현재 이동조작중인가?
 	if (bMoving)
@@ -522,19 +522,20 @@ bool ATGPlayer::CameraLineTrace(FHitResult& TraceHit, ECollisionChannel Channel,
 
 	if (debug)
 	{
-		return UKismetSystemLibrary::LineTraceSingle(
-			GetWorld(), //어느 월드의 소속인가? (this)를 넣어줘도 됨
-			Start,
-			End,
-			UEngineTypes::ConvertToTraceType(Channel),	// 사용할 트레이스채널
-			QueryParams.bTraceComplex,	// 복합콜리전 사용
-			IgnoredActors,	// 해당 액터는 이 트레이스를 무시
-			EDrawDebugTrace::ForOneFrame,	//디버그(그리기 타입 적용),
-			TraceHit,
-			true,	// 자기자신을 Ignore
-			FLinearColor::Red,	//디버그 색깔
-			FLinearColor::Green	//트레이스 히트 시 색깔
-		);
+		//return UKismetSystemLibrary::LineTraceSingle(
+		//	GetWorld(), //어느 월드의 소속인가? (this)를 넣어줘도 됨
+		//	Start,
+		//	End,
+		//	UEngineTypes::ConvertToTraceType(Channel),	// 사용할 트레이스채널
+		//	QueryParams.bTraceComplex,	// 복합콜리전 사용
+		//	IgnoredActors,	// 해당 액터는 이 트레이스를 무시
+		//	EDrawDebugTrace::ForOneFrame,	//디버그(그리기 타입 적용),
+		//	TraceHit,
+		//	true,	// 자기자신을 Ignore
+		//	FLinearColor::Red,	//디버그 색깔
+		//	FLinearColor::Green	//트레이스 히트 시 색깔
+		//);
+		return false;
 	}
 	else
 	{
