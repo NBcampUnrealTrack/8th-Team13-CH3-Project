@@ -37,11 +37,6 @@ void ATGDebuffTower::Tick(float DeltaTime)
 	ApplyRangeDebuff();
 }
 
-void ATGDebuffTower::StartDebuff()
-{
-
-}
-
 void ATGDebuffTower::ApplyRangeDebuff()
 {
 	FVector Center = GetActorLocation();
