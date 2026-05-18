@@ -2,7 +2,6 @@
 
 
 #include "Weapons/TGWeaponSingleShot.h"
-#include "Kismet/KismetSystemLibrary.h"
 #include "Enemies/TGBossBase.h"
 #include "Enemies/TGEnemyBase.h"
 #include "Engine/DamageEvents.h"
@@ -52,20 +51,7 @@ void UTGWeaponSingleShot::Shoot(AActor* Instigator, class UMeshComponent* Weapon
 	// 발포 이펙트
 	SpawnAttachedEffects(status.Asset.FireParticle, WeaponComponent, MuzzlePos, status.Asset.FireParticleScale);
 
-	UKismetSystemLibrary::LineTraceSingle(
-		GetWorld(), //어느 월드의 소속인가? (this)를 넣어줘도 됨
-		MuzzlePos,
-		MuzzlePos + Direction * Distance,
-		UEngineTypes::ConvertToTraceType(ECC_Visibility),	// 사용할 트레이스채널
-		QueryParams.bTraceComplex,	// 복합콜리전 사용
-		IgnoredActors,	// 해당 액터는 이 트레이스를 무시
-		EDrawDebugTrace::None,	//디버그(그리기 타입 적용),
-		TraceHit,
-		true,	// 자기자신을 Ignore
-		FLinearColor::Blue,	//디버그 색깔
-		FLinearColor::Yellow,	//트레이스 히트 시 색깔
-		5.0f
-	);
+	LineTrace(MuzzlePos, Direction, Distance);
 	if (TraceHit.bBlockingHit)
 	{
 		// 착탄 이펙트
