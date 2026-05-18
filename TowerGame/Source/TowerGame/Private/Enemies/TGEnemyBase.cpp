@@ -139,7 +139,7 @@ void ATGEnemyBase::RequestRepath()
 		if (CurrentStructureTarget && IsStructureTargetInAttackRange(CurrentStructureTarget)){
 			StartStructureAttack();
 		}else{
-			MoveToStructureTargetWithoutAttackRange();
+			MoveDirectlyToStructureTarget();
 		}
 	}
 }
@@ -196,7 +196,7 @@ void ATGEnemyBase::CheckStructureAttackRange()
 	StartStructureAttack();
 }
 
-void ATGEnemyBase::MoveToStructureTargetWithoutAttackRange()
+void ATGEnemyBase::MoveDirectlyToStructureTarget()
 {
 	if (!CurrentStructureTarget) return;
 
@@ -312,7 +312,7 @@ void ATGEnemyBase::HandleMoveCompleted(FAIRequestID RequestID, EPathFollowingRes
 			StartStructureAttack();
 			return;
 		}
-		MoveToStructureTargetWithoutAttackRange();
+		MoveDirectlyToStructureTarget();
 		return;
 	}else if (Result == EPathFollowingResult::Aborted){
 		//if (TryRecoverToNearestNavMesh()){

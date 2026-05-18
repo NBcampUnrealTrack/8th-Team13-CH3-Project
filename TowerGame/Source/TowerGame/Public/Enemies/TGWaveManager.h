@@ -58,6 +58,9 @@ private:
 
 	int32 AliveEnemyCount;
 
+	UPROPERTY()
+	TObjectPtr<ATGBossBase> CurrentBoss;
+
 public:
 	ATGWaveManager();
 
@@ -94,6 +97,9 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Boss")
 	FOnBossSpawned OnBossSpawned;
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Boss")
+	AActor* GetBoss() const;
+
 private:
 	// Wave 관리
 	void SpawnNextEnemy();
@@ -105,6 +111,9 @@ private:
 	// Enemy 제거 Delegate
 	UFUNCTION()
 	void HandleEnemyRemoved(ATGEnemyBase* RemoveEnemy);
+
+	UFUNCTION()
+	void HandleBossRemoved(ATGBossBase* RemovedBoss);
 
 	// Boss Spawn 처리
 	void SpawnBoss();

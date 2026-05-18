@@ -103,17 +103,15 @@ void UTGPlayerWidget::HandleWaveStarted(int32 WaveIndex)
 
 void UTGPlayerWidget::UpdateBossHPBar(float CurrentHP, float MaxHP)
 {
-	if (!PB_EnemyHP) return;
+	if (!PB_BossHP) return;
 
-	// Temp PB_Enemy 재사용으로 인한 Hidden 방어 코드 PB_Boss 제작/변경 후 삭제
-	if (PB_EnemyHP->GetVisibility() != ESlateVisibility::Visible){
-		PB_EnemyHP->SetVisibility(ESlateVisibility::Visible);
-	}
+	// Phase 별 UI 최대 최소 비율 변경
+	const float PhaseMaxHP = Boss->GetCurrentPhaseMaxHP();
+	const float PhaseMinHP = Boss->GetCurrentPhaseMinHP();
+	const float PhaseHPRange = PhaseMaxHP - PhaseMinHP;
 
-	// Boss HP 반영
-	// TODO Phase 별 비율 적용 & 전용 PB로 변경
-	const float BossRatio = MaxHP > 0.f ? FMath::Clamp(CurrentHP / MaxHP, 0.0f, 1.0f) : 0.f;
-	PB_EnemyHP->SetPercent(BossRatio);
+	const float Percent = FMath::Clamp((CurrentHP - PhaseMinHP) / PhaseHPRange, 0.0f, 1.0f);
+	PB_BossHP->SetPercent(Percent);
 }
 
 void UTGPlayerWidget::HandleBossRemoved(ATGBossBase* RemovedBoss)
@@ -122,8 +120,8 @@ void UTGPlayerWidget::HandleBossRemoved(ATGBossBase* RemovedBoss)
 
 	UnbindBoss();
 
-	if (!PB_EnemyHP) return;
-	PB_EnemyHP->SetVisibility(ESlateVisibility::Hidden);
+	if (!PB_BossHP) return;
+	PB_BossHP->SetVisibility(ESlateVisibility::Hidden);
 }
 
 void UTGPlayerWidget::UpdateCurrentCore(ATGCoreBase* NewCore)
@@ -274,11 +272,15 @@ void UTGPlayerWidget::BindBoss(ATGBossBase* NewBoss)
 	Boss->OnBossHpChanged.AddDynamic(this, &UTGPlayerWidget::UpdateBossHPBar);
 	Boss->OnBossRemoved.AddDynamic(this, &UTGPlayerWidget::HandleBossRemoved);
 
+	if (Txt_BossName){
+		Txt_BossName->SetText(Boss->GetBossName());
+		Txt_BossName->SetVisibility(ESlateVisibility::Visible);
+	}
+
 	UpdateBossHPBar(Boss->GetCurrentHP(), Boss->GetMaxHP());
 
-	// 임시로 EnemyHP ProgressBar 재활용
-	if (PB_EnemyHP){
-		PB_EnemyHP->SetVisibility(ESlateVisibility::Visible);
+	if (PB_BossHP){
+		PB_BossHP->SetVisibility(ESlateVisibility::Visible);
 	}
 }
 

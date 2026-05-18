@@ -44,7 +44,7 @@ public:
 	void CheckStructureAttackRange();
 
 	// 공격 범위 X 경로 이동
-	void MoveToStructureTargetWithoutAttackRange();
+	void MoveDirectlyToStructureTarget();
 
 	void AttackStructureTarget();
 	void StopStructureAttack();

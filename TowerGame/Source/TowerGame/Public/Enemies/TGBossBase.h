@@ -37,10 +37,19 @@ public:
 
 public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Boss|Stat")
+	FText GetBossName() const;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Boss|Stat")
 	float GetCurrentHP() const;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Boss|Stat")
 	float GetMaxHP() const;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Boss|Stat")
+	float GetCurrentPhaseMinHP() const;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Boss|Stat")
+	float GetCurrentPhaseMaxHP() const;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Boss|Spawn")
 	float GetSpawnClearRadius() const;
@@ -58,7 +67,7 @@ public:
 
 protected:
 	// PhaseClasses[Index]를 현재 State 객체로 생성하고 전환한다.
-	void ChangePhase(int32 NewPhaseIndex);
+	void ChangeToNextPhase();
 	// 현재 HP 비율이 PhaseHPRatio 기준 이하인지 확인한다.
 	void CheckPhaseTransition();
 
@@ -66,11 +75,17 @@ protected:
 	void ApplyBossDamage(float DamageAmount);
 
 protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss")
+	FText BossName;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Stat")
 	float MaxHP;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Stat")
 	float CurrentHP;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Stat")
+	float TowerDamageMultiplier;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Spawn")
 	float SpawnClearRadius;
@@ -93,4 +108,7 @@ protected:
 	// 싱글 플레이 기준 Boss가 공격 대상으로 사용할 Player.
 	UPROPERTY()
 	TObjectPtr<ATGPlayer> TargetPlayer;
+
+	FTimerHandle PhaseTransitionTimerHandle;
+
 };

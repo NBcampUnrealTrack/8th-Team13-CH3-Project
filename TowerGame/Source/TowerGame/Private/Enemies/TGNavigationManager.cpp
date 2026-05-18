@@ -137,12 +137,10 @@ void ATGNavigationManager::RepathAllEnemies()
 }
 
 // NavMesh 갱신 이후 경로 탐색
-void ATGNavigationManager::HandleNavigationGenerationFinished(ANavigationData* NavDate)
+void ATGNavigationManager::HandleNavigationGenerationFinished(ANavigationData* NavData)
 {
 	if (!bPendingRepathAfterNavGeneration) return;
 	bPendingRepathAfterNavGeneration = false;
-
-	UE_LOG(LogNavigation, Warning, TEXT("NavMesh 생성 완료 후 RepathAllEnies 호출"));
 
 	RepathAllEnemies();
 }

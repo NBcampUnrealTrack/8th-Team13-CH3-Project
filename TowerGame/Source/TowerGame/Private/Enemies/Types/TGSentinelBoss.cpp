@@ -9,6 +9,7 @@
 
 ATGSentinelBoss::ATGSentinelBoss()
 {
+	BossName = FText::FromString(TEXT("감시자"));
 	MaxHP = 100;
 	SpawnClearRadius = 600.f;
 

@@ -51,7 +51,7 @@ private:
 
 	// NavMesh 갱신 후 호출 될 함수
 	UFUNCTION()
-	void HandleNavigationGenerationFinished(ANavigationData* NavDate);
+	void HandleNavigationGenerationFinished(ANavigationData* NavData);
 
 protected:
 	// 목적지
