@@ -28,7 +28,7 @@ void ATGWeaponTower::Tick(float DeltaTime)
 	AttackTarget(DeltaTime);
 
 	//	사거리 그려줄 디버그스피어
-	DrawDebugSphere(GetWorld(), GetActorLocation(), AttackRange, 16, FColor::Green);
+	//DrawDebugSphere(GetWorld(), GetActorLocation(), AttackRange, 16, FColor::Green);
 }
 
 void ATGWeaponTower::AttackTarget(float& DeltaTime)

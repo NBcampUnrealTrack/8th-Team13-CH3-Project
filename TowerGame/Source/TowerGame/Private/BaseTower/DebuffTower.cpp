@@ -31,7 +31,7 @@ void ATGDebuffTower::Tick(float DeltaTime)
 	DetectingEnemy();
 
 	//	사거리 그려줄 디버그스피어
-	DrawDebugSphere(GetWorld(), GetActorLocation(), DebuffRange, 16, FColor::Purple);
+	//DrawDebugSphere(GetWorld(), GetActorLocation(), DebuffRange, 16, FColor::Purple);
 
 	// 범위 내 적 슬로우 적용
 	ApplyRangeDebuff();
@@ -72,10 +72,10 @@ void ATGDebuffTower::ApplyRangeDebuff()
 					// 기본속도 저장 후 슬로우 적용
 					SlowedEnemies.Add(Enemy, Movement->MaxWalkSpeed);
 					Movement->MaxWalkSpeed *= SlowRate;
-				}  
-			}  
-		}  
-	}  
+				}
+			}
+		}
+	}
 
 	// 범위 벗어난 적 원래 속도로 복구
 	for (auto It = SlowedEnemies.CreateIterator(); It; ++It)

@@ -28,7 +28,7 @@ void ATGBuffTower::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	//	사거리 그려줄 디버그스피어
-	DrawDebugSphere(GetWorld(), GetActorLocation(), BuffRange, 16, FColor::Green);
+	//DrawDebugSphere(GetWorld(), GetActorLocation(), BuffRange, 16, FColor::Green);
 }
 
 void ATGBuffTower::StartHeal()
@@ -68,7 +68,7 @@ void ATGBuffTower::ApplyRangeHeal()
 	);
 
 	// 디버그용 구체 (개발 완료 후 삭제 가능)
-	DrawDebugSphere(GetWorld(), Center, BuffRange, 12, FColor::Green, false, HealInterval);
+	//DrawDebugSphere(GetWorld(), Center, BuffRange, 12, FColor::Green, false, HealInterval);
 
 	if (bHasOverlap)
 	{

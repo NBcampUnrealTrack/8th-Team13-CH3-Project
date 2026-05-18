@@ -43,6 +43,7 @@ void ATGInteractiveActor::BeginPlay()
 		}
 	}
 
+	/*
 	GetWorldTimerManager().SetTimer(
 		DebugDrawTimerHandle,
 		this,
@@ -50,6 +51,7 @@ void ATGInteractiveActor::BeginPlay()
 		2.0f,
 		false
 	);
+	//*/
 }
 
 // void ATGInteractiveActor::SyncCollisionToMeshBounds() const
