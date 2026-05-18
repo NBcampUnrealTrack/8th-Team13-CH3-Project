@@ -4,7 +4,6 @@
 #include "Enemies/TGWaveManager.h"
 
 #include "EngineUtils.h"
-#include "TGWeaponTower.h"
 #include "Core/Grid/TGGridBase.h"
 #include "Core/Grid/TGSingleGrid.h"
 #include "Enemies/TGBossBase.h"

@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "TGWeaponTower.h"
 #include "GameFramework/Actor.h"
 #include "TGWaveManager.generated.h"
 

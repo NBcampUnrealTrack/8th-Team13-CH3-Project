@@ -67,6 +67,9 @@ private:
 	TObjectPtr<UTextBlock> Txt_EnemyType;
 
 	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UTextBlock> Txt_BossName;
+
+	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UTextBlock> Txt_CurrentWave;
 
 	// TODO: UMG 블루프린트(WBP_PlayerWidget)에 TextBlock을 추가하고 이름을 "EnergyText"로 지정하면 자동 바인딩됩니다.
@@ -76,6 +79,9 @@ private:
 	// ProgressBar
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UProgressBar> PB_EnemyHP;
+
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UProgressBar> PB_BossHP;
 
 	UPROPERTY(meta = (BindWidget))
 	UProgressBar* HP_Bar;
