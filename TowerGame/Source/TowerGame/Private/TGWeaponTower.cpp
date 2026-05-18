@@ -3,6 +3,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
 #include "Enemies/TGEnemyBase.h"
+#include "Enemies/TGWaveManager.h"
 
 ATGWeaponTower::ATGWeaponTower()
 {
@@ -124,8 +125,13 @@ void ATGWeaponTower::DetectingEnemy()
 
 	float MinDistance = 500000.f;
 	Target = nullptr;
+	Target = ATGWaveManager::Get(this)->GetBoss();
+	if (Target)	return;
+
 	for (AActor* Actor : FoundActors)
 	{
+		ATGEnemyBase* Enemy = Cast<ATGEnemyBase>(Actor);
+		if (Enemy->GetCurrentHP() <= 0)	continue;
 		FVector MyLocation = GetActorLocation();
 		FVector TargetLocation = Actor->GetActorLocation();
 		float Distance = FVector::Distance(MyLocation, TargetLocation);

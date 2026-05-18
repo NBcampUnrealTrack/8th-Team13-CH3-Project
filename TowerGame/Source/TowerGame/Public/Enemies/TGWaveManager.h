@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "TGWeaponTower.h"
 #include "GameFramework/Actor.h"
 #include "TGWaveManager.generated.h"
 
@@ -98,7 +99,7 @@ public:
 	FOnBossSpawned OnBossSpawned;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Boss")
-	ATGBossBase* GetBoss() const;
+	AActor* GetBoss() const;
 
 private:
 	// Wave 관리
