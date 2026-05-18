@@ -248,7 +248,7 @@ void ATGPlayer::Tick(float DeltaTime)
 	// 무기가 향하는 방향
 	FHitResult WeaponTrace;
 
-	CameraLineTrace(WeaponTrace, ECC_Visibility, Weapon_Skeletal->GetRelativeLocation().Length() + GetCurrentWeapon()->GetAsset()->MuzzlePos.Length(), ShootDistance, true);
+	CameraLineTrace(WeaponTrace, ECC_Visibility, Weapon_Skeletal->GetRelativeLocation().Length() + GetCurrentWeapon()->GetAsset()->MuzzlePos.Length(), ShootDistance);
 	//FVector MuzzlePos = Weapon_Skeletal->GetComponentTransform().TransformPosition(GetCurrentWeapon()->GetAsset()->MuzzlePos);
 	//Weapon_Skeletal->SetWorldRotation(UKismetMathLibrary::FindLookAtRotation(Camera->GetComponentLocation() + InitialLocation + GetCurrentWeapon()->GetAsset()->LocationOffset, WeaponTrace.Location));
 	////Weapon_Skeletal->AddRelativeRotation(GetCurrentWeapon()->GetAsset()->RotationOffset);

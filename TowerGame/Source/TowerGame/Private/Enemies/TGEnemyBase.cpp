@@ -12,7 +12,6 @@
 #include "Enemies/TGEnemyAIController.h"
 
 #include "Enemies/TGNavigationManager.h"
-#include "Field/FieldSystemNodes.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -88,15 +87,14 @@ void ATGEnemyBase::RequestRepath()
 {
 	if (!NavigationManager) return;
 
-
 	AAIController* AIController = Cast<AAIController>(GetController());
 	if (!AIController) return;
-
 
 	// 이동 완료 콜백 중복 바인딩 방지
 	AIController->ReceiveMoveCompleted.RemoveDynamic(this, &ATGEnemyBase::HandleMoveCompleted);
 	AIController->StopMovement();
 	StopStructureAttack();
+	StopStructureAttackRangeCheck();
 	AIController->ReceiveMoveCompleted.AddDynamic(this, &ATGEnemyBase::HandleMoveCompleted);
 
 	// 목적지 위치 get
@@ -138,7 +136,11 @@ void ATGEnemyBase::RequestRepath()
 
 	// 이미 목적지에 도착한 상태
 	if (MoveResult == EPathFollowingRequestResult::AlreadyAtGoal){
-		StartStructureAttack();
+		if (CurrentStructureTarget && IsStructureTargetInAttackRange(CurrentStructureTarget)){
+			StartStructureAttack();
+		}else{
+			MoveToStructureTargetWithoutAttackRange();
+		}
 	}
 }
 
@@ -166,6 +168,72 @@ void ATGEnemyBase::StartStructureAttack()
 	);
 }
 
+void ATGEnemyBase::StopStructureAttackRangeCheck()
+{
+	if (UWorld* World = GetWorld()){
+		World->GetTimerManager().ClearTimer(StructureAttackRangeCheckTimerHandle);
+	}
+}
+
+void ATGEnemyBase::CheckStructureAttackRange()
+{
+	// 공격 목표가 지정되지 않은 경우
+	if (!CurrentStructureTarget){
+		StopStructureAttackRangeCheck();
+		return;
+	}
+
+	// 범위 밖
+	if (!IsStructureTargetInAttackRange(CurrentStructureTarget)) return;
+
+	// 이동 중지
+	if (AAIController* AIController = Cast<AAIController>(GetController())){
+		AIController->StopMovement();
+	}
+
+	// 공격범위 X 이동
+	StopStructureAttackRangeCheck();
+	StartStructureAttack();
+}
+
+void ATGEnemyBase::MoveToStructureTargetWithoutAttackRange()
+{
+	if (!CurrentStructureTarget) return;
+
+	AAIController* AIController = Cast<AAIController>(GetController());
+	if (!AIController) return;
+
+	const UCapsuleComponent* CapsuleCollision = GetCapsuleComponent();
+	const float CapsuleHalfHeight = CapsuleCollision ? CapsuleCollision->GetScaledCapsuleHalfHeight() : 0.0f;
+	const FVector TargetLocation = CurrentStructureTarget->GetActorLocation()
+		+ NavigationHeightOffset
+		+ FVector(0, 0, CapsuleHalfHeight);
+
+	// 공격 범위 보정 없이 목표 위치까지 이동
+	AIController->MoveToLocation(
+		TargetLocation,
+		0.f,
+		false,
+		true,
+		false,
+		true,
+		nullptr,
+		false
+	);
+
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	// 공격 범위 안으로 들어왔는지 확인
+	World->GetTimerManager().SetTimer(
+		StructureAttackRangeCheckTimerHandle,
+		this,
+		&ATGEnemyBase::CheckStructureAttackRange,
+		0.1f,
+		true
+	);
+}
+
 void ATGEnemyBase::StopStructureAttack()
 {
 	UWorld* World = GetWorld();
@@ -184,8 +252,6 @@ float ATGEnemyBase::TakeDamage(float DamageAmount,
 
 	CurrentHP -= AppliedDamage;
 	OnEnemyHpChanged.Broadcast(CurrentHP, MaxHP);
-
-	UE_LOG(LogTemp, Warning, TEXT("Enemy 피격 - Damage: %.1f / HP: %.1f"), AppliedDamage, CurrentHP);
 
 	if (CurrentHP <= 0){
 		if (ATGGameMode* GM = Cast<ATGGameMode>(UGameplayStatics::GetGameMode(GetWorld())))
@@ -228,9 +294,6 @@ void ATGEnemyBase::AttackStructureTarget()
 		return;
 	}
 
-	UE_LOG(LogTemp, Warning,
-		TEXT("Enemy 공격 - Target: %s /  Damage: %f"), *CurrentStructureTarget->GetName(), StructureAttackDamage);
-
 	// Target(CoreBase / BaseTower) 공격
 	UGameplayStatics::ApplyDamage(
 		CurrentStructureTarget,
@@ -247,7 +310,9 @@ void ATGEnemyBase::HandleMoveCompleted(FAIRequestID RequestID, EPathFollowingRes
 	if (Result == EPathFollowingResult::Success){
 		if (CurrentStructureTarget && IsStructureTargetInAttackRange(CurrentStructureTarget)){
 			StartStructureAttack();
+			return;
 		}
+		MoveToStructureTargetWithoutAttackRange();
 		return;
 	}else if (Result == EPathFollowingResult::Aborted){
 		//if (TryRecoverToNearestNavMesh()){

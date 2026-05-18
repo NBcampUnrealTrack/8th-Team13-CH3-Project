@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "TGMountedTower.h"
+#include "Player/TGPlayer.h"
 #include "BuffTower.generated.h"
 
 UCLASS()
@@ -33,6 +34,10 @@ protected:
 	// 회복 반복 타이머 핸들
 	FTimerHandle HealTimerHandle;
 
+	// 플레이어 포인터 저장 — BeginPlay에서 한 번만 탐색
+	UPROPERTY()
+	ATGPlayer* CachedPlayer;
+
 public:
 	// 회복 시작 (타워 설치 완료 시 호출)
 	UFUNCTION(BlueprintCallable, Category = "Tower Logic")
@@ -48,7 +53,5 @@ public:
 	// 업그레이드 (회복량 증가)
 	virtual void Upgrade() override;
 
-	// 현재 회복 범위 반환
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Tower Settings")
-	float GetBuffRange() const { return BuffRange; }
+
 };

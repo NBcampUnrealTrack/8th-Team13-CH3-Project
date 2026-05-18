@@ -78,6 +78,7 @@ protected:	// 라인트레이싱 정보
 public:
 	virtual const FTGWeaponAsset* GetAsset() { return nullptr; }
 	virtual void Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance);
-	void SpawnAttachedEffects(class UParticleSystem* Particle, USceneComponent* AttachToComponent, FVector Location, float ParticleScale, bool bSpawnDecal = false, float DecalLifeSpan = 120.0f);
+	void SpawnAttachedEffects(class UParticleSystem* Particle, USceneComponent* AttachToComponent, FVector Location, float ParticleScale, bool bSpawnDecal = false, float DecalLifeSpan = 5.f);
+	bool LineTrace(FVector MuzzlePos, FVector Direction, float Distance);
 	void HandleFireDelay();
 };

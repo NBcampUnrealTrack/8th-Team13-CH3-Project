@@ -3,6 +3,7 @@
 
 #include "Weapons/TGWeaponBase.h"
 #include "Kismet/GameplayStatics.h"
+//#include "Kismet/KismetSystemLibrary.h"
 #include "Particles/ParticleSystem.h"
 #include "Components/DecalComponent.h"
 
@@ -46,4 +47,30 @@ void UTGWeaponBase::HandleFireDelay()
 {
 	GetWorld()->GetTimerManager().ClearTimer(TimerFireDelay);
 	CanFire = true;
+}
+
+bool UTGWeaponBase::LineTrace(FVector MuzzlePos, FVector Direction, float Distance)
+{
+	return GetWorld()->LineTraceSingleByChannel(
+		TraceHit,
+		MuzzlePos,
+		MuzzlePos + Direction * Distance,
+		ECC_Visibility,
+		QueryParams
+	);
+
+	//return UKismetSystemLibrary::LineTraceSingle(
+	//	GetWorld(), //어느 월드의 소속인가? (this)를 넣어줘도 됨
+	//	MuzzlePos,
+	//	MuzzlePos + Direction * Distance,
+	//	UEngineTypes::ConvertToTraceType(ECC_Visibility),	// 사용할 트레이스채널
+	//	QueryParams.bTraceComplex,	// 복합콜리전 사용
+	//	IgnoredActors,	// 해당 액터는 이 트레이스를 무시
+	//	EDrawDebugTrace::ForDuration,	//디버그(그리기 타입 적용),
+	//	TraceHit,
+	//	true,	// 자기자신을 Ignore
+	//	FLinearColor::Blue,	//디버그 색깔
+	//	FLinearColor::Yellow,	//트레이스 히트 시 색깔
+	//	5.0f
+	//);
 }
