@@ -30,7 +30,7 @@ void UTGWeaponShotgun::Shoot(AActor* Instigator, class UMeshComponent* WeaponCom
 			UEngineTypes::ConvertToTraceType(ECC_Visibility),	// 사용할 트레이스채널
 			QueryParams.bTraceComplex,	// 복합콜리전 사용
 			IgnoredActors,	// 해당 액터는 이 트레이스를 무시
-			EDrawDebugTrace::ForDuration,	//디버그(그리기 타입 적용),
+			EDrawDebugTrace::None,	//디버그(그리기 타입 적용),
 			TraceHit,
 			true,	// 자기자신을 Ignore
 			FLinearColor::Blue,	//디버그 색깔
