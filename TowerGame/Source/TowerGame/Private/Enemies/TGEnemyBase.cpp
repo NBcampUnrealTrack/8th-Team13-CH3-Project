@@ -67,21 +67,6 @@ void ATGEnemyBase::BeginPlay()
 	}
 }
 
-void ATGEnemyBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-	StopStructureAttack();
-
-	// NavigationManger 등록 해제
-	if (NavigationManager)
-	{
-		NavigationManager->UnRegisterEnemy(this);
-	}
-
-	OnEnemyRemoved.Broadcast(this);
-
-	Super::EndPlay(EndPlayReason);
-}
-
 void ATGEnemyBase::InitializeEnemy(ATGNavigationManager* InNavigationManager)
 {
 	if (!InNavigationManager) return;
@@ -207,7 +192,6 @@ float ATGEnemyBase::TakeDamage(float DamageAmount,
 		{
 			GM->AddEnergy(EnergyDropAmount);
 		}
-		//Destroy();
 		DestroyUnit();
 	}
 
@@ -405,7 +389,15 @@ bool ATGEnemyBase::TryMoveToAttackRangeOfBuilding(ABaseTower* Building)
 
 void ATGEnemyBase::DestroyUnit()
 {	//	사망을 이 함수로 대체해야합니다.
-	bIsDestroyed = true;
+	StopStructureAttack();
+
+	// NavigationManger 등록 해제
+	if (NavigationManager)
+	{
+		NavigationManager->UnRegisterEnemy(this);
+	}
+
+	OnEnemyRemoved.Broadcast(this);
 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	for (UStaticMeshComponent* BodyPart : BodyParts)

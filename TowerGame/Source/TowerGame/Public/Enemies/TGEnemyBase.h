@@ -23,7 +23,6 @@ public:
 	// Unreal Life Cycle
 	ATGEnemyBase();
 	virtual void BeginPlay() override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
@@ -123,7 +122,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="TowerGame|BodyParts")
 	TArray<TObjectPtr<UStaticMeshComponent>> BodyParts;
 
-	bool bIsDestroyed = false;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="TowerGame|BodyParts")
 	float PartsLifeSpan = 5.f;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="TowerGame|BodyParts")
