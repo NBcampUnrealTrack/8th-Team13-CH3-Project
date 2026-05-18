@@ -62,6 +62,7 @@ void ATGPlayer::BeginPlay()
 	HP = MaxHP;
 	bMoving = false;
 	bBuildMode = false;
+	bCanSwitch = true;
 	CurrentEvadeCount = EvadeCount;
 	CurrentEvadeCooldown = 0.0f;
 	DefaultWalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
@@ -218,12 +219,23 @@ void ATGPlayer::Interact(const FInputActionValue& InputValue)
 
 void ATGPlayer::SwitchingWeapon(const FInputActionValue& InputValue)
 {
+	const float SwitchWeaponDelay = 0.1f;
 	const float moveDir = InputValue.Get<float>();
-	if (FMath::IsNearlyZero(moveDir))
+	if (FMath::IsNearlyZero(moveDir) || !bCanSwitch)
 		return;
 
+	bCanSwitch = false;
+	GetWorld()->GetTimerManager().SetTimer(
+		SwitchWeaponDelayHandle,
+		[this]() {
+			GetWorld()->GetTimerManager().ClearTimer(SlowDebuffTimerHandle);
+			bCanSwitch = true;
+		},
+		SwitchWeaponDelay,
+		false
+	);
 	TArray<TPair<FString, TObjectPtr<UTGWeaponBase>>> Arr = OwnedWeapons.Array();
-	int32 Idx = Arr.IndexOfByPredicate([this](TPair<FString, TObjectPtr<UTGWeaponBase>> element) {return CurrentWeaponKey == element.Key; });
+	int32 Idx = Arr.IndexOfByPredicate([this](TPair<FString, TObjectPtr<UTGWeaponBase>> element) {return SwitchingWeaponKey == element.Key; });
 	if (moveDir > 0)
 		Idx++;
 	else
@@ -515,6 +527,7 @@ void ATGPlayer::OwnWeapon(ETGWeaponTriggerType TriggerType, FName RowName, bool 
 void ATGPlayer::EquipWeapon(FString Key)
 {
 	CurrentWeaponKey = Key;
+	SwitchingWeaponKey = Key;
 	FTGWeaponAsset AssetInfo = *GetCurrentWeapon()->GetAsset();
 	if (AssetInfo.SkeletalMesh)
 	{

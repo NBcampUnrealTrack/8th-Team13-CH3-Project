@@ -120,6 +120,8 @@ protected:
 	FOnTimelineVector SwitchingWeaponTL_CurLoc;
 	FOnTimelineVector SwitchingWeaponTL_CurRot;
 	FOnTimelineEvent SwitchingWeaponTL_Finish;
+	FTimerHandle SwitchWeaponDelayHandle;
+	bool bCanSwitch;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
 	int32 MaxHP;
