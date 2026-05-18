@@ -67,13 +67,11 @@ void ATGDebuffTower::ApplyRangeDebuff()
 			{
 				// 기본속도 기준으로 SlowRate 적용
 				// 이미 슬로우 중이면 중복 적용 방지
-				float DefaultSpeed = Movement->GetMaxSpeed();
-				if (Movement->MaxWalkSpeed > DefaultSpeed * SlowRate)
+				if (!SlowedEnemies.Contains(Enemy))
 				{
 					// 기본속도 저장 후 슬로우 적용
-					SlowedEnemies.Add(Enemy, DefaultSpeed);
-					Movement->MaxWalkSpeed = DefaultSpeed * SlowRate;
-				}
+					SlowedEnemies.Add(Enemy, Movement->MaxWalkSpeed);
+					Movement->MaxWalkSpeed *= SlowRate;
 			}
 		}
 	}
