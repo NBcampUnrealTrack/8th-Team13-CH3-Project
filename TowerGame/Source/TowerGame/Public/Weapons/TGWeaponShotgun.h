@@ -30,7 +30,7 @@ class TOWERGAME_API UTGWeaponShotgun : public UTGWeaponBase
 private:
 	FTGStatusWeaponShotgun status;
 public:
-	virtual void Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance) override;
+	virtual void Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance, bool TriggerLock) override;
 	virtual const FTGWeaponAsset* GetAsset() override { return &status.Asset; };
 	void SetStatus(const FTGStatusWeaponShotgun value) { status = value; }
 };

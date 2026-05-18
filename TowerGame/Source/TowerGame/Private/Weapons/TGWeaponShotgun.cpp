@@ -7,14 +7,14 @@
 #include "Engine/DamageEvents.h"
 #include "Kismet/GameplayStatics.h"
 
-void UTGWeaponShotgun::Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance)
+void UTGWeaponShotgun::Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance, bool TriggerLock)
 {
-	if (!CanFire)
+	if (!CanFire || TriggerLock)
 		return;
 
 	CanFire = false;
 	GetWorld()->GetTimerManager().SetTimer(TimerFireDelay, this, &UTGWeaponBase::HandleFireDelay, status.ShotInterval, false);
-	Super::Shoot(Instigator, WeaponComponent, MuzzlePos, Direction, Distance);
+	Super::Shoot(Instigator, WeaponComponent, MuzzlePos, Direction, Distance, TriggerLock);
 
 	// 발포 이펙트
 	SpawnAttachedEffects(status.Asset.FireParticle, WeaponComponent, MuzzlePos, status.Asset.FireParticleScale);

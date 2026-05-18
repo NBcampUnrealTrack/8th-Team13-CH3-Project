@@ -18,6 +18,7 @@
 #include "Weapons/TGWeaponSingleShot.h"
 #include "Weapons/TGWeaponShotgun.h"
 #include "Weapons/TGWeaponRepeater.h"
+#include "Curves/CurveVector.h"
 #include "BaseTower/TGBaseTower.h"
 
 // Sets default values
@@ -38,6 +39,11 @@ ATGPlayer::ATGPlayer() : MaxHP(100), SlowRate(0.5f), DefaultWalkSpeed(0)
 	Weapon_Static->SetupAttachment(Camera);
 	Weapon_Static->SetRelativeLocation(InitialLocation);
 
+	SwitchingWeaponTimelineComp = CreateDefaultSubobject<UTimelineComponent>("SwitchingWeapon_TLC");
+	SwitchingWeaponTL_Finish.BindUFunction(this, TEXT("OnFinishSwitchingWeaponTimeline"));
+	SwitchingWeaponTL_CurLoc.BindUFunction(this, TEXT("OnUpdateSwitchingWeaponTimeline_Location"));
+	SwitchingWeaponTL_CurRot.BindUFunction(this, TEXT("OnUpdateSwitchingWeaponTimeline_Rotation"));
+
 	EvadeCount = 2;
 	EvadeCooldown = 3.0f;
 	InteractDistance = 300.f;
@@ -52,6 +58,7 @@ void ATGPlayer::BeginPlay()
 	Super::BeginPlay();
 	Weapon_Skeletal->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	Weapon_Static->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
 	HP = MaxHP;
 	bMoving = false;
 	bBuildMode = false;
@@ -65,6 +72,13 @@ void ATGPlayer::BeginPlay()
 	OwnWeapon(ETGWeaponTriggerType::REPEATER, TEXT("AssaultRifle"), true);
 	OwnWeapon(ETGWeaponTriggerType::SHOTGUN, TEXT("Shotgun"), false);
 	OwnWeapon(ETGWeaponTriggerType::SINGLE_SHOT, TEXT("SniperRifle"), false);
+
+	if (!SwitchingCurveLoc.IsNull())
+		SwitchingWeaponTimelineComp->AddInterpVector(SwitchingCurveLoc, SwitchingWeaponTL_CurLoc);
+	if (!SwitchingCurveRot.IsNull())
+		SwitchingWeaponTimelineComp->AddInterpVector(SwitchingCurveRot, SwitchingWeaponTL_CurRot);
+	SwitchingWeaponTimelineComp->SetTimelineFinishedFunc(SwitchingWeaponTL_Finish);
+	SwitchingWeaponTimelineComp->SetLooping(false);
 }
 
 void ATGPlayer::Move(const FInputActionValue& value)
@@ -173,9 +187,9 @@ void ATGPlayer::Shot(const FInputActionValue& InputValue)
 	FVector MuzzlePos;
 	FVector ShootDir;
 	UMeshComponent* CurrentWeaponComp = nullptr;
-	if (Weapon_Skeletal)
+	if (Weapon_Skeletal->GetSkeletalMeshAsset())
 		CurrentWeaponComp = Weapon_Skeletal;
-	else if (Weapon_Static)
+	else if (Weapon_Static->GetStaticMesh())
 		CurrentWeaponComp = Weapon_Static;
 	else
 		CurrentWeaponComp = GetMesh();
@@ -186,7 +200,7 @@ void ATGPlayer::Shot(const FInputActionValue& InputValue)
 	else
 		ShootDir = (Camera->GetComponentLocation() + Camera->GetForwardVector() * ShootDistance - MuzzlePos).GetSafeNormal();	// 카메라 정중앙을 향해 발사
 
-	GetCurrentWeapon()->Shoot(this, CurrentWeaponComp, MuzzlePos, ShootDir, ShootDistance);
+	GetCurrentWeapon()->Shoot(this, CurrentWeaponComp, MuzzlePos, ShootDir, ShootDistance, SwitchingWeaponTimelineComp->GetPlaybackPosition() > 0.f);
 }
 
 void ATGPlayer::Interact(const FInputActionValue& InputValue)
@@ -222,7 +236,9 @@ void ATGPlayer::SwitchingWeapon(const FInputActionValue& InputValue)
 		else
 			Idx = Arr.Num() - 1;
 	}
-	EquipWeapon(Arr[Idx].Key);
+
+	SwitchingWeaponTimelineComp->Play();
+	SwitchingWeaponKey = Arr[Idx].Key;
 }
 
 // Called every frame
@@ -248,11 +264,11 @@ void ATGPlayer::Tick(float DeltaTime)
 	// 무기가 향하는 방향
 	FHitResult WeaponTrace;
 
-	CameraLineTrace(WeaponTrace, ECC_Visibility, Weapon_Skeletal->GetRelativeLocation().Length() + GetCurrentWeapon()->GetAsset()->MuzzlePos.Length(), ShootDistance);
-	//FVector MuzzlePos = Weapon_Skeletal->GetComponentTransform().TransformPosition(GetCurrentWeapon()->GetAsset()->MuzzlePos);
-	//Weapon_Skeletal->SetWorldRotation(UKismetMathLibrary::FindLookAtRotation(Camera->GetComponentLocation() + InitialLocation + GetCurrentWeapon()->GetAsset()->LocationOffset, WeaponTrace.Location));
-	////Weapon_Skeletal->AddRelativeRotation(GetCurrentWeapon()->GetAsset()->RotationOffset);
-	//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Aim Rot: %s"), *Weapon_Skeletal->GetComponentRotation().ToString()));
+	CameraLineTrace(WeaponTrace, ECC_Visibility, Weapon_Static->GetRelativeLocation().Length() + GetCurrentWeapon()->GetAsset()->MuzzlePos.Length(), ShootDistance);
+
+	//FVector MuzzlePos = Weapon_Static->GetComponentTransform().TransformPosition(GetCurrentWeapon()->GetAsset()->MuzzlePos);
+	//Weapon_Static->SetWorldRotation(UKismetMathLibrary::FindLookAtRotation(Camera->GetComponentLocation() + InitialLocation + GetCurrentWeapon()->GetAsset()->LocationOffset, WeaponTrace.Location));
+	//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Aim Rot: %s"), *Weapon_Static->GetComponentRotation().ToString()));
 
 	// Trace 결과 중 HitEnemy을 확인하여 기존 값과 다를 경우 Broadcast
 	ATGEnemyBase* HitEnemy = Cast<ATGEnemyBase>(WeaponTrace.GetActor());
@@ -265,6 +281,9 @@ void ATGPlayer::Tick(float DeltaTime)
 	//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Current Evade Count(LSHIFT): %d / %d"), CurrentEvadeCount, EvadeCount));
 	//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Aim Target: %s"), WeaponTrace.bBlockingHit ? *WeaponTrace.GetActor()->GetName() : TEXT("None")));
 	//GEngine->AddOnScreenDebugMessage(-1, 0.0f, bBuildMode ? FColor::Emerald : FColor::Orange, FString::Printf(TEXT("Current Mode: %s"), bBuildMode ? TEXT("Build") : TEXT("Combat")));
+
+	// 무기 트랜스폼 업데이트
+	UpdateWeaponTransform();
 
 	// 현재 이동조작중인가?
 	if (bMoving)
@@ -289,6 +308,30 @@ void ATGPlayer::RestoreEvadeCooldown(float DeltaTime)
 	{
 		CurrentEvadeCooldown = 0.0f;
 	}
+}
+
+void ATGPlayer::UpdateWeaponTransform()
+{
+	UMeshComponent* CurrentWeaponComp = nullptr;
+	FVector TotalLocOffset = FVector::ZeroVector;
+	FRotator TotalRotOffset = FRotator::ZeroRotator;
+	if (Weapon_Skeletal->GetSkeletalMeshAsset())
+		CurrentWeaponComp = Weapon_Skeletal;
+	else if (Weapon_Static->GetStaticMesh())
+		CurrentWeaponComp = Weapon_Static;
+	else
+		return;
+
+	for (FVector loc : WeaponLocationOffset)
+		TotalLocOffset += loc;
+	for (FRotator rot : WeaponRotationOffset)
+		TotalRotOffset += rot;
+	
+	CurrentWeaponComp->SetRelativeLocation(InitialLocation + GetCurrentWeapon()->GetAsset()->LocationOffset + TotalLocOffset);
+	CurrentWeaponComp->SetRelativeRotation(FRotator::ZeroRotator + TotalRotOffset);
+
+	WeaponLocationOffset.Empty();
+	WeaponRotationOffset.Empty();
 }
 
 float ATGPlayer::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
@@ -383,6 +426,24 @@ UTGWeaponBase* ATGPlayer::GetCurrentWeapon()
 	return OwnedWeapons.Find(CurrentWeaponKey)->Get();
 }
 
+void ATGPlayer::OnFinishSwitchingWeaponTimeline()
+{
+	if (SwitchingWeaponTimelineComp->GetPlaybackPosition() < SwitchingWeaponTimelineComp->GetTimelineLength())
+		return;
+	SwitchingWeaponTimelineComp->ReverseFromEnd();
+	EquipWeapon(SwitchingWeaponKey);
+}
+
+void ATGPlayer::OnUpdateSwitchingWeaponTimeline_Location(FVector Loc)
+{
+	WeaponLocationOffset.Add(Loc);
+}
+
+void ATGPlayer::OnUpdateSwitchingWeaponTimeline_Rotation(FVector Rot)
+{
+	WeaponRotationOffset.Add(FRotator(Rot.Y, Rot.Z, Rot.X));
+}
+
 void ATGPlayer::OwnWeapon(ETGWeaponTriggerType TriggerType, FName RowName, bool equip)
 {
 	UDataTable* DT;
@@ -459,15 +520,11 @@ void ATGPlayer::EquipWeapon(FString Key)
 	{
 		Weapon_Static->SetStaticMesh(nullptr);
 		Weapon_Skeletal->SetSkeletalMeshAsset(AssetInfo.SkeletalMesh);
-		Weapon_Skeletal->SetRelativeLocation(InitialLocation + AssetInfo.LocationOffset);
-		Weapon_Skeletal->SetRelativeRotation(AssetInfo.RotationOffset);
 	}
 	else if (AssetInfo.StaticMesh)
 	{
 		Weapon_Skeletal->SetSkeletalMeshAsset(nullptr);
 		Weapon_Static->SetStaticMesh(AssetInfo.StaticMesh);
-		Weapon_Static->SetRelativeLocation(InitialLocation + AssetInfo.LocationOffset);
-		Weapon_Static->SetRelativeRotation(AssetInfo.RotationOffset);
 	}
 }
 

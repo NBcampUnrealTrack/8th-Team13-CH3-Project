@@ -45,19 +45,19 @@ UWorld* UTGWeaponRepeater::GetWorld() const
 	return GetOuter()->GetWorld();
 }
 
-void UTGWeaponRepeater::Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance)
+void UTGWeaponRepeater::Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance, bool TriggerLock)
 {
 	IsFire = true;
 	CurSpreadTime += GetWorld()->GetDeltaSeconds();
 	if (CurSpreadTime > status.MaxSpreadTime)
 		CurSpreadTime = status.MaxSpreadTime;
 
-	if (!CanFire)
+	if (!CanFire || TriggerLock)
 		return;
 
 	CanFire = false;
 	GetWorld()->GetTimerManager().SetTimer(TimerFireDelay, this, &UTGWeaponBase::HandleFireDelay, status.ShotInterval, false);
-	Super::Shoot(Instigator, WeaponComponent, MuzzlePos, Direction, Distance);
+	Super::Shoot(Instigator, WeaponComponent, MuzzlePos, Direction, Distance, TriggerLock);
 
 	// 발포 이펙트
 	SpawnAttachedEffects(status.Asset.FireParticle, WeaponComponent, MuzzlePos, status.Asset.FireParticleScale);

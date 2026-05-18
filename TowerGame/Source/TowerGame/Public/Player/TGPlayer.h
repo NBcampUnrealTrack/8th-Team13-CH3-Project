@@ -7,6 +7,7 @@
 #include "Weapons/TGWeaponBase.h"
 #include "BaseTower/TGTurretType.h"
 #include "BaseTower/TGBuildWidget.h"
+#include "Components/TimelineComponent.h"
 #include "TGPlayer.generated.h"
 
 class ATGEnemyBase;
@@ -57,6 +58,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	void RestoreEvadeCooldown(float DeltaTime);
+	void UpdateWeaponTransform();
 
 	virtual float TakeDamage(
 		float DamageAmount, struct
@@ -104,6 +106,20 @@ protected:
 	TObjectPtr<USkeletalMeshComponent> Weapon_Skeletal;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UStaticMeshComponent> Weapon_Static;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Value")
+	TArray<FVector> WeaponLocationOffset;	// 로케이션 오프셋. 실제 트랜스폼은 기본값에 이 오프셋들을 합쳐서 업데이트함.
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Value")
+	TArray<FRotator> WeaponRotationOffset;	// 회전의 목표값
+	UPROPERTY(EditDefaultsOnly, Category = "Components")
+	TObjectPtr<UTimelineComponent> SwitchingWeaponTimelineComp;
+	UPROPERTY(EditDefaultsOnly, Category = "Components")
+	TObjectPtr<UCurveVector> SwitchingCurveLoc;
+	UPROPERTY(EditDefaultsOnly, Category = "Components")
+	TObjectPtr<UCurveVector> SwitchingCurveRot;
+
+	FOnTimelineVector SwitchingWeaponTL_CurLoc;
+	FOnTimelineVector SwitchingWeaponTL_CurRot;
+	FOnTimelineEvent SwitchingWeaponTL_Finish;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
 	int32 MaxHP;
@@ -146,9 +162,16 @@ protected:
 	UPROPERTY()
 	TMap<FString, TObjectPtr<UTGWeaponBase>> OwnedWeapons;	// 소유중인 무기
 	FString CurrentWeaponKey;	// 현재 장착중인 무기의 Key
+	FString SwitchingWeaponKey;	// 교체중인 무기의 Key
 
 	UFUNCTION(BlueprintCallable)
 	UTGWeaponBase* GetCurrentWeapon();	// 현재 장착중인 무기를 가져온다.
+	UFUNCTION()
+	void OnFinishSwitchingWeaponTimeline();
+	UFUNCTION()
+	void OnUpdateSwitchingWeaponTimeline_Location(FVector Loc);
+	UFUNCTION()
+	void OnUpdateSwitchingWeaponTimeline_Rotation(FVector Rot);
 
 	void OwnWeapon(ETGWeaponTriggerType TriggerType, FName RowName, bool equip);	// 무기를 소유한다. equip을 하면 장착까지 한다.
 	void EquipWeapon(FString Key);	// 무기를 장착한다.

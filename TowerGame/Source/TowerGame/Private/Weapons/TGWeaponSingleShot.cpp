@@ -38,15 +38,15 @@ UWorld* UTGWeaponSingleShot::GetWorld() const
 	return GetOuter()->GetWorld();
 }
 
-void UTGWeaponSingleShot::Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance)
+void UTGWeaponSingleShot::Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance, bool TriggerLock)
 {
 	IsFire = true;
-	if (!CanFire || IsPrevFire)
+	if (!CanFire || IsPrevFire || TriggerLock)
 		return;
 
 	CanFire = false;
 	GetWorld()->GetTimerManager().SetTimer(TimerFireDelay, this, &UTGWeaponBase::HandleFireDelay, status.ShotCoolTime, false);
-	Super::Shoot(Instigator, WeaponComponent, MuzzlePos, Direction, Distance);
+	Super::Shoot(Instigator, WeaponComponent, MuzzlePos, Direction, Distance, TriggerLock);
 
 	// 발포 이펙트
 	SpawnAttachedEffects(status.Asset.FireParticle, WeaponComponent, MuzzlePos, status.Asset.FireParticleScale);

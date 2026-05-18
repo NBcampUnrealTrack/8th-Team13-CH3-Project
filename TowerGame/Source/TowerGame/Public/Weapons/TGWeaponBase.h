@@ -30,8 +30,6 @@ public:
 		FVector MuzzlePos = FVector::ZeroVector;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Offset")	// 위치 오프셋 (오차수정)
 		FVector LocationOffset = FVector::ZeroVector;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Offset")	// 회전 오프셋
-		FRotator RotationOffset = FRotator::ZeroRotator;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VisualEffects")	// 발포 이펙트
 		TObjectPtr<class UParticleSystem> FireParticle = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VisualEffects")	// 발포 이펙트 스케일
@@ -77,7 +75,7 @@ protected:	// 라인트레이싱 정보
 	FTimerHandle TimerFireDelay;
 public:
 	virtual const FTGWeaponAsset* GetAsset() { return nullptr; }
-	virtual void Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance);
+	virtual void Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance, bool TriggerLock);
 	void SpawnAttachedEffects(class UParticleSystem* Particle, USceneComponent* AttachToComponent, FVector Location, float ParticleScale, bool bSpawnDecal = false, float DecalLifeSpan = 5.f);
 	bool LineTrace(FVector MuzzlePos, FVector Direction, float Distance);
 	void HandleFireDelay();

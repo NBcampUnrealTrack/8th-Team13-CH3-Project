@@ -7,7 +7,7 @@
 #include "Particles/ParticleSystem.h"
 #include "Components/DecalComponent.h"
 
-void UTGWeaponBase::Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance)
+void UTGWeaponBase::Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance, bool TriggerLock)
 {
 	QueryParams.bTraceComplex = true;
 	QueryParams.ClearIgnoredSourceObjects();
