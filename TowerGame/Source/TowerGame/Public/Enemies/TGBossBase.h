@@ -37,13 +37,19 @@ public:
 
 public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Boss|Stat")
-	FString GetBossName() const;
+	FText GetBossName() const;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Boss|Stat")
 	float GetCurrentHP() const;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Boss|Stat")
 	float GetMaxHP() const;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Boss|Stat")
+	float GetCurrentPhaseMinHP() const;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Boss|Stat")
+	float GetCurrentPhaseMaxHP() const;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Boss|Spawn")
 	float GetSpawnClearRadius() const;
@@ -70,7 +76,7 @@ protected:
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss")
-	FString BossName;
+	FText BossName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Stat")
 	float MaxHP;

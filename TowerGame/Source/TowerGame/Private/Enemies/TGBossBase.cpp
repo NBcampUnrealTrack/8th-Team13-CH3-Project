@@ -19,6 +19,9 @@ ATGBossBase::ATGBossBase() :
 	TargetPlayer(nullptr)
 {
 	PrimaryActorTick.bCanEverTick = false;
+
+	BossName = FText::FromString("Boss");
+
 }
 
 void ATGBossBase::BeginPlay()
@@ -61,7 +64,7 @@ float ATGBossBase::TakeDamage(float DamageAmount, const FDamageEvent& DamageEven
 	return AppliedDamage;
 }
 
-FString ATGBossBase::GetBossName() const
+FText ATGBossBase::GetBossName() const
 {
 	return BossName;
 }
@@ -74,6 +77,23 @@ float ATGBossBase::GetCurrentHP() const
 float ATGBossBase::GetMaxHP() const
 {
 	return MaxHP;
+}
+
+float ATGBossBase::GetCurrentPhaseMinHP() const
+{
+	if (!PhaseHPRatio.IsValidIndex(CurrentPhaseIndex)) return 0.f;
+
+	return PhaseHPRatio[CurrentPhaseIndex] * MaxHP;
+}
+
+float ATGBossBase::GetCurrentPhaseMaxHP() const
+{
+	if (CurrentPhaseIndex <= 0) return MaxHP;
+
+	const int32 PreviousPhaseIndex = CurrentPhaseIndex - 1;
+	if (!PhaseHPRatio.IsValidIndex(PreviousPhaseIndex)) return MaxHP;
+
+	return PhaseHPRatio[PreviousPhaseIndex] * MaxHP;
 }
 
 float ATGBossBase::GetSpawnClearRadius() const

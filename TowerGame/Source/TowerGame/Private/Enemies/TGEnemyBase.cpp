@@ -312,7 +312,7 @@ void ATGEnemyBase::HandleMoveCompleted(FAIRequestID RequestID, EPathFollowingRes
 			StartStructureAttack();
 			return;
 		}
-		MoveToStructureTargetWithoutAttackRange();
+		MoveDirectlyToStructureTarget();
 		return;
 	}else if (Result == EPathFollowingResult::Aborted){
 		//if (TryRecoverToNearestNavMesh()){

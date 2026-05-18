@@ -105,10 +105,13 @@ void UTGPlayerWidget::UpdateBossHPBar(float CurrentHP, float MaxHP)
 {
 	if (!PB_BossHP) return;
 
-	// Boss HP 반영
-	// TODO Phase 별 비율 적용 & 전용 PB로 변경
-	const float BossRatio = MaxHP > 0.f ? FMath::Clamp(CurrentHP / MaxHP, 0.0f, 1.0f) : 0.f;
-	PB_BossHP->SetPercent(BossRatio);
+	// Phase 별 UI 최대 최소 비율 변경
+	const float PhaseMaxHP = Boss->GetCurrentPhaseMaxHP();
+	const float PhaseMinHP = Boss->GetCurrentPhaseMinHP();
+	const float PhaseHPRange = PhaseMaxHP - PhaseMinHP;
+
+	const float Percent = FMath::Clamp((CurrentHP - PhaseMinHP) / PhaseHPRange, 0.0f, 1.0f);
+	PB_BossHP->SetPercent(Percent);
 }
 
 void UTGPlayerWidget::HandleBossRemoved(ATGBossBase* RemovedBoss)
@@ -270,7 +273,7 @@ void UTGPlayerWidget::BindBoss(ATGBossBase* NewBoss)
 	Boss->OnBossRemoved.AddDynamic(this, &UTGPlayerWidget::HandleBossRemoved);
 
 	if (Txt_BossName){
-		Txt_BossName->SetText(FText::FromString(Boss->GetBossName()));
+		Txt_BossName->SetText(Boss->GetBossName());
 		Txt_BossName->SetVisibility(ESlateVisibility::Visible);
 	}
 
