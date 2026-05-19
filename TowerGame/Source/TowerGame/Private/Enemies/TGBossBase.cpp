@@ -6,6 +6,7 @@
 #include "TGMountedTower.h"
 #include "Core/GameFlow/TGGameMode.h"
 #include "Enemies/TGBossPhaseBase.h"
+#include "Engine/DamageEvents.h"
 #include "Kismet/GameplayStatics.h"
 #include "Player/TGPlayer.h"
 
@@ -57,6 +58,17 @@ float ATGBossBase::TakeDamage(float DamageAmount, const FDamageEvent& DamageEven
 		AppliedDamage *= TowerDamageMultiplier;
 	}
 
+	if (DamageEvent.IsOfType(FPointDamageEvent::ClassID)){
+		const FPointDamageEvent& PointDamageEvent = static_cast<const FPointDamageEvent&>(DamageEvent);
+
+		const float PartDamageResult =
+			ApplyBreakablePartDamage(PointDamageEvent.HitInfo.GetComponent(), AppliedDamage);
+
+		if (PartDamageResult >= 0.f){
+			AppliedDamage = PartDamageResult;
+		}
+	}
+
 	// 데미지 적용 후 페이즈 전환 검사
 	ApplyBossDamage(AppliedDamage);
 	CheckPhaseTransition();
@@ -104,6 +116,18 @@ float ATGBossBase::GetSpawnClearRadius() const
 ATGPlayer* ATGBossBase::GetPlayer() const
 {
 	return TargetPlayer;
+}
+
+void ATGBossBase::SetActiveBreakablePartTags(const TArray<FName>& InBreakablePartTags)
+{
+	ActiveBreakablePartTags.Empty();
+
+	// Set에 Tag 추가 공격 가능 파츠 탐색용
+	for (const FName& PartTag : InBreakablePartTags){
+		if (PartTag != NAME_None){
+			ActiveBreakablePartTags.Add(PartTag);
+		}
+	}
 }
 
 void ATGBossBase::ChangeToNextPhase()
@@ -166,4 +190,52 @@ void ATGBossBase::ApplyBossDamage(float DamageAmount)
 		}
 		Destroy();
 	}
+}
+
+float ATGBossBase::ApplyBreakablePartDamage(UActorComponent* HitComponent, float DamageAmount)
+{
+	if (!HitComponent || !CurrentPhase || DamageAmount <= 0.f) return -1.f;
+
+	for (const FName& ComponentTag : HitComponent->ComponentTags){
+		if (!ActiveBreakablePartTags.Contains(ComponentTag)) continue;
+
+		// 해당 페이즈에 해당 파츠가 존재하는지 확인
+		FTGBossBreakablePartData* PartData = CurrentPhase->FindBreakablePart(ComponentTag);
+		if (!PartData){
+			ActiveBreakablePartTags.Remove(ComponentTag);
+			return -1.f;
+		}
+
+		// Tag 존재 + 체력 0 -> 파괴 중인 파츠
+		if (PartData->CurrentHP <= 0){
+			// 파괴 처리 함수 구현 후 Tag 제거 시점 변경 예정
+			ActiveBreakablePartTags.Remove(ComponentTag);
+			CurrentPhase->RemoveBreakablePart(ComponentTag);
+			return 0.f;
+		}
+
+		// 파츠에 체력에 데미지를 보정해서 적용
+		float AppliedPartDamage = FMath::Clamp(DamageAmount, 0.f, PartData->CurrentHP);
+		PartData->CurrentHP -= AppliedPartDamage;
+
+		UE_LOG(LogTemp, Warning, TEXT("[BossPart] Damaged - Part: %s / Damage: %.1f / HP: %.1f"),
+					*ComponentTag.ToString(), AppliedPartDamage, PartData->CurrentHP);
+
+		// 파츠의 체력이 0일 경우 파괴 추가 데미지 적용
+		if (PartData->CurrentHP <= 0){
+			AppliedPartDamage += MaxHP * PartData->DestroyBonusDamageRatio;
+
+			// 파괴 처리 함수 구현 후 Tag 제거 시점 변경 예정
+			ActiveBreakablePartTags.Remove(ComponentTag);
+			CurrentPhase->RemoveBreakablePart(ComponentTag);
+
+			UE_LOG(LogTemp, Warning, TEXT("[BossPart] Destroyed - Part: %s / Damage: %.1f"),
+				*ComponentTag.ToString(), AppliedPartDamage);
+
+			// 파츠 분리/삭제 처리
+		}
+
+		return AppliedPartDamage;
+	}
+	return -1.f;
 }

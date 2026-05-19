@@ -64,7 +64,15 @@ void UTGWeaponSingleShot::Shoot(AActor* Instigator, class UMeshComponent* Weapon
 		}
 		else if (ATGBossBase* Boss = Cast<ATGBossBase>(HitActor))
 		{
-			UGameplayStatics::ApplyDamage(Boss, status.Power, Instigator->GetInstigatorController(), Instigator, nullptr);
+			UGameplayStatics::ApplyPointDamage(
+				Boss,
+				status.Power,
+				Direction,
+				TraceHit,
+				Instigator->GetInstigatorController(),
+				Instigator,
+				nullptr
+			);
 		}
 	}
 }
