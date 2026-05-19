@@ -84,13 +84,13 @@ void ATGPlayer::BeginPlay()
 
 void ATGPlayer::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	Super::EndPlay(EndPlayReason);
-
 	// Safety check to stop the timer from executing after the actor is gone
 	if (GetWorld() && GetWorld()->GetTimerManager().IsTimerActive(SwitchWeaponDelayHandle))
 		GetWorld()->GetTimerManager().ClearTimer(SwitchWeaponDelayHandle);
 	if (GetWorld() && GetWorld()->GetTimerManager().IsTimerActive(SlowDebuffTimerHandle))
 		GetWorld()->GetTimerManager().ClearTimer(SlowDebuffTimerHandle);
+
+	Super::EndPlay(EndPlayReason);
 }
 
 void ATGPlayer::Move(const FInputActionValue& value)
@@ -234,10 +234,10 @@ void ATGPlayer::SwitchingWeapon(const FInputActionValue& InputValue)
 	bCanSwitch = false;
 	GetWorld()->GetTimerManager().SetTimer(
 		SwitchWeaponDelayHandle,
-		[this]() {
+		FTimerDelegate::CreateLambda([this]() {
 			GetWorld()->GetTimerManager().ClearTimer(SlowDebuffTimerHandle);
 			bCanSwitch = true;
-		},
+		}),
 		SwitchWeaponDelay,
 		false
 	);
