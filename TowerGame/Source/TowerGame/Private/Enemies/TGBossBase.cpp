@@ -159,6 +159,7 @@ void ATGBossBase::ChangeToNextPhase()
 	CurrentPhaseIndex = NewPhaseIndex;
 
 	CurrentPhase->EnterPhase();
+	RebuildPartDamageMaterialCache();
 }
 
 void ATGBossBase::CheckPhaseTransition()
@@ -213,15 +214,15 @@ float ATGBossBase::ApplyBreakablePartDamage(UActorComponent* HitComponent, float
 
 		// Tag 존재 + 체력 0 -> 파괴 중인 파츠
 		if (PartData->CurrentHP <= 0){
-			// 파괴 처리 함수 구현 후 Tag 제거 시점 변경 예정
-			ActiveBreakablePartTags.Remove(ComponentTag);
-			CurrentPhase->RemoveBreakablePart(ComponentTag);
 			return 0.f;
 		}
 
 		// 파츠에 체력에 데미지를 보정해서 적용
 		float AppliedPartDamage = FMath::Clamp(DamageAmount, 0.f, PartData->CurrentHP);
 		PartData->CurrentHP -= AppliedPartDamage;
+
+		const float MaxPartHp = PartData->HPRatio* MaxHP;
+		UpdateBreakablePartDamageVisual(ComponentTag, PartData->CurrentHP, MaxPartHp);
 
 		UE_LOG(LogTemp, Warning, TEXT("[BossPart] Damaged - Part: %s / Damage: %.1f / HP: %.1f"),
 					*ComponentTag.ToString(), AppliedPartDamage, PartData->CurrentHP);
@@ -320,5 +321,50 @@ void ATGBossBase::DestroyDetachedPartComponent()
 		if (!PartData || PartData->CurrentHP <= 0.f) continue;
 
 		DestroyBreakableParts(PartTag);
+	}
+}
+
+void ATGBossBase::RebuildPartDamageMaterialCache()
+{
+	PartDamageMaterialMap.Empty();
+
+	TArray<UStaticMeshComponent*> StaticMeshComponents;
+	GetComponents<UStaticMeshComponent>(StaticMeshComponents);
+
+	for (UStaticMeshComponent* StaticMesh : StaticMeshComponents){
+		if (!StaticMesh) continue;
+
+		for (const FName& PartTag : ActiveBreakablePartTags){
+			if (!StaticMesh->ComponentHasTag(PartTag)) continue;
+
+			//다이나믹 머티리얼 인스턴스 cast
+			UMaterialInstanceDynamic* DynamicMaterial =
+				Cast<UMaterialInstanceDynamic>(StaticMesh->GetMaterial(0));
+
+			if (!DynamicMaterial){
+				DynamicMaterial = StaticMesh->CreateAndSetMaterialInstanceDynamic(0);
+			}
+
+			// 다이나믹 머티리얼 캐시에 저장
+			if (DynamicMaterial){
+				PartDamageMaterialMap.FindOrAdd(PartTag).Add(DynamicMaterial);
+			}
+		}
+	}
+}
+
+void ATGBossBase::UpdateBreakablePartDamageVisual(FName PartTag, float CurrentPartHP, float MaxPartHP)
+{
+	// 체력 비율 적용
+	const float HPRatio = CurrentPartHP / MaxPartHP;
+	const float DamageAmount = 1.f - HPRatio;
+
+	TArray<UMaterialInstanceDynamic*>* PartMaterials = PartDamageMaterialMap.Find(PartTag);
+	if (!PartMaterials) return;
+
+	for (UMaterialInstanceDynamic* Material : *PartMaterials){
+		if (!Material) continue;
+
+		Material->SetScalarParameterValue(TEXT("PartDamageAmount"), static_cast<float>(DamageAmount/2));
 	}
 }

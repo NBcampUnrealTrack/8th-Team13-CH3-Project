@@ -84,6 +84,10 @@ protected:
 	// Phase 전환 시 해당 페이즈의 파괴되지 않은 부위 파괴
 	void DestroyDetachedPartComponent();
 
+	// Material 초기화 및 갱신
+	void RebuildPartDamageMaterialCache();
+	void UpdateBreakablePartDamageVisual(FName PartTag, float CurrentPartHP, float MaxPartHP);
+
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss")
 	FText BossName;
@@ -133,5 +137,9 @@ protected:
 	TObjectPtr<ATGPlayer> TargetPlayer;
 
 	FTimerHandle PhaseTransitionTimerHandle;
+
+private:
+	// 부위 외형 손상용 캐시
+	TMap<FName, TArray<UMaterialInstanceDynamic*>> PartDamageMaterialMap;
 
 };
