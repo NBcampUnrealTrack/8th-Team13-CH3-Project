@@ -4,6 +4,7 @@
 #include "UI/TGPlayerWidget.h"
 #include "UI/TGPlayingWidget.h"
 #include "UI/TGPauseWidget.h"
+#include "BaseTower/TGBuildWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "Core/GameFlow/TGGameMode.h"
 #include "Core/Grid/TGGridBase.h"
@@ -12,7 +13,8 @@ ATGHUD::ATGHUD()
 	: CachedGameMode(nullptr),
 	PlayerWidget(nullptr),
 	PauseWidget(nullptr),
-	GameOverWidget(nullptr)
+	GameOverWidget(nullptr),
+	BuildWidget(nullptr)
 {
 }
 
@@ -50,82 +52,134 @@ void ATGHUD::HideAllWidgets()
 	{
 		GameOverWidget->RemoveFromParent();
 	}
+
+	if (BuildWidget && BuildWidget->IsInViewport())
+	{
+		BuildWidget->RemoveFromParent();
+	}
 }
 
 void ATGHUD::UpdateUIByState(ETGGameFlowState NewState)
 {
-	HideAllWidgets();
-
 	APlayerController* PC = GetOwningPlayerController();
 	if (!PC)
 	{
 		return;
 	}
 
-	switch (NewState)
+	if (NewState == ETGGameFlowState::Playing && OldState == ETGGameFlowState::BuildMode)
 	{
-	case ETGGameFlowState::Playing:
-		if (!PlayerWidget && PlayerWidgetClass)
+		UE_LOG(LogTemp, Warning, TEXT("BuildWidget Close"));
+		if (BuildWidget && BuildWidget->IsInViewport())
 		{
-			PlayerWidget = CreateWidget<UTGPlayerWidget>(PC, PlayerWidgetClass);
+			BuildWidget->RemoveFromParent();
+			UE_LOG(LogTemp, Warning, TEXT("BuildWidget Close2"));
 		}
-
-		if (PlayerWidget)
-		{
-			PlayerWidget->AddToViewport();
-
-			AActor* FoundActor = UGameplayStatics::GetActorOfClass(
-				GetWorld(),
-				ATGGridBase::StaticClass()
-			);
-
-			ATGGridBase* GridBase = Cast<ATGGridBase>(FoundActor);
-
-			if (GridBase)
-			{
-				PlayerWidget->SetGridBase(GridBase);
-			}
-			else
-			{
-				UE_LOG(LogTemp, Warning, TEXT("HUD: GridBase not found"));
-			}
-		}
-
-		PC->bShowMouseCursor = false;
-		PC->SetInputMode(FInputModeGameOnly());
-		break;
-
-	case ETGGameFlowState::Paused:
-		if (!PauseWidget && PauseWidgetClass)
-		{
-			PauseWidget = CreateWidget<UTGPauseWidget>(PC, PauseWidgetClass);
-		}
-
-		if (PauseWidget)
-		{
-			PauseWidget->AddToViewport();
-		}
-
-		PC->bShowMouseCursor = true;
-		PC->SetInputMode(FInputModeGameAndUI());
-		break;
-
-	case ETGGameFlowState::GameOver:
-		if (!GameOverWidget && GameOverWidgetClass)
-		{
-			GameOverWidget = CreateWidget<UTGGameOverWidget>(PC, GameOverWidgetClass);
-		}
-
-		if (GameOverWidget)
-		{
-			GameOverWidget->AddToViewport();
-		}
-
-		PC->bShowMouseCursor = true;
-		PC->SetInputMode(FInputModeUIOnly());
-		break;
-
-	default:
-		break;
+		OldState = NewState;
+		return;
 	}
+
+	if (NewState == ETGGameFlowState::BuildMode && OldState == ETGGameFlowState::Playing)
+	{
+		AddtoViewportBuildWidget(PC);
+		OldState = NewState;
+		return;
+	}
+
+	HideAllWidgets();
+
+	if (NewState == ETGGameFlowState::Playing)
+	{
+		AddtoViewportPlayerWidget(PC);
+	}
+	else if (NewState == ETGGameFlowState::Paused)
+	{
+		AddtoViewportPausedWidget(PC);
+	}
+	else if (NewState == ETGGameFlowState::GameOver)
+	{
+		AddtoViewportGameOverWidget(PC);
+	}
+
+	OldState = NewState;
+}
+
+void ATGHUD::AddtoViewportPlayerWidget(APlayerController* PC)
+{
+	if (!PlayerWidget && PlayerWidgetClass)
+	{
+		PlayerWidget = CreateWidget<UTGPlayerWidget>(PC, PlayerWidgetClass);
+	}
+
+	if (PlayerWidget)
+	{
+		PlayerWidget->AddToViewport();
+
+		AActor* FoundActor = UGameplayStatics::GetActorOfClass(
+			GetWorld(),
+			ATGGridBase::StaticClass()
+		);
+
+		ATGGridBase* GridBase = Cast<ATGGridBase>(FoundActor);
+
+		if (GridBase)
+		{
+			PlayerWidget->SetGridBase(GridBase);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("HUD: GridBase not found"));
+		}
+	}
+
+	PC->bShowMouseCursor = false;
+	PC->SetInputMode(FInputModeGameOnly());
+}
+
+void ATGHUD::AddtoViewportBuildWidget(APlayerController* PC)
+{
+	if (!BuildWidget && BuildWidgetClass)
+	{
+		BuildWidget = CreateWidget<UTGBuildWidget>(PC, BuildWidgetClass);
+	}
+
+	if (BuildWidget)
+	{
+		BuildWidget->AddToViewport();
+	}
+
+	PC->bShowMouseCursor = false;
+	PC->SetInputMode(FInputModeGameOnly());
+}
+
+void ATGHUD::AddtoViewportPausedWidget(APlayerController* PC)
+{
+	if (!PauseWidget && PauseWidgetClass)
+	{
+		PauseWidget = CreateWidget<UTGPauseWidget>(PC, PauseWidgetClass);
+	}
+
+	if (PauseWidget)
+	{
+		PauseWidget->AddToViewport();
+	}
+
+	PC->bShowMouseCursor = true;
+	PC->SetInputMode(FInputModeGameAndUI());
+}
+
+void ATGHUD::AddtoViewportGameOverWidget(APlayerController* PC)
+{
+	if (!GameOverWidget && GameOverWidgetClass)
+	{
+		GameOverWidget = CreateWidget<UTGGameOverWidget>(PC, GameOverWidgetClass);
+	}
+
+	if (GameOverWidget)
+	{
+		GameOverWidget->AddToViewport();
+	}
+
+	PC->bShowMouseCursor = true;
+	PC->SetInputMode(FInputModeUIOnly());
 }

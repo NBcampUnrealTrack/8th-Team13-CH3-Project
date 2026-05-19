@@ -37,7 +37,6 @@ protected:
 
 	UPROPERTY()
 	ABaseTower* OwnerTower;
-
 public:
 	// 타워 연결 및 UI 갱신
 	void SetOwnerTower(ABaseTower* InTower);

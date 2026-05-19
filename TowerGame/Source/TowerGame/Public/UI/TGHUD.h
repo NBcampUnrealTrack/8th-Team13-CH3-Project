@@ -8,6 +8,7 @@
 class UTGGameOverWidget;
 class UTGPlayerWidget;
 class UTGPauseWidget;
+class UTGBuildWidget;
 class ATGGameMode;
 
 UCLASS()
@@ -24,10 +25,15 @@ protected:
 
 	void HideAllWidgets();
 	void UpdateUIByState(ETGGameFlowState NewState);
-
+	void AddtoViewportPlayerWidget(APlayerController* PC);
+	void AddtoViewportBuildWidget(APlayerController* PC);
+	void AddtoViewportPausedWidget(APlayerController* PC);
+	void AddtoViewportGameOverWidget(APlayerController* PC);
 protected:
 	UPROPERTY()
 	ATGGameMode* CachedGameMode;
+
+	ETGGameFlowState OldState;
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UTGPlayerWidget> PlayerWidgetClass;
@@ -35,10 +41,14 @@ protected:
 	TSubclassOf<UTGPauseWidget> PauseWidgetClass;
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UTGGameOverWidget> GameOverWidgetClass;
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UTGBuildWidget> BuildWidgetClass;
 	UPROPERTY()
 	UTGPlayerWidget* PlayerWidget;
 	UPROPERTY()
 	UTGPauseWidget* PauseWidget;
 	UPROPERTY()
 	UTGGameOverWidget* GameOverWidget;
+	UPROPERTY()
+	UTGBuildWidget* BuildWidget;
 };

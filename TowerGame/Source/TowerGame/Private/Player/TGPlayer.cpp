@@ -145,20 +145,16 @@ void ATGPlayer::Build(const FInputActionValue& InputValue)
 {
 	bBuildMode = !bBuildMode;
 
-	// 빌드모드 진입 시 위젯 표시, 해제 시 위젯 닫기
-	if (BuildWidgetClass)
+	// 빌드모드 GameMode 및 TGHUD에서 관리되게 변경함
+	if (ATGGameMode* GM = Cast<ATGGameMode>(GetWorld()->GetAuthGameMode()))
 	{
-		APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
-		if (PC)
+		if (bBuildMode)
 		{
-			if (!BuildWidget)
-			{
-				BuildWidget = CreateWidget<UTGBuildWidget>(PC, BuildWidgetClass);
-			}
-			if (bBuildMode)
-				BuildWidget->AddToViewport();
-			else
-				BuildWidget->RemoveFromParent();
+			GM->EnterBuildMode();
+		}
+		else
+		{
+			GM->ExitBuildMode();
 		}
 	}
 }
