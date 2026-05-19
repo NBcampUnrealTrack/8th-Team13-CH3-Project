@@ -78,6 +78,10 @@ protected:
 	void ApplyBossDamage(float DamageAmount);
 	float ApplyBreakablePartDamage(UActorComponent* HitComponent, float DamageAmount);
 
+	// 부위 파괴
+	void DestroyBreakableParts(FName PartTag);
+	void DestroyDetachedPartComponent(UStaticMeshComponent* StaticMesh, FName PartTag);
+
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss")
 	FText BossName;
@@ -111,6 +115,16 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Part")
 	TSet<FName> ActiveBreakablePartTags;
+
+	// 부위 파괴 관련 설정
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Part")
+	float PartsLifeSpan;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Part")
+	float ExplodeRadius;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Part")
+	float ExplodeForce;
 
 	// 싱글 플레이 기준 Boss가 공격 대상으로 사용할 Player.
 	UPROPERTY()

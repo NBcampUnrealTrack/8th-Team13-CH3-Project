@@ -17,6 +17,9 @@ ATGBossBase::ATGBossBase() :
 	SpawnClearRadius(0),
 	CurrentPhase(nullptr),
 	CurrentPhaseIndex(INDEX_NONE),
+	PartsLifeSpan(3.f),
+	ExplodeRadius(100.f),
+	ExplodeForce(50.f),
 	TargetPlayer(nullptr)
 {
 	PrimaryActorTick.bCanEverTick = false;
@@ -225,17 +228,78 @@ float ATGBossBase::ApplyBreakablePartDamage(UActorComponent* HitComponent, float
 		if (PartData->CurrentHP <= 0){
 			AppliedPartDamage += MaxHP * PartData->DestroyBonusDamageRatio;
 
-			// 파괴 처리 함수 구현 후 Tag 제거 시점 변경 예정
-			ActiveBreakablePartTags.Remove(ComponentTag);
-			CurrentPhase->RemoveBreakablePart(ComponentTag);
-
 			UE_LOG(LogTemp, Warning, TEXT("[BossPart] Destroyed - Part: %s / Damage: %.1f"),
 				*ComponentTag.ToString(), AppliedPartDamage);
 
-			// 파츠 분리/삭제 처리
+			DestroyBreakableParts(ComponentTag);
 		}
 
 		return AppliedPartDamage;
 	}
 	return -1.f;
+}
+
+void ATGBossBase::DestroyBreakableParts(FName PartTag)
+{
+	// 보스의 하위 StaticMeshCompoenet 전체 수집
+	TArray<UStaticMeshComponent*> StaticMeshComponents;
+	GetComponents<UStaticMeshComponent>(StaticMeshComponents);
+
+	for (UStaticMeshComponent* StaticMesh: StaticMeshComponents){
+		// 태그가 일치하는 컴포넌트만 필터링
+		if (!StaticMesh || !StaticMesh->ComponentHasTag(PartTag)) continue;
+
+		// 부모로부터 분리 및 충돌/네비/물리 설정
+		StaticMesh->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+		StaticMesh->SetCanEverAffectNavigation(false);
+		StaticMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+		StaticMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+		StaticMesh->SetSimulatePhysics(true);
+
+		// 폭발 적용(Force)
+		StaticMesh->AddRadialForce(
+			GetActorLocation(),
+			ExplodeRadius,
+			ExplodeForce,
+			RIF_Linear,
+			true
+		);
+
+		// 폭발 적용(Rotation)
+		StaticMesh->AddTorqueInDegrees(FVector(
+			FMath::FRandRange(-180.f,180.f),
+			FMath::FRandRange(-180.f,180.f),
+			FMath::FRandRange(-180.f,180.f)
+		));
+
+		FTimerHandle DestroyPartTimerHandle;
+		FTimerDelegate DestroyPartDelegate;
+		DestroyPartDelegate.BindUObject(
+			this,
+			&ATGBossBase::DestroyDetachedPartComponent,
+			StaticMesh,
+			PartTag
+		);
+
+		// 파괴된 파츠가 Level에서 사라질 때 호출됨
+		GetWorldTimerManager().SetTimer(
+			DestroyPartTimerHandle,
+			DestroyPartDelegate,
+			PartsLifeSpan,
+			false
+		);
+	}
+}
+
+void ATGBossBase::DestroyDetachedPartComponent(UStaticMeshComponent* StaticMesh, FName PartTag)
+{
+	if (StaticMesh && !StaticMesh->IsBeingDestroyed()){
+		StaticMesh->DestroyComponent();
+	}
+
+	// Tag 제거
+	ActiveBreakablePartTags.Remove(PartTag);
+	if (CurrentPhase){
+		CurrentPhase->RemoveBreakablePart(PartTag);
+	}
 }
