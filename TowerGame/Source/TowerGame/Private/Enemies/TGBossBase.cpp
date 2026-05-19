@@ -143,6 +143,8 @@ void ATGBossBase::ChangeToNextPhase()
 
 	// 기존 페이즈 종료
 	if (CurrentPhase){
+		DestroyDetachedPartComponent();
+
 		CurrentPhase->ExitPhase();
 		CurrentPhase = nullptr;
 	}
@@ -301,5 +303,22 @@ void ATGBossBase::DestroyDetachedPartComponent(UStaticMeshComponent* StaticMesh,
 	ActiveBreakablePartTags.Remove(PartTag);
 	if (CurrentPhase){
 		CurrentPhase->RemoveBreakablePart(PartTag);
+	}
+}
+
+void ATGBossBase::DestroyDetachedPartComponent()
+{
+	if (!CurrentPhase) return;
+
+	// Set -> Array
+	TArray<FName> PartTags = ActiveBreakablePartTags.Array();
+
+
+	for (const FName& PartTag : PartTags){
+		FTGBossBreakablePartData* PartData = CurrentPhase->FindBreakablePart(PartTag);
+		// PartData가 없거나 현재 체력이 없는 얘들은 이미 부위 파괴 처리 중인것으로 간주
+		if (!PartData || PartData->CurrentHP <= 0.f) continue;
+
+		DestroyBreakableParts(PartTag);
 	}
 }

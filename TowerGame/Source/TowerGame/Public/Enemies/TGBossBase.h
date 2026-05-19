@@ -81,6 +81,8 @@ protected:
 	// 부위 파괴
 	void DestroyBreakableParts(FName PartTag);
 	void DestroyDetachedPartComponent(UStaticMeshComponent* StaticMesh, FName PartTag);
+	// Phase 전환 시 해당 페이즈의 파괴되지 않은 부위 파괴
+	void DestroyDetachedPartComponent();
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss")
