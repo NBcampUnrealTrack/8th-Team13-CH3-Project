@@ -22,6 +22,21 @@ void UTGBossPhaseBase::EnterPhase()
 
 	if (!OwnerBoss) return;
 
+	TArray<FName> BreakablePartTags;
+
+	// 공격 가능 파츠 태그
+	for (FTGBossBreakablePartData& Part : BreakableParts){
+		if (Part.PartTag == NAME_None || Part.HPRatio <= 0.f){
+			Part.CurrentHP = 0.f;
+			continue;
+		}
+
+		Part.CurrentHP = Part.HPRatio * OwnerBoss->GetMaxHP();
+		BreakablePartTags.Add(Part.PartTag);
+	}
+
+	OwnerBoss->SetActiveBreakablePartTags(BreakablePartTags);
+
 	UWorld* World = OwnerBoss->GetWorld();
 	if (!World) return;
 
@@ -52,4 +67,24 @@ void UTGBossPhaseBase::ExitPhase()
 void UTGBossPhaseBase::ExecutePattern()
 {
 	UE_LOG(LogTemp, Log, TEXT("%s ExecutePattern"), *GetName());
+}
+
+FTGBossBreakablePartData* UTGBossPhaseBase::FindBreakablePart(FName PartTag)
+{
+	// BreakableParts에서 Tag 검색
+	for (FTGBossBreakablePartData& Part : BreakableParts){
+		if (Part.PartTag == PartTag){
+			return &Part;
+		}
+	}
+
+	return nullptr;
+}
+
+void UTGBossPhaseBase::RemoveBreakablePart(FName PartTag)
+{
+	BreakableParts.RemoveAll([PartTag](const FTGBossBreakablePartData& Part)
+	{
+		return Part.PartTag == PartTag;
+	});
 }

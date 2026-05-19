@@ -58,6 +58,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Boss|Target")
 	ATGPlayer* GetPlayer() const;
 
+	// 파괴 가능한 Part지정
+	void SetActiveBreakablePartTags(const TArray<FName>& InBreakablePartTags);
+
 public:
 	UPROPERTY(BlueprintAssignable, Category = "Boss|Stat")
 	FOnBossHpChanged OnBossHpChanged;
@@ -73,6 +76,13 @@ protected:
 
 	// Boss 본체 HP만 감소시킨다. 부위 파괴는 이후 단계에서 분리한다.
 	void ApplyBossDamage(float DamageAmount);
+	float ApplyBreakablePartDamage(UActorComponent* HitComponent, float DamageAmount);
+
+	// 부위 파괴
+	void DestroyBreakableParts(FName PartTag);
+	void DestroyDetachedPartComponent(UStaticMeshComponent* StaticMesh, FName PartTag);
+	// Phase 전환 시 해당 페이즈의 파괴되지 않은 부위 파괴
+	void DestroyDetachedPartComponent();
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss")
@@ -104,6 +114,19 @@ protected:
 	// Index N은 Phase N에서 Phase N+1로 넘어가는 HP 비율이다.
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Phase")
 	TArray<float> PhaseHPRatio;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Part")
+	TSet<FName> ActiveBreakablePartTags;
+
+	// 부위 파괴 관련 설정
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Part")
+	float PartsLifeSpan;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Part")
+	float ExplodeRadius;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Part")
+	float ExplodeForce;
 
 	// 싱글 플레이 기준 Boss가 공격 대상으로 사용할 Player.
 	UPROPERTY()

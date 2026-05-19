@@ -61,7 +61,7 @@ void UTGWeaponRepeater::Shoot(AActor* Instigator, class UMeshComponent* WeaponCo
 
 	// 발포 이펙트
 	SpawnAttachedEffects(status.Asset.FireParticle, WeaponComponent, MuzzlePos, status.Asset.FireParticleScale);
-	
+
 	FVector SpreadDir = FMath::VRandCone(Direction, FMath::DegreesToRadians(FMath::Lerp(0.0f,status.MaxBulletSpread,(CurSpreadTime/status.MaxSpreadTime))));	//탄퍼짐 각도
 	LineTrace(MuzzlePos, SpreadDir, Distance);
 	if (TraceHit.bBlockingHit)
@@ -76,7 +76,15 @@ void UTGWeaponRepeater::Shoot(AActor* Instigator, class UMeshComponent* WeaponCo
 		}
 		else if (ATGBossBase* Boss = Cast<ATGBossBase>(HitActor))
 		{
-			UGameplayStatics::ApplyDamage(Boss, status.Power, Instigator->GetInstigatorController(), Instigator, nullptr);
+			UGameplayStatics::ApplyPointDamage(
+				Boss,
+				status.Power,
+				SpreadDir,
+				TraceHit,
+				Instigator->GetInstigatorController(),
+				Instigator,
+				nullptr
+			);
 		}
 	}
 }

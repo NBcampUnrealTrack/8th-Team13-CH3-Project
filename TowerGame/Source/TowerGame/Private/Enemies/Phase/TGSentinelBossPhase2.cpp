@@ -16,6 +16,12 @@ UTGSentinelBossPhase2::UTGSentinelBossPhase2() :
 	AttackDamage(15.f),
 	PendingAttackLocation(FVector::ZeroVector)
 {
+	// Phase 파괴 가능 Part 설정
+	FTGBossBreakablePartData BodyPart;
+	BodyPart.PartTag = TEXT("Body");
+	BodyPart.HPRatio = 0.15f;
+	BodyPart.DestroyBonusDamageRatio = 0.05f;
+	BreakableParts.Add(BodyPart);
 }
 
 void UTGSentinelBossPhase2::EnterPhase()
