@@ -2,12 +2,13 @@
 
 
 #include "Weapons/TGWeaponShotgun.h"
+#include "Player/TGPlayer.h"
 #include "Enemies/TGBossBase.h"
 #include "Enemies/TGEnemyBase.h"
 #include "Engine/DamageEvents.h"
 #include "Kismet/GameplayStatics.h"
 
-void UTGWeaponShotgun::Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance, bool TriggerLock)
+void UTGWeaponShotgun::Shoot(ATGPlayer* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance, bool TriggerLock)
 {
 	if (!CanFire || TriggerLock)
 		return;
@@ -18,6 +19,7 @@ void UTGWeaponShotgun::Shoot(AActor* Instigator, class UMeshComponent* WeaponCom
 
 	// 발포 이펙트
 	SpawnAttachedEffects(status.Asset.FireParticle, WeaponComponent, MuzzlePos, status.Asset.FireParticleScale);
+	Instigator->PlayRecoil(status.ShotInterval);
 
 	for (int i = 0; i < status.Pellet; i++)
 	{

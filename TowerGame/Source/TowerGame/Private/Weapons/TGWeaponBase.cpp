@@ -2,12 +2,15 @@
 
 
 #include "Weapons/TGWeaponBase.h"
+#include "Player/TGPlayer.h"
 #include "Kismet/GameplayStatics.h"
 //#include "Kismet/KismetSystemLibrary.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Particles/ParticleSystem.h"
 #include "Components/DecalComponent.h"
+#include "Curves/CurveVector.h"
+#include "Components/TimelineComponent.h"
 
 void UTGWeaponBase::SpawnBeamEffect(FVector Start, FVector End)
 {

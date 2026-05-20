@@ -6,6 +6,8 @@
 #include "UObject/NoExportTypes.h"
 #include "TGWeaponBase.generated.h"
 
+struct FTimeline;
+
 #define AMMO_UNDEFINED -1	//한번도 쏘지않은 상태
 
 UENUM(BlueprintType)
@@ -42,6 +44,10 @@ public:
 		TObjectPtr<UMaterialInterface> BulletMarks = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VisualEffects")	// 착탄 데칼 스케일
 		float BulletMarksScale = 1.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VisualEffects")	// 반동 위치커브
+		TObjectPtr<class UCurveVector> RecoilCurveLoc = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VisualEffects")	// 반동 회전커브
+		TObjectPtr<class UCurveVector> RecoilCurveRot = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VisualEffects")
 	TObjectPtr<class UNiagaraSystem> BeamEffect = nullptr;
 };
@@ -69,18 +75,20 @@ class TOWERGAME_API UTGWeaponBase : public UObject
 protected:
 	int32 CurAmmo = AMMO_UNDEFINED;
 	bool CanFire = true;
+
+	FTimerHandle TimerFireDelay;
+
 protected:	// 라인트레이싱 정보
 	FHitResult TraceHit;
 	FCollisionQueryParams QueryParams;
 	TArray<AActor*> IgnoredActors;
 
-	FTimerHandle TimerFireDelay;
-
 	void SpawnBeamEffect(FVector Start, FVector End);
 
 public:
+
 	virtual const FTGWeaponAsset* GetAsset() { return nullptr; }
-	virtual void Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance, bool TriggerLock);
+	virtual void Shoot(class ATGPlayer* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance, bool TriggerLock);
 	void SpawnAttachedEffects(class UParticleSystem* Particle, USceneComponent* AttachToComponent, FVector Location, float ParticleScale, bool bSpawnDecal = false, float DecalLifeSpan = 5.f);
 	bool LineTrace(FVector MuzzlePos, FVector Direction, float Distance);
 	void HandleFireDelay();
