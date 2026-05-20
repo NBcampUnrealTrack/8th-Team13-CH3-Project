@@ -6,6 +6,7 @@
 #include "TGMountedTower.h"
 #include "Core/GameFlow/TGGameMode.h"
 #include "Enemies/TGBossPhaseBase.h"
+#include "Engine/DamageEvents.h"
 #include "Kismet/GameplayStatics.h"
 #include "Player/TGPlayer.h"
 
@@ -16,6 +17,9 @@ ATGBossBase::ATGBossBase() :
 	SpawnClearRadius(0),
 	CurrentPhase(nullptr),
 	CurrentPhaseIndex(INDEX_NONE),
+	PartsLifeSpan(3.f),
+	ExplodeRadius(100.f),
+	ExplodeForce(50.f),
 	TargetPlayer(nullptr)
 {
 	PrimaryActorTick.bCanEverTick = false;
@@ -55,6 +59,17 @@ float ATGBossBase::TakeDamage(float DamageAmount, const FDamageEvent& DamageEven
 	// Tower 데미지는 보정 후 적용
 	if (Cast<ATGMountedTower>(DamageCauser)){
 		AppliedDamage *= TowerDamageMultiplier;
+	}
+
+	if (DamageEvent.IsOfType(FPointDamageEvent::ClassID)){
+		const FPointDamageEvent& PointDamageEvent = static_cast<const FPointDamageEvent&>(DamageEvent);
+
+		const float PartDamageResult =
+			ApplyBreakablePartDamage(PointDamageEvent.HitInfo.GetComponent(), AppliedDamage);
+
+		if (PartDamageResult >= 0.f){
+			AppliedDamage = PartDamageResult;
+		}
 	}
 
 	// 데미지 적용 후 페이즈 전환 검사
@@ -106,6 +121,18 @@ ATGPlayer* ATGBossBase::GetPlayer() const
 	return TargetPlayer;
 }
 
+void ATGBossBase::SetActiveBreakablePartTags(const TArray<FName>& InBreakablePartTags)
+{
+	ActiveBreakablePartTags.Empty();
+
+	// Set에 Tag 추가 공격 가능 파츠 탐색용
+	for (const FName& PartTag : InBreakablePartTags){
+		if (PartTag != NAME_None){
+			ActiveBreakablePartTags.Add(PartTag);
+		}
+	}
+}
+
 void ATGBossBase::ChangeToNextPhase()
 {
 	const int32 NewPhaseIndex = CurrentPhaseIndex + 1;
@@ -116,6 +143,8 @@ void ATGBossBase::ChangeToNextPhase()
 
 	// 기존 페이즈 종료
 	if (CurrentPhase){
+		DestroyDetachedPartComponent();
+
 		CurrentPhase->ExitPhase();
 		CurrentPhase = nullptr;
 	}
@@ -130,6 +159,10 @@ void ATGBossBase::ChangeToNextPhase()
 	CurrentPhaseIndex = NewPhaseIndex;
 
 	CurrentPhase->EnterPhase();
+	RebuildPartDamageMaterialCache();
+
+	// 페이즈 변경 완료 시 UI에 반영
+	OnBossHpChanged.Broadcast(CurrentHP, MaxHP);
 }
 
 void ATGBossBase::CheckPhaseTransition()
@@ -165,5 +198,176 @@ void ATGBossBase::ApplyBossDamage(float DamageAmount)
 			GameMode->HandleGameClear();
 		}
 		Destroy();
+	}
+}
+
+float ATGBossBase::ApplyBreakablePartDamage(UActorComponent* HitComponent, float DamageAmount)
+{
+	if (!HitComponent || !CurrentPhase || DamageAmount <= 0.f) return -1.f;
+
+	for (const FName& ComponentTag : HitComponent->ComponentTags){
+		if (!ActiveBreakablePartTags.Contains(ComponentTag)) continue;
+
+		// 해당 페이즈에 해당 파츠가 존재하는지 확인
+		FTGBossBreakablePartData* PartData = CurrentPhase->FindBreakablePart(ComponentTag);
+		if (!PartData){
+			ActiveBreakablePartTags.Remove(ComponentTag);
+			return -1.f;
+		}
+
+		// Tag 존재 + 체력 0 -> 파괴 중인 파츠
+		if (PartData->CurrentHP <= 0){
+			return 0.f;
+		}
+
+		// 파츠에 체력에 데미지를 보정해서 적용
+		float AppliedPartDamage = FMath::Clamp(DamageAmount, 0.f, PartData->CurrentHP);
+		PartData->CurrentHP -= AppliedPartDamage;
+
+		const float MaxPartHp = PartData->HPRatio* MaxHP;
+		UpdateBreakablePartDamageVisual(ComponentTag, PartData->CurrentHP, MaxPartHp);
+
+		UE_LOG(LogTemp, Warning, TEXT("[BossPart] Damaged - Part: %s / Damage: %.1f / HP: %.1f"),
+					*ComponentTag.ToString(), AppliedPartDamage, PartData->CurrentHP);
+
+		// 파츠의 체력이 0일 경우 파괴 추가 데미지 적용
+		if (PartData->CurrentHP <= 0){
+			AppliedPartDamage += MaxHP * PartData->DestroyBonusDamageRatio;
+
+			UE_LOG(LogTemp, Warning, TEXT("[BossPart] Destroyed - Part: %s / Damage: %.1f"),
+				*ComponentTag.ToString(), AppliedPartDamage);
+
+			DestroyBreakableParts(ComponentTag);
+		}
+
+		return AppliedPartDamage;
+	}
+	return -1.f;
+}
+
+void ATGBossBase::DestroyBreakableParts(FName PartTag)
+{
+	// 보스의 하위 StaticMeshCompoenet 전체 수집
+	TArray<UStaticMeshComponent*> StaticMeshComponents;
+	GetComponents<UStaticMeshComponent>(StaticMeshComponents);
+
+	for (UStaticMeshComponent* StaticMesh: StaticMeshComponents){
+		// 태그가 일치하는 컴포넌트만 필터링
+		if (!StaticMesh || !StaticMesh->ComponentHasTag(PartTag)) continue;
+
+		// 부모로부터 분리 및 충돌/네비/물리 설정
+		StaticMesh->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+		StaticMesh->SetCanEverAffectNavigation(false);
+		StaticMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+		StaticMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+		StaticMesh->SetSimulatePhysics(true);
+
+		// 폭발 적용(Force)
+		StaticMesh->AddRadialForce(
+			GetActorLocation(),
+			ExplodeRadius,
+			ExplodeForce,
+			RIF_Linear,
+			true
+		);
+
+		// 폭발 적용(Rotation)
+		StaticMesh->AddTorqueInDegrees(FVector(
+			FMath::FRandRange(-180.f,180.f),
+			FMath::FRandRange(-180.f,180.f),
+			FMath::FRandRange(-180.f,180.f)
+		));
+
+		FTimerHandle DestroyPartTimerHandle;
+		FTimerDelegate DestroyPartDelegate;
+		DestroyPartDelegate.BindUObject(
+			this,
+			&ATGBossBase::DestroyDetachedPartComponent,
+			StaticMesh,
+			PartTag
+		);
+
+		// 파괴된 파츠가 Level에서 사라질 때 호출됨
+		GetWorldTimerManager().SetTimer(
+			DestroyPartTimerHandle,
+			DestroyPartDelegate,
+			PartsLifeSpan,
+			false
+		);
+	}
+}
+
+void ATGBossBase::DestroyDetachedPartComponent(UStaticMeshComponent* StaticMesh, FName PartTag)
+{
+	if (StaticMesh && !StaticMesh->IsBeingDestroyed()){
+		StaticMesh->DestroyComponent();
+	}
+
+	// Tag 제거
+	ActiveBreakablePartTags.Remove(PartTag);
+	if (CurrentPhase){
+		CurrentPhase->RemoveBreakablePart(PartTag);
+	}
+}
+
+void ATGBossBase::DestroyDetachedPartComponent()
+{
+	if (!CurrentPhase) return;
+
+	// Set -> Array
+	TArray<FName> PartTags = ActiveBreakablePartTags.Array();
+
+
+	for (const FName& PartTag : PartTags){
+		FTGBossBreakablePartData* PartData = CurrentPhase->FindBreakablePart(PartTag);
+		// PartData가 없거나 현재 체력이 없는 얘들은 이미 부위 파괴 처리 중인것으로 간주
+		if (!PartData || PartData->CurrentHP <= 0.f) continue;
+
+		DestroyBreakableParts(PartTag);
+	}
+}
+
+void ATGBossBase::RebuildPartDamageMaterialCache()
+{
+	PartDamageMaterialMap.Empty();
+
+	TArray<UStaticMeshComponent*> StaticMeshComponents;
+	GetComponents<UStaticMeshComponent>(StaticMeshComponents);
+
+	for (UStaticMeshComponent* StaticMesh : StaticMeshComponents){
+		if (!StaticMesh) continue;
+
+		for (const FName& PartTag : ActiveBreakablePartTags){
+			if (!StaticMesh->ComponentHasTag(PartTag)) continue;
+
+			//다이나믹 머티리얼 인스턴스 cast
+			UMaterialInstanceDynamic* DynamicMaterial =
+				Cast<UMaterialInstanceDynamic>(StaticMesh->GetMaterial(0));
+
+			if (!DynamicMaterial){
+				DynamicMaterial = StaticMesh->CreateAndSetMaterialInstanceDynamic(0);
+			}
+
+			// 다이나믹 머티리얼 캐시에 저장
+			if (DynamicMaterial){
+				PartDamageMaterialMap.FindOrAdd(PartTag).Add(DynamicMaterial);
+			}
+		}
+	}
+}
+
+void ATGBossBase::UpdateBreakablePartDamageVisual(FName PartTag, float CurrentPartHP, float MaxPartHP)
+{
+	// 체력 비율 적용
+	const float HPRatio = CurrentPartHP / MaxPartHP;
+	const float DamageAmount = 1.f - HPRatio;
+
+	TArray<UMaterialInstanceDynamic*>* PartMaterials = PartDamageMaterialMap.Find(PartTag);
+	if (!PartMaterials) return;
+
+	for (UMaterialInstanceDynamic* Material : *PartMaterials){
+		if (!Material) continue;
+
+		Material->SetScalarParameterValue(TEXT("PartDamageAmount"), static_cast<float>(DamageAmount * 2));
 	}
 }

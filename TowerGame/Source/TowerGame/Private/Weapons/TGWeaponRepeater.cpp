@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Weapons/TGWeaponRepeater.h"
@@ -78,7 +78,15 @@ void UTGWeaponRepeater::Shoot(ATGPlayer* Instigator, class UMeshComponent* Weapo
 		}
 		else if (ATGBossBase* Boss = Cast<ATGBossBase>(HitActor))
 		{
-			UGameplayStatics::ApplyDamage(Boss, status.Power, Instigator->GetInstigatorController(), Instigator, nullptr);
+			UGameplayStatics::ApplyPointDamage(
+				Boss,
+				status.Power,
+				SpreadDir,
+				TraceHit,
+				Instigator->GetInstigatorController(),
+				Instigator,
+				nullptr
+			);
 		}
 	}
 }
