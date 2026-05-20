@@ -7,7 +7,6 @@
 #include "Weapons/TGWeaponBase.h"
 #include "BaseTower/TGTurretType.h"
 #include "BaseTower/TGBuildWidget.h"
-#include "Components/TimelineComponent.h"
 #include "TGPlayer.generated.h"
 
 class ATGEnemyBase;
@@ -54,7 +53,6 @@ public:
 	// 델리게이트 이벤트
 	UPROPERTY(BlueprintAssignable, Category = "Enemy")
 	FOnFocusedEnemyChanged OnFocusedEnemyChanged;
-
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -100,6 +98,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Status")
 	void ApplySlowDebuff(float Duration);
 
+	// 총기반동 실행
+	void PlayRecoil(float ShotInterval);
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
 	TObjectPtr<class UCameraComponent> Camera;
@@ -112,15 +112,16 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Value")
 	TArray<FRotator> WeaponRotationOffset;	// 회전의 목표값
 	UPROPERTY(EditDefaultsOnly, Category = "Components")
-	TObjectPtr<UTimelineComponent> SwitchingWeaponTimelineComp;
+	TObjectPtr<class UTimelineComponent> RecoilTimelineComp;
+	UPROPERTY(EditDefaultsOnly, Category = "Components|Value")
+	TObjectPtr<UCurveVector> CurveVector_None;
+	UPROPERTY(EditDefaultsOnly, Category = "Components")
+	TObjectPtr<class UTimelineComponent> SwitchingWeaponTimelineComp;
 	UPROPERTY(EditDefaultsOnly, Category = "Components")
 	TObjectPtr<UCurveVector> SwitchingCurveLoc;
 	UPROPERTY(EditDefaultsOnly, Category = "Components")
 	TObjectPtr<UCurveVector> SwitchingCurveRot;
 
-	FOnTimelineVector SwitchingWeaponTL_CurLoc;
-	FOnTimelineVector SwitchingWeaponTL_CurRot;
-	FOnTimelineEvent SwitchingWeaponTL_Finish;
 	FTimerHandle SwitchWeaponDelayHandle;
 	bool bCanSwitch;
 
@@ -142,6 +143,8 @@ protected:
 	float ShootDistance;
 	bool bMoving;
 	FVector2D MoveDir;	// 현재 이동중인 방향, 정규화벡터
+	FVector CurrentRecoilLocScale;
+	FRotator CurrentRecoilRotScale;
 	bool bBuildMode;	// 빌드모드
 	ETGTurretType SelectedTurretType = ETGTurretType::None;	// 숫자키로 선택한 타워 타입
 
@@ -172,9 +175,13 @@ protected:
 	UFUNCTION()
 	void OnFinishSwitchingWeaponTimeline();
 	UFUNCTION()
-	void OnUpdateSwitchingWeaponTimeline_Location(FVector Loc);
+	void OnAddSwitchingWeaponOffset_Location(FVector Loc);
 	UFUNCTION()
-	void OnUpdateSwitchingWeaponTimeline_Rotation(FVector Rot);
+	void OnAddSwitchingWeaponOffset_Rotation(FVector Rot);
+	UFUNCTION()
+	void OnAddRecoilWeaponOffset_Location(FVector Loc);
+	UFUNCTION()
+	void OnAddRecoilWeaponOffset_Rotation(FVector Rot);
 
 	void OwnWeapon(ETGWeaponTriggerType TriggerType, FName RowName, bool equip);	// 무기를 소유한다. equip을 하면 장착까지 한다.
 	void EquipWeapon(FString Key);	// 무기를 장착한다.

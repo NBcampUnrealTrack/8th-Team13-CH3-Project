@@ -2,6 +2,7 @@
 
 
 #include "Weapons/TGWeaponSingleShot.h"
+#include "Player/TGPlayer.h"
 #include "Enemies/TGBossBase.h"
 #include "Enemies/TGEnemyBase.h"
 #include "Engine/DamageEvents.h"
@@ -38,7 +39,7 @@ UWorld* UTGWeaponSingleShot::GetWorld() const
 	return GetOuter()->GetWorld();
 }
 
-void UTGWeaponSingleShot::Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance, bool TriggerLock)
+void UTGWeaponSingleShot::Shoot(ATGPlayer* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance, bool TriggerLock)
 {
 	IsFire = true;
 	if (!CanFire || IsPrevFire || TriggerLock)
@@ -50,6 +51,7 @@ void UTGWeaponSingleShot::Shoot(AActor* Instigator, class UMeshComponent* Weapon
 
 	// 발포 이펙트
 	SpawnAttachedEffects(status.Asset.FireParticle, WeaponComponent, MuzzlePos, status.Asset.FireParticleScale);
+	Instigator->PlayRecoil(status.ShotCoolTime);
 
 	LineTrace(MuzzlePos, Direction, Distance);
 	if (TraceHit.bBlockingHit)

@@ -18,6 +18,7 @@
 #include "Weapons/TGWeaponSingleShot.h"
 #include "Weapons/TGWeaponShotgun.h"
 #include "Weapons/TGWeaponRepeater.h"
+#include "Components/TimelineComponent.h"
 #include "Curves/CurveVector.h"
 #include "BaseTower/TGBaseTower.h"
 
@@ -40,9 +41,12 @@ ATGPlayer::ATGPlayer() : MaxHP(100), SlowRate(0.5f), DefaultWalkSpeed(0)
 	Weapon_Static->SetRelativeLocation(InitialLocation);
 
 	SwitchingWeaponTimelineComp = CreateDefaultSubobject<UTimelineComponent>("SwitchingWeapon_TLC");
-	SwitchingWeaponTL_Finish.BindUFunction(this, TEXT("OnFinishSwitchingWeaponTimeline"));
-	SwitchingWeaponTL_CurLoc.BindUFunction(this, TEXT("OnUpdateSwitchingWeaponTimeline_Location"));
-	SwitchingWeaponTL_CurRot.BindUFunction(this, TEXT("OnUpdateSwitchingWeaponTimeline_Rotation"));
+	RecoilTimelineComp = CreateDefaultSubobject<UTimelineComponent>("Recoil_TLC");
+	RecoilTimelineComp->SetPropertySetObject(this);
+
+	static ConstructorHelpers::FObjectFinder<UCurveVector> CurveNoneAsset(TEXT("/Game/Weapons/Curves/CV_None.CV_None"));
+	if (CurveNoneAsset.Succeeded())
+		CurveVector_None = CurveNoneAsset.Object;
 
 	EvadeCount = 2;
 	EvadeCooldown = 3.0f;
@@ -70,6 +74,29 @@ void ATGPlayer::BeginPlay()
 	if (GetWorld()->GetFirstPlayerController())
 		EnableInput(GetWorld()->GetFirstPlayerController());
 
+	// 반동 타임라인 초기화
+	CurrentRecoilLocScale = FVector::ZeroVector;
+	CurrentRecoilRotScale = FRotator::ZeroRotator;
+	FOnTimelineVector RecoilTL_CurLoc;
+	FOnTimelineVector RecoilTL_CurRot;
+
+	RecoilTL_CurLoc.BindUFunction(this, TEXT("OnAddRecoilWeaponOffset_Location"));
+	RecoilTL_CurRot.BindUFunction(this, TEXT("OnAddRecoilWeaponOffset_Rotation"));
+
+
+	RecoilTimelineComp->AddInterpVector(CurveVector_None, RecoilTL_CurLoc, NAME_None, FName("LocationCurve"));
+	RecoilTimelineComp->AddInterpVector(CurveVector_None, RecoilTL_CurRot, NAME_None, FName("RotationCurve"));
+	RecoilTimelineComp->SetLooping(false);
+
+	// 무기 교체 타임라인 초기화
+	FOnTimelineVector SwitchingWeaponTL_CurLoc;
+	FOnTimelineVector SwitchingWeaponTL_CurRot;
+	FOnTimelineEvent SwitchingWeaponTL_Finish;
+	SwitchingWeaponTL_Finish.BindUFunction(this, TEXT("OnFinishSwitchingWeaponTimeline"));
+	SwitchingWeaponTL_CurLoc.BindUFunction(this, TEXT("OnAddSwitchingWeaponOffset_Location"));
+	SwitchingWeaponTL_CurRot.BindUFunction(this, TEXT("OnAddSwitchingWeaponOffset_Rotation"));
+
+	// 무기 소유
 	OwnWeapon(ETGWeaponTriggerType::REPEATER, TEXT("AssaultRifle"), true);
 	OwnWeapon(ETGWeaponTriggerType::SHOTGUN, TEXT("Shotgun"), false);
 	OwnWeapon(ETGWeaponTriggerType::SINGLE_SHOT, TEXT("SniperRifle"), false);
@@ -89,6 +116,9 @@ void ATGPlayer::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		GetWorld()->GetTimerManager().ClearTimer(SwitchWeaponDelayHandle);
 	if (GetWorld() && GetWorld()->GetTimerManager().IsTimerActive(SlowDebuffTimerHandle))
 		GetWorld()->GetTimerManager().ClearTimer(SlowDebuffTimerHandle);
+
+	for (TPair<FString, UTGWeaponBase*> w : OwnedWeapons)
+		w.Value->MarkAsGarbage();
 
 	Super::EndPlay(EndPlayReason);
 }
@@ -453,14 +483,26 @@ void ATGPlayer::OnFinishSwitchingWeaponTimeline()
 	EquipWeapon(SwitchingWeaponKey);
 }
 
-void ATGPlayer::OnUpdateSwitchingWeaponTimeline_Location(FVector Loc)
+void ATGPlayer::OnAddSwitchingWeaponOffset_Location(FVector Loc)
 {
 	WeaponLocationOffset.Add(Loc);
 }
 
-void ATGPlayer::OnUpdateSwitchingWeaponTimeline_Rotation(FVector Rot)
+void ATGPlayer::OnAddSwitchingWeaponOffset_Rotation(FVector Rot)
 {
-	WeaponRotationOffset.Add(FRotator(Rot.Y, Rot.Z, Rot.X));
+	WeaponRotationOffset.Add(FRotator(Rot.X, Rot.Y, Rot.Z));
+}
+
+void ATGPlayer::OnAddRecoilWeaponOffset_Location(FVector Loc)
+{
+	WeaponLocationOffset.Add(Loc * CurrentRecoilLocScale);
+}
+
+void ATGPlayer::OnAddRecoilWeaponOffset_Rotation(FVector Rot)
+{
+	WeaponRotationOffset.Add(FRotator(Rot.X * CurrentRecoilRotScale.Pitch, Rot.Y * CurrentRecoilRotScale.Yaw, Rot.Z * CurrentRecoilRotScale.Roll));
+	AddControllerPitchInput(-Rot.X * CurrentRecoilRotScale.Pitch);
+	AddControllerYawInput(Rot.Y * CurrentRecoilRotScale.Yaw);
 }
 
 void ATGPlayer::OwnWeapon(ETGWeaponTriggerType TriggerType, FName RowName, bool equip)
@@ -546,11 +588,28 @@ void ATGPlayer::EquipWeapon(FString Key)
 		Weapon_Skeletal->SetSkeletalMeshAsset(nullptr);
 		Weapon_Static->SetStaticMesh(AssetInfo.StaticMesh);
 	}
+
+	FOnTimelineVector RecoilTL_CurLoc;
+	FOnTimelineVector RecoilTL_CurRot;
+
+	RecoilTL_CurLoc.BindUFunction(this, TEXT("OnAddWeaponOffset_Location"));
+	RecoilTL_CurRot.BindUFunction(this, TEXT("OnAddWeaponOffset_Rotation"));
+
+	RecoilTimelineComp->SetVectorCurve(AssetInfo.RecoilCurveLoc.IsNull() ? CurveVector_None : AssetInfo.RecoilCurveLoc, FName("LocationCurve"));
+	RecoilTimelineComp->SetVectorCurve(AssetInfo.RecoilCurveLoc.IsNull() ? CurveVector_None : AssetInfo.RecoilCurveRot, FName("RotationCurve"));
 }
 
 FString ATGPlayer::GetWeaponKey(ETGWeaponTriggerType TriggerType, FName WeaponName)
 {
 	return FString::Printf(TEXT("%d_%s"), TriggerType, *WeaponName.ToString());
+}
+
+void ATGPlayer::PlayRecoil(float ShotInterval)
+{
+	CurrentRecoilLocScale = FVector(FMath::RandRange(0.75f, 1.0f), FMath::RandRange(-1.0f, 1.0f), FMath::RandRange(0.75f, 1.0f));
+	CurrentRecoilRotScale = FRotator(FMath::RandRange(0.75f, 1.0f), FMath::RandRange(-1.0f, 1.0f), 0.f);
+	RecoilTimelineComp->SetPlayRate(1.0f / ShotInterval);
+	RecoilTimelineComp->PlayFromStart();
 }
 
 void ATGPlayer::ClearSlowDebuff()

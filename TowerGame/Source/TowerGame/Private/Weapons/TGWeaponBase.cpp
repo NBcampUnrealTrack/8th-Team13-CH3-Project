@@ -2,12 +2,15 @@
 
 
 #include "Weapons/TGWeaponBase.h"
+#include "Player/TGPlayer.h"
 #include "Kismet/GameplayStatics.h"
 //#include "Kismet/KismetSystemLibrary.h"
 #include "Particles/ParticleSystem.h"
 #include "Components/DecalComponent.h"
+#include "Curves/CurveVector.h"
+#include "Components/TimelineComponent.h"
 
-void UTGWeaponBase::Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance, bool TriggerLock)
+void UTGWeaponBase::Shoot(ATGPlayer* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance, bool TriggerLock)
 {
 	QueryParams.bTraceComplex = true;
 	QueryParams.ClearIgnoredSourceObjects();

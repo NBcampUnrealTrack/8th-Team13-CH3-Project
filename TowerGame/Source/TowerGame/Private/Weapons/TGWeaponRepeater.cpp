@@ -2,6 +2,7 @@
 
 
 #include "Weapons/TGWeaponRepeater.h"
+#include "Player/TGPlayer.h"
 #include "Enemies/TGBossBase.h"
 #include "Enemies/TGEnemyBase.h"
 #include "Engine/DamageEvents.h"
@@ -45,7 +46,7 @@ UWorld* UTGWeaponRepeater::GetWorld() const
 	return GetOuter()->GetWorld();
 }
 
-void UTGWeaponRepeater::Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance, bool TriggerLock)
+void UTGWeaponRepeater::Shoot(ATGPlayer* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance, bool TriggerLock)
 {
 	IsFire = true;
 	CurSpreadTime += GetWorld()->GetDeltaSeconds();
@@ -61,6 +62,7 @@ void UTGWeaponRepeater::Shoot(AActor* Instigator, class UMeshComponent* WeaponCo
 
 	// 발포 이펙트
 	SpawnAttachedEffects(status.Asset.FireParticle, WeaponComponent, MuzzlePos, status.Asset.FireParticleScale);
+	Instigator->PlayRecoil(status.ShotInterval);
 	
 	FVector SpreadDir = FMath::VRandCone(Direction, FMath::DegreesToRadians(FMath::Lerp(0.0f,status.MaxBulletSpread,(CurSpreadTime/status.MaxSpreadTime))));	//탄퍼짐 각도
 	LineTrace(MuzzlePos, SpreadDir, Distance);
