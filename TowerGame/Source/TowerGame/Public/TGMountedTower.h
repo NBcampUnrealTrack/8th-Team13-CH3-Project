@@ -29,6 +29,12 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Tower|Base")
 	UStaticMeshComponent* BodyMesh;
 
+	//	범위 표시를 위한 구체
+	UPROPERTY(EditAnywhere, Category="Tower|Base")
+	UStaticMeshComponent* RangeSphere;
+
+	void SetRangeSphereScale(float NewScale);
+
 	//	목표를 가지는 타워라면 해당 목표를 저장할 변수입니다.
 	//	무기 메쉬가 목표를 따라가도록 합니다.
 	UPROPERTY()

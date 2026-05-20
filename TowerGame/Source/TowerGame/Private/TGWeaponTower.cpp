@@ -18,6 +18,7 @@ void ATGWeaponTower::BeginPlay()
 	Super::BeginPlay();
 	//	공격 로직 변경을 위해 주석처리
 	//StartAttack();
+	SetRangeSphereScale(AttackRange);
 }
 
 void ATGWeaponTower::Tick(float DeltaTime)

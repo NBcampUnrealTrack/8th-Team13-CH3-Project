@@ -22,6 +22,8 @@ void ATGBuffTower::BeginPlay()
 
 	// HealInterval(초)마다 ApplyRangeHeal 무한 반복
 	StartHeal();
+
+	SetRangeSphereScale(BuffRange);
 }
 
 void ATGBuffTower::Tick(float DeltaTime)

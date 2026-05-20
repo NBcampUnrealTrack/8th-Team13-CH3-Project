@@ -35,6 +35,8 @@ void ATGDebuffTower::Tick(float DeltaTime)
 
 	// 범위 내 적 슬로우 적용
 	ApplyRangeDebuff();
+
+	SetRangeSphereScale(DebuffRange);
 }
 
 void ATGDebuffTower::ApplyRangeDebuff()

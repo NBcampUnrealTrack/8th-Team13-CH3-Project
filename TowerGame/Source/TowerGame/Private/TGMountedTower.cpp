@@ -17,6 +17,12 @@ ATGMountedTower::ATGMountedTower()
 	SetRootComponent(BodyMesh);
 	InteractionCollision->SetupAttachment(BodyMesh);
 
+	//	범위 표시 메쉬
+	RangeSphere = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RangeSphere"));
+	RangeSphere->SetupAttachment(BodyMesh);
+	RangeSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	RangeSphere->SetCanEverAffectNavigation(false);
+
 	// 무기 메시
 	WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponMesh"));
 	WeaponMesh->SetupAttachment(BodyMesh);
@@ -45,7 +51,7 @@ void ATGMountedTower::BeginPlay()
 
 	SetInteractionEnabled(true);
 	ATGNavigationManager::Get(this)->NotifyBuildingPlaced();
-	
+
 	if (TowerWidgetClass)
 	{
 		FloatingWidgetComp->SetWidgetClass(TowerWidgetClass);
@@ -55,6 +61,16 @@ void ATGMountedTower::BeginPlay()
 			TowerWidget->SetOwnerTower(this);
 		}
 	}
+}
+
+void ATGMountedTower::SetRangeSphereScale(float NewScale)
+{
+	// 기본 스피어 메시의 반지름은 50 유닛이므로, 원하는 범위 반지름에 맞게 나눠서 스케일 적용
+	// 부모 컴포넌트의 월드 스케일을 추가로 나눠 상속된 스케일을 상쇄
+	const float MeshRadius = 50.f;
+	const float ParentScale = RangeSphere->GetAttachParent()->GetComponentScale().X;
+	const float Scale = (NewScale / MeshRadius) / ParentScale;
+	RangeSphere->SetRelativeScale3D(FVector(Scale));
 }
 
 void ATGMountedTower::Tick(float DeltaTime)
