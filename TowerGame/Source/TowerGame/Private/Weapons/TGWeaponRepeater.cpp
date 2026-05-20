@@ -64,6 +64,10 @@ void UTGWeaponRepeater::Shoot(AActor* Instigator, class UMeshComponent* WeaponCo
 
 	FVector SpreadDir = FMath::VRandCone(Direction, FMath::DegreesToRadians(FMath::Lerp(0.0f,status.MaxBulletSpread,(CurSpreadTime/status.MaxSpreadTime))));	//탄퍼짐 각도
 	LineTrace(MuzzlePos, SpreadDir, Distance);
+	//	레이저 이펙트
+	FVector BeamEnd = TraceHit.bBlockingHit ? TraceHit.Location : MuzzlePos + Direction * Distance;
+	SpawnBeamEffect(MuzzlePos, BeamEnd);
+
 	if (TraceHit.bBlockingHit)
 	{
 		// 착탄 이펙트

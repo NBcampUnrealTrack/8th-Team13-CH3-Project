@@ -4,8 +4,24 @@
 #include "Weapons/TGWeaponBase.h"
 #include "Kismet/GameplayStatics.h"
 //#include "Kismet/KismetSystemLibrary.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "Particles/ParticleSystem.h"
 #include "Components/DecalComponent.h"
+
+void UTGWeaponBase::SpawnBeamEffect(FVector Start, FVector End)
+{
+	UNiagaraSystem* Beam = GetAsset()->BeamEffect;
+	if (Beam == nullptr) return;
+
+	UNiagaraComponent* NiagaraComponent = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+		GetWorld(), Beam, FVector::ZeroVector);
+	if (NiagaraComponent)
+	{
+		NiagaraComponent->SetVectorParameter(FName("BeamStart"), Start);
+		NiagaraComponent->SetVectorParameter(FName("BeamEnd"), End);
+	}
+}
 
 void UTGWeaponBase::Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance, bool TriggerLock)
 {

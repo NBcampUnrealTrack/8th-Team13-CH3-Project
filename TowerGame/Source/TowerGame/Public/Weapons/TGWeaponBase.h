@@ -42,6 +42,8 @@ public:
 		TObjectPtr<UMaterialInterface> BulletMarks = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VisualEffects")	// 착탄 데칼 스케일
 		float BulletMarksScale = 1.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VisualEffects")
+	TObjectPtr<class UNiagaraSystem> BeamEffect = nullptr;
 };
 
 USTRUCT(BlueprintType)
@@ -73,6 +75,9 @@ protected:	// 라인트레이싱 정보
 	TArray<AActor*> IgnoredActors;
 
 	FTimerHandle TimerFireDelay;
+
+	void SpawnBeamEffect(FVector Start, FVector End);
+
 public:
 	virtual const FTGWeaponAsset* GetAsset() { return nullptr; }
 	virtual void Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance, bool TriggerLock);

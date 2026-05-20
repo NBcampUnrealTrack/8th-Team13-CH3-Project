@@ -52,6 +52,10 @@ void UTGWeaponSingleShot::Shoot(AActor* Instigator, class UMeshComponent* Weapon
 	SpawnAttachedEffects(status.Asset.FireParticle, WeaponComponent, MuzzlePos, status.Asset.FireParticleScale);
 
 	LineTrace(MuzzlePos, Direction, Distance);
+	//	레이저 이펙트
+	FVector BeamEnd = TraceHit.bBlockingHit ? TraceHit.Location : MuzzlePos + Direction * Distance;
+	SpawnBeamEffect(MuzzlePos, BeamEnd);
+
 	if (TraceHit.bBlockingHit)
 	{
 		// 착탄 이펙트

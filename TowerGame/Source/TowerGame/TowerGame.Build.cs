@@ -19,7 +19,8 @@ public class TowerGame : ModuleRules
 			"NavigationSystem",
 			"UMG",
 			"Slate",
-			"SlateCore"
+			"SlateCore",
+			"Niagara"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });

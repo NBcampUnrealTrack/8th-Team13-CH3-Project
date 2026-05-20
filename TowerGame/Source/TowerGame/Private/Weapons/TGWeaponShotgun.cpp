@@ -23,6 +23,10 @@ void UTGWeaponShotgun::Shoot(AActor* Instigator, class UMeshComponent* WeaponCom
 	{
 		FVector SpreadDir = FMath::VRandCone(Direction, FMath::DegreesToRadians(status.BulletSpread));	//탄퍼짐 각도
 		LineTrace(MuzzlePos, SpreadDir, Distance);
+		//	레이저 이펙트
+		FVector BeamEnd = TraceHit.bBlockingHit ? TraceHit.Location : MuzzlePos + Direction * Distance;
+		SpawnBeamEffect(MuzzlePos, BeamEnd);
+
 		if (TraceHit.bBlockingHit)
 		{
 			// 착탄 이펙트
