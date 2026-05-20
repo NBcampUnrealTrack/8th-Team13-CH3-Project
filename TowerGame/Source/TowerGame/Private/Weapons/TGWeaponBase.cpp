@@ -63,6 +63,23 @@ void UTGWeaponBase::SpawnAttachedEffects(UParticleSystem* Particle, USceneCompon
 	}
 }
 
+void UTGWeaponBase::SpawnAttachedNiagaraEffects(UNiagaraSystem* NiagaraSystem, USceneComponent* AttachToComponent, FVector Location, float Scale)
+{
+	if (!NiagaraSystem) return;
+
+	UNiagaraComponent* NiagaraComp = UNiagaraFunctionLibrary::SpawnSystemAttached(
+		NiagaraSystem,
+		AttachToComponent,
+		NAME_None,
+		Location,
+		AttachToComponent->GetComponentRotation(),
+		EAttachLocation::KeepWorldPosition,
+		true
+	);
+	if (NiagaraComp)
+		NiagaraComp->SetWorldScale3D(FVector(Scale));
+}
+
 void UTGWeaponBase::HandleFireDelay()
 {
 	GetWorld()->GetTimerManager().ClearTimer(TimerFireDelay);

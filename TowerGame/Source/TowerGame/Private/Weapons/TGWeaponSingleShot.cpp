@@ -50,7 +50,7 @@ void UTGWeaponSingleShot::Shoot(ATGPlayer* Instigator, class UMeshComponent* Wea
 	Super::Shoot(Instigator, WeaponComponent, MuzzlePos, Direction, Distance, TriggerLock);
 
 	// 발포 이펙트
-	SpawnAttachedEffects(status.Asset.FireParticle, WeaponComponent, MuzzlePos, status.Asset.FireParticleScale);
+	SpawnAttachedNiagaraEffects(status.Asset.FireParticle, WeaponComponent, MuzzlePos, status.Asset.FireParticleScale);
 	Instigator->PlayRecoil(status.ShotCoolTime);
 
 	LineTrace(MuzzlePos, Direction, Distance);

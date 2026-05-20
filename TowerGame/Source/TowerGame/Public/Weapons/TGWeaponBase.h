@@ -33,7 +33,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Offset")	// 위치 오프셋 (오차수정)
 		FVector LocationOffset = FVector::ZeroVector;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VisualEffects")	// 발포 이펙트
-		TObjectPtr<class UParticleSystem> FireParticle = nullptr;
+		TObjectPtr<class UNiagaraSystem> FireParticle = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VisualEffects")	// 발포 이펙트 스케일
 		float FireParticleScale = 1.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VisualEffects")	// 착탄 이펙트
@@ -90,6 +90,7 @@ public:
 	virtual const FTGWeaponAsset* GetAsset() { return nullptr; }
 	virtual void Shoot(class ATGPlayer* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance, bool TriggerLock);
 	void SpawnAttachedEffects(class UParticleSystem* Particle, USceneComponent* AttachToComponent, FVector Location, float ParticleScale, bool bSpawnDecal = false, float DecalLifeSpan = 5.f);
+	void SpawnAttachedNiagaraEffects(class UNiagaraSystem* NiagaraSystem, USceneComponent* AttachToComponent, FVector Location, float Scale);
 	bool LineTrace(FVector MuzzlePos, FVector Direction, float Distance);
 	void HandleFireDelay();
 };

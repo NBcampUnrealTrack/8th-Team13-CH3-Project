@@ -18,7 +18,7 @@ void UTGWeaponShotgun::Shoot(ATGPlayer* Instigator, class UMeshComponent* Weapon
 	Super::Shoot(Instigator, WeaponComponent, MuzzlePos, Direction, Distance, TriggerLock);
 
 	// 발포 이펙트
-	SpawnAttachedEffects(status.Asset.FireParticle, WeaponComponent, MuzzlePos, status.Asset.FireParticleScale);
+	SpawnAttachedNiagaraEffects(status.Asset.FireParticle, WeaponComponent, MuzzlePos, status.Asset.FireParticleScale);
 	Instigator->PlayRecoil(status.ShotInterval);
 
 	for (int i = 0; i < status.Pellet; i++)
