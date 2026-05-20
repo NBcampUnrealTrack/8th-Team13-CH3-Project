@@ -26,7 +26,8 @@ void UTGWeaponBase::SpawnBeamEffect(FVector Start, FVector End)
 	}
 }
 
-void UTGWeaponBase::Shoot(AActor* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance, bool TriggerLock)
+void UTGWeaponBase::Shoot(class ATGPlayer* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos,
+	FVector Direction, float Distance, bool TriggerLock)
 {
 	QueryParams.bTraceComplex = true;
 	QueryParams.ClearIgnoredSourceObjects();
