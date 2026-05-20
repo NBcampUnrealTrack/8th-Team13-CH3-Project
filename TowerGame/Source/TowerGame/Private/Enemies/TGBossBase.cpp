@@ -160,6 +160,9 @@ void ATGBossBase::ChangeToNextPhase()
 
 	CurrentPhase->EnterPhase();
 	RebuildPartDamageMaterialCache();
+
+	// 페이즈 변경 완료 시 UI에 반영
+	OnBossHpChanged.Broadcast(CurrentHP, MaxHP);
 }
 
 void ATGBossBase::CheckPhaseTransition()
@@ -365,6 +368,6 @@ void ATGBossBase::UpdateBreakablePartDamageVisual(FName PartTag, float CurrentPa
 	for (UMaterialInstanceDynamic* Material : *PartMaterials){
 		if (!Material) continue;
 
-		Material->SetScalarParameterValue(TEXT("PartDamageAmount"), static_cast<float>(DamageAmount/2));
+		Material->SetScalarParameterValue(TEXT("PartDamageAmount"), static_cast<float>(DamageAmount * 2));
 	}
 }
