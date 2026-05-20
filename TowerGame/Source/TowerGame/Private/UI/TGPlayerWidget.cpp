@@ -305,17 +305,28 @@ void UTGPlayerWidget::HandlePauseClicked()
 
 void UTGPlayerWidget::SetGridBase(ATGGridBase* InGridBase)
 {
-	if (!IsValid(InGridBase))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayerWidget: GridBase is invalid"));
-		return;
-	}
-
 	if (!MiniMapWidget)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("PlayerWidget: MiniMapWidget is null"));
 		return;
 	}
 
+	if (!IsValid(InGridBase))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PlayerWidget: GridBase is invalid"));
+		return;
+	}
+
 	MiniMapWidget->SetGridBase(InGridBase);
+
+	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
+
+	if (PlayerPawn)
+	{
+		MiniMapWidget->SetPlayerActor(PlayerPawn);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PlayerWidget: PlayerPawn is null"));
+	}
 }

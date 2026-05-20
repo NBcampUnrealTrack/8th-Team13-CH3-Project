@@ -7,6 +7,7 @@
 class UCanvasPanel;
 class UTextBlock;
 class ATGGridBase;
+class AActor;
 
 UCLASS()
 class TOWERGAME_API UTGMiniMapWidget : public UUserWidget
@@ -16,31 +17,47 @@ class TOWERGAME_API UTGMiniMapWidget : public UUserWidget
 public:
 	void SetGridBase(ATGGridBase* InGridBase);
 
+	// 플레이어 액터 등록
+	void SetPlayerActor(AActor* InPlayerActor);
+
 protected:
+	virtual void NativeDestruct() override;
+
 	UPROPERTY(meta = (BindWidget))
 	UCanvasPanel* TileLayer;
 
 	UPROPERTY(meta = (BindWidget))
 	UCanvasPanel* MarkerLayer;
 
+private:
 	UPROPERTY()
 	ATGGridBase* CachedGridBase = nullptr;
+
+	UPROPERTY()
+	AActor* CachedPlayerActor = nullptr;
+
+	UPROPERTY()
+	UTextBlock* PlayerMarker = nullptr;
+
+	FTimerHandle PlayerMarkerUpdateTimerHandle;
+
+	UPROPERTY(EditAnywhere, Category = "Minimap")
+	FVector2D MinimapSize = FVector2D(280.0f, 280.0f);
 
 private:
 	void BuildDebugMinimap();
 
 	void AddGridPointMarker(
-		int32 GridX,
-		int32 GridY,
+		int32 InGridX,
+		int32 InGridY,
 		const FLinearColor& MarkerColor,
 		const FString& MarkerName,
 		float TileWidth,
 		float TileHeight
 	);
 
-	UPROPERTY(EditAnywhere, Category = "Minimap")
-	FVector2D MinimapSize = FVector2D(280.0f, 280.0f);
+	void CreatePlayerMarker();
+	void UpdatePlayerMarkerPosition();
 
-	UPROPERTY(EditAnywhere, Category = "Minimap")
-	FVector2D PointMarkerSize = FVector2D(24.0f, 24.0f);
+	FVector2D WorldLocationToMinimapPosition(const FVector& WorldLocation) const;
 };
