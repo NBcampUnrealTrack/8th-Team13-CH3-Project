@@ -236,6 +236,16 @@ void UTGPlayerWidget::HideFocusedEnemyInfo()
 	}
 }
 
+void UTGPlayerWidget::HandleGridBuildingPlaced(FIntPoint GridPoint)
+{
+	if (!MiniMapWidget)
+	{
+		return;
+	}
+
+	MiniMapWidget->MarkWallAtGrid(GridPoint);
+}
+
 void UTGPlayerWidget::BindFocusedEnemy(ATGEnemyBase* NewEnemy)
 {
 	UnbindFocusedEnemy();
@@ -317,7 +327,14 @@ void UTGPlayerWidget::SetGridBase(ATGGridBase* InGridBase)
 		return;
 	}
 
+	GridBase = InGridBase;
+
 	MiniMapWidget->SetGridBase(InGridBase);
+
+	GridBase->OnGridBuildingPlaced.AddUniqueDynamic(
+		this,
+		&UTGPlayerWidget::HandleGridBuildingPlaced
+	);
 
 	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
 
