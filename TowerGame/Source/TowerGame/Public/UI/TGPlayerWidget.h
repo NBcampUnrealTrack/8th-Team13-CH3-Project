@@ -10,9 +10,12 @@ class ATGBossBase;
 class ATGEnemyBase;
 class ATGWaveManager;
 class ATGGameMode;
+class UTGWeaponBase;
 class ATGNavigationManager;
+class UHorizontalBox;
 class UProgressBar;
 class UButton;
+class UImage;
 class UTextBlock;
 //미니맵 위젯 수정사항
 class UTGMiniMapWidget;
@@ -30,7 +33,6 @@ protected:
 	void HandlePauseClicked();
 
 	virtual void NativeConstruct() override;
-	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 	virtual void NativeDestruct() override;
 
 	UPROPERTY()
@@ -87,9 +89,17 @@ private:
 	TObjectPtr<UProgressBar> PB_BossHP;
 
 	UPROPERTY(meta = (BindWidget))
-	UProgressBar* HP_Bar;
+	TObjectPtr<UProgressBar> HP_Bar;
 	UPROPERTY(meta = (BindWidget))
-	UProgressBar* CoreHP_Bar;
+	TObjectPtr<UProgressBar> CoreHP_Bar;
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UHorizontalBox> Evade_BarGroup;
+	UPROPERTY()
+	TArray<TObjectPtr<UProgressBar>> Evade_Bars;
+
+	//Image
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UImage> WeaponImage;
 
 private:
 	// Focused Enemy 변경 시 호출
@@ -99,6 +109,18 @@ private:
 	// Enemy 체력 UI에 반영
 	UFUNCTION()
 	void UpdateFocusedEnemyHPBar(float CurrentHP, float MaxHP);
+
+	// Player 체력 UI에 반영
+	UFUNCTION()
+	void UpdatePlayerHPBar(float CurrentHP, float MaxHP);
+
+	// Player 회피게이지 UI에 반영
+	UFUNCTION()
+	void UpdateEvadeBar(int32 CurrentEvadeCount, float CooldownRate);
+
+	// Player 무기 교체 시 UI에 반영
+	UFUNCTION()
+	void UpdateWeaponImage(UTGWeaponBase* Weapon);
 
 	// Enemy 제거 시 호출
 	UFUNCTION()

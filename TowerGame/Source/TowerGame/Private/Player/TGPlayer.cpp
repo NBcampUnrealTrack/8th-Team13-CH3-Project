@@ -69,6 +69,7 @@ void ATGPlayer::BeginPlay()
 	bCanSwitch = true;
 	CurrentEvadeCount = EvadeCount;
 	CurrentEvadeCooldown = 0.0f;
+	OnEvadeChanged.Broadcast(CurrentEvadeCount, CurrentEvadeCooldown / EvadeCooldown);
 	DefaultWalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
 
 	if (GetWorld()->GetFirstPlayerController())
@@ -100,6 +101,7 @@ void ATGPlayer::BeginPlay()
 	OwnWeapon(ETGWeaponTriggerType::REPEATER, TEXT("AssaultRifle"), true);
 	OwnWeapon(ETGWeaponTriggerType::SHOTGUN, TEXT("Shotgun"), false);
 	OwnWeapon(ETGWeaponTriggerType::SINGLE_SHOT, TEXT("SniperRifle"), false);
+	OnWeaponChanged.Broadcast(GetCurrentWeapon());
 
 	if (!SwitchingCurveLoc.IsNull())
 		SwitchingWeaponTimelineComp->AddInterpVector(SwitchingCurveLoc, SwitchingWeaponTL_CurLoc);
@@ -118,7 +120,10 @@ void ATGPlayer::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		GetWorld()->GetTimerManager().ClearTimer(SlowDebuffTimerHandle);
 
 	for (TPair<FString, UTGWeaponBase*> w : OwnedWeapons)
+	{
 		w.Value->MarkAsGarbage();
+		w.Value = nullptr;
+	}
 
 	Super::EndPlay(EndPlayReason);
 }
@@ -179,6 +184,7 @@ void ATGPlayer::Evade(const FInputActionValue& value)
 		LaunchVel = LaunchVel * XYVelocity + FVector(0.0f, 0.0f, ZVelocity);
 	}
 
+	OnEvadeChanged.Broadcast(CurrentEvadeCount, CurrentEvadeCooldown / EvadeCooldown);
 	LaunchCharacter(LaunchVel, true, true);
 }
 
@@ -287,6 +293,7 @@ void ATGPlayer::SwitchingWeapon(const FInputActionValue& InputValue)
 
 	SwitchingWeaponTimelineComp->Play();
 	SwitchingWeaponKey = Arr[Idx].Key;
+	OnWeaponChanged.Broadcast(Arr[Idx].Value);
 }
 
 // Called every frame
@@ -351,6 +358,7 @@ void ATGPlayer::RestoreEvadeCooldown(float DeltaTime)
 			CurrentEvadeCooldown = 0.0f;
 			CurrentEvadeCount++;
 		}
+		OnEvadeChanged.Broadcast(CurrentEvadeCount, CurrentEvadeCooldown / EvadeCooldown);
 	}
 	else
 	{
@@ -429,6 +437,7 @@ int32 ATGPlayer::ChangePlayerHP(int32 value)
 	HP += value;
 	if (HP > MaxHP)
 		HP = MaxHP;
+	OnPlayerHpChanged.Broadcast(HP, MaxHP);
 	if (HP <= 0 && GetWorld()->GetFirstPlayerController())
 	{
 		DisableInput(GetWorld()->GetFirstPlayerController());

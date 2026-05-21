@@ -2,8 +2,12 @@
 
 
 #include "UI/TGPlayerWidget.h"
+#include "Blueprint/WidgetTree.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
+#include "Components/HorizontalBox.h"
+#include "Components/HorizontalBoxSlot.h"
+#include "Components/Image.h"
 #include "Player/TGPlayer.h"
 #include "Enemies/TGNavigationManager.h"
 #include "Enemies/TGCoreBase.h"
@@ -22,6 +26,32 @@ void UTGPlayerWidget::NativeConstruct()
 	// Focus Enemy 변경 이벤트 구독
 	if (player){
 		player->OnFocusedEnemyChanged.AddUniqueDynamic(this, &UTGPlayerWidget::HandleFocusedEnemyChanged);
+		player->OnPlayerHpChanged.AddUniqueDynamic(this, &UTGPlayerWidget::UpdatePlayerHPBar);
+		player->OnEvadeChanged.AddUniqueDynamic(this, &UTGPlayerWidget::UpdateEvadeBar);
+		player->OnWeaponChanged.AddDynamic(this, &UTGPlayerWidget::UpdateWeaponImage);
+
+		// 회피 게이지 생성
+		for (int i = 0; i < player->GetMaxEvadeCount(); i++)
+		{
+			UProgressBar* EvadeItem = WidgetTree->ConstructWidget<UProgressBar>(UProgressBar::StaticClass());
+			FProgressBarStyle BarStyle;
+			BarStyle.SetBackgroundImage(FSlateBrush());
+			BarStyle.SetFillImage(FSlateBrush());
+			EvadeItem->SetFillColorAndOpacity(FLinearColor(0.f, 0.5f, 0.5f, 1.0f));
+			EvadeItem->SetWidgetStyle(BarStyle);
+			UHorizontalBoxSlot* EvadeSlot = Evade_BarGroup->AddChildToHorizontalBox(EvadeItem);
+			if (EvadeSlot)
+			{
+				FSlateChildSize ChildSize;
+				ChildSize.Value = 1.0f;
+				EvadeSlot->SetSize(ChildSize);
+				EvadeSlot->SetHorizontalAlignment(EHorizontalAlignment::HAlign_Fill);
+				EvadeSlot->SetVerticalAlignment(EVerticalAlignment::VAlign_Fill);
+				EvadeSlot->SetPadding(FMargin(4.0f, 0.0f));
+			}
+			Evade_Bars.Add(EvadeItem);
+		}
+		UpdateEvadeBar(player->GetCurrentEvadeCount(), player->GetCurrentEvadeCooldown() / player->GetMaxEvadeCooldown());
 	}
 
 	// Wave 시작 이벤트, Boss Spawn 이벤트 구독
@@ -47,16 +77,6 @@ void UTGPlayerWidget::NativeConstruct()
 	}
 }
 
-void UTGPlayerWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
-{
-	Super::NativeTick(MyGeometry, InDeltaTime);
-	if (player)
-	{
-		HP_Bar->SetPercent(player->GetPlayerHP() / player->GetPlayerMaxHP());
-	}
-
-}
-
 void UTGPlayerWidget::NativeDestruct()
 {
 	// 타이머 해제
@@ -64,9 +84,16 @@ void UTGPlayerWidget::NativeDestruct()
 		World->GetTimerManager().ClearTimer(FocusedEnemyHideTimerHandle);
 	}
 
+	for (UProgressBar* b : Evade_Bars)
+	{
+		b = nullptr;
+	}
+	Evade_Bars.Empty();
+
 	// 구독했던 델리게이트들 해제
 	if (player){
 		player->OnFocusedEnemyChanged.RemoveDynamic(this, &UTGPlayerWidget::HandleFocusedEnemyChanged);
+		player->OnPlayerHpChanged.RemoveDynamic(this, &UTGPlayerWidget::UpdatePlayerHPBar);
 	}
 
 	if (WaveManager){
@@ -208,6 +235,41 @@ void UTGPlayerWidget::UpdateFocusedEnemyHPBar(float CurrentHP, float MaxHP)
 
 	const float EnemyRatio = FMath::Clamp(CurrentHP / MaxHP, 0.0f, 1.0f);
 	PB_EnemyHP->SetPercent(EnemyRatio);
+}
+
+void UTGPlayerWidget::UpdatePlayerHPBar(float CurrentHP, float MaxHP)
+{
+	if (!player) return;
+	HP_Bar->SetPercent(FMath::Clamp(CurrentHP / MaxHP, 0.0f, 1.0f));
+}
+
+void UTGPlayerWidget::UpdateEvadeBar(int32 CurrentEvadeCount, float CooldownRate)
+{
+	int idx;
+	for (idx = 0; idx < Evade_Bars.Num(); idx++)
+	{
+		if (Evade_Bars.IsValidIndex(idx))
+		{
+			if (idx < CurrentEvadeCount)
+				Evade_Bars[idx]->SetPercent(1.f);
+			else if(idx == CurrentEvadeCount)
+				Evade_Bars[idx]->SetPercent(CooldownRate);
+			else
+				Evade_Bars[idx]->SetPercent(0.f);
+		}
+	}
+}
+
+void UTGPlayerWidget::UpdateWeaponImage(UTGWeaponBase* Weapon)
+{
+	UMaterialInstanceDynamic* mat = WeaponImage->GetDynamicMaterial();
+	if (Weapon->GetAsset()->WeaponImage)
+	{
+		WeaponImage->SetVisibility(ESlateVisibility::Visible);
+		mat->SetTextureParameterValue(TEXT("WeaponTex"), Weapon->GetAsset()->WeaponImage);
+	}
+	else
+		WeaponImage->SetVisibility(ESlateVisibility::Hidden);
 }
 
 void UTGPlayerWidget::HandleFocusedEnemyRemoved(ATGEnemyBase* RemovedEnemy)
