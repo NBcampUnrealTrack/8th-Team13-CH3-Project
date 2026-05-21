@@ -53,5 +53,12 @@ public:
 	// 업그레이드 (회복량 증가)
 	virtual void Upgrade() override;
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Tower Settings")
+	float GetBuffRange() const { return BuffRange; }
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Tower Settings")
+	int32 GetHealAmount() const { return HealAmount; }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Tower Settings")
+	float GetHealInterval() const { return HealInterval; }
 };

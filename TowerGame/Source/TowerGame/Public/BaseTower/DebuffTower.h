@@ -46,6 +46,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Tower Settings")
 	float GetDebuffRange() const { return DebuffRange; }
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Tower Settings")
+	float GetSlowRate() const { return SlowRate; }
+
 private:
 	//	범위 내 가장 가까운 적 탐지
 	void DetectingEnemy();
