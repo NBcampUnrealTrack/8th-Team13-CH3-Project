@@ -2,10 +2,10 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "BaseTower/TGTurretType.h"
 #include "TGBuildWidget.generated.h"
 
-class UTextBlock;
-class ABaseTower;
+class UImage;
 
 UCLASS()
 class TOWERGAME_API UTGBuildWidget : public UUserWidget
@@ -15,32 +15,28 @@ class TOWERGAME_API UTGBuildWidget : public UUserWidget
 protected:
 	virtual void NativeConstruct() override;
 
-	// 슬롯 1 : BaseTower
+	// 슬롯 이미지 (4종) — BP에서 이름 일치
 	UPROPERTY(meta = (BindWidget))
-	UTextBlock* Text_Slot1Name;
+	UImage* Image_Slot1;
 
-	// 슬롯 2 : WeaponTower
 	UPROPERTY(meta = (BindWidget))
-	UTextBlock* Text_Slot2Name;
+	UImage* Image_Slot2;
 
-	// 슬롯 3 : DebuffTower
 	UPROPERTY(meta = (BindWidget))
-	UTextBlock* Text_Slot3Name;
+	UImage* Image_Slot3;
 
-	// 슬롯 4 : BuffTower
 	UPROPERTY(meta = (BindWidget))
-	UTextBlock* Text_Slot4Name;
+	UImage* Image_Slot4;
 
-	// 현재 보유 에너지
-	UPROPERTY(meta = (BindWidget))
-	UTextBlock* Text_Energy;
+	// 선택된 슬롯 색상 (밝게)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Slot|Style")
+	FLinearColor SelectedColor = FLinearColor::White;
 
-	UPROPERTY()
-	ABaseTower* OwnerTower;
+	// 미선택 슬롯 색상 (어둡게)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Slot|Style")
+	FLinearColor NormalColor = FLinearColor(0.4f, 0.4f, 0.4f, 0.6f);
+
 public:
-	// 타워 연결 및 UI 갱신
-	void SetOwnerTower(ABaseTower* InTower);
-
-	// UI 갱신
-	void RefreshUI();
+	// 선택된 타워 타입에 맞춰 슬롯 이미지 강조 갱신
+	void RefreshSlotHighlight(ETGTurretType SelectedType);
 };

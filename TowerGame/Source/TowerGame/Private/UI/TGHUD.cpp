@@ -10,6 +10,7 @@
 #include "Core/Grid/TGGridBase.h"
 #include "Enemies/TGWaveManager.h"
 #include "Enemies/TGEnemyBase.h"
+#include "Player/TGPlayer.h"
 
 ATGHUD::ATGHUD()
 	: CachedGameMode(nullptr),
@@ -31,6 +32,11 @@ void ATGHUD::BeginPlay()
 		CachedGameMode->OnFlowStateChanged.AddDynamic(this, &ATGHUD::HandleFlowStateChanged);
 
 		UpdateUIByState(CachedGameMode->CurrentState);
+	}
+
+	if (ATGPlayer* Player = Cast<ATGPlayer>(GetOwningPawn()))
+	{
+		Player->OnTurretTypeSelected.AddDynamic(this, &ATGHUD::HandleTurretTypeSelected);
 	}
 }
 
@@ -151,10 +157,24 @@ void ATGHUD::AddtoViewportBuildWidget(APlayerController* PC)
 	if (BuildWidget)
 	{
 		BuildWidget->AddToViewport();
+
+		// 빌드모드 진입 시 현재 선택 타입으로 즉시 강조 갱신
+		if (ATGPlayer* Player = Cast<ATGPlayer>(PC->GetPawn()))
+		{
+			BuildWidget->RefreshSlotHighlight(Player->GetSelectedTurretType());
+		}
 	}
 
 	PC->bShowMouseCursor = false;
 	PC->SetInputMode(FInputModeGameOnly());
+}
+
+void ATGHUD::HandleTurretTypeSelected(ETGTurretType SelectedType)
+{
+	if (BuildWidget)
+	{
+		BuildWidget->RefreshSlotHighlight(SelectedType);
+	}
 }
 
 void ATGHUD::AddtoViewportPausedWidget(APlayerController* PC)
