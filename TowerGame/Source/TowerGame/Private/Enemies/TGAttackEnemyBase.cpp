@@ -6,6 +6,7 @@
 #include "AIController.h"
 #include "TGMountedTower.h"
 #include "Engine/OverlapResult.h"
+#include "Enemies/TGEnemyMovementComponent.h"
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 #include "Player/TGPlayer.h"
@@ -87,7 +88,9 @@ void ATGAttackEnemyBase::StartPlayerAttack(AActor* Player)
 
 	if (AAIController* AIController = Cast<AAIController>(GetController())){
 		// Player 공격 과정에서는 이동 중단
-		AIController->ReceiveMoveCompleted.RemoveAll(this);
+		if (EnemyMovementComponent){
+			AIController->ReceiveMoveCompleted.RemoveAll(EnemyMovementComponent);
+		}
 		AIController->StopMovement();
 	}
 
