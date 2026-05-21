@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -17,6 +17,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPlayerHpChanged, float, CurrentH
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnEvadeChanged, int32, EvadeCount, float, CooldownRate);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFocusedEnemyChanged, ATGEnemyBase*, FocusedEnemy);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTurretTypeSelected, ETGTurretType, SelectedType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponChanged, UTGWeaponBase*, WeaponAsset);
 
 UCLASS()
 class TOWERGAME_API ATGPlayer : public ACharacter
@@ -62,6 +63,7 @@ public:
 
 	FOnPlayerHpChanged OnPlayerHpChanged;
 	FOnEvadeChanged OnEvadeChanged;
+	FOnWeaponChanged OnWeaponChanged;
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -109,6 +111,9 @@ public:
 	// Enemy - Debuff 적용
 	UFUNCTION(BlueprintCallable, Category = "Status")
 	void ApplySlowDebuff(float Duration);
+
+	UFUNCTION(BlueprintCallable)
+	UTGWeaponBase* GetCurrentWeapon();	// 현재 장착중인 무기를 가져온다.
 
 	// 총기반동 실행
 	void PlayRecoil(float ShotInterval, float RecoilInputScale);
@@ -183,8 +188,6 @@ protected:
 	FString CurrentWeaponKey;	// 현재 장착중인 무기의 Key
 	FString SwitchingWeaponKey;	// 교체중인 무기의 Key
 
-	UFUNCTION(BlueprintCallable)
-	UTGWeaponBase* GetCurrentWeapon();	// 현재 장착중인 무기를 가져온다.
 	UFUNCTION()
 	void OnFinishSwitchingWeaponTimeline();
 	UFUNCTION()

@@ -101,6 +101,7 @@ void ATGPlayer::BeginPlay()
 	OwnWeapon(ETGWeaponTriggerType::REPEATER, TEXT("AssaultRifle"), true);
 	OwnWeapon(ETGWeaponTriggerType::SHOTGUN, TEXT("Shotgun"), false);
 	OwnWeapon(ETGWeaponTriggerType::SINGLE_SHOT, TEXT("SniperRifle"), false);
+	OnWeaponChanged.Broadcast(GetCurrentWeapon());
 
 	if (!SwitchingCurveLoc.IsNull())
 		SwitchingWeaponTimelineComp->AddInterpVector(SwitchingCurveLoc, SwitchingWeaponTL_CurLoc);
@@ -292,6 +293,7 @@ void ATGPlayer::SwitchingWeapon(const FInputActionValue& InputValue)
 
 	SwitchingWeaponTimelineComp->Play();
 	SwitchingWeaponKey = Arr[Idx].Key;
+	OnWeaponChanged.Broadcast(Arr[Idx].Value);
 }
 
 // Called every frame

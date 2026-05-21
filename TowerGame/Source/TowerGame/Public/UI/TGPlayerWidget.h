@@ -10,10 +10,12 @@ class ATGBossBase;
 class ATGEnemyBase;
 class ATGWaveManager;
 class ATGGameMode;
+class UTGWeaponBase;
 class ATGNavigationManager;
 class UHorizontalBox;
 class UProgressBar;
 class UButton;
+class UImage;
 class UTextBlock;
 //미니맵 위젯 수정사항
 class UTGMiniMapWidget;
@@ -95,6 +97,10 @@ private:
 	UPROPERTY()
 	TArray<TObjectPtr<UProgressBar>> Evade_Bars;
 
+	//Image
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UImage> WeaponImage;
+
 private:
 	// Focused Enemy 변경 시 호출
 	UFUNCTION()
@@ -111,6 +117,10 @@ private:
 	// Player 회피게이지 UI에 반영
 	UFUNCTION()
 	void UpdateEvadeBar(int32 CurrentEvadeCount, float CooldownRate);
+
+	// Player 무기 교체 시 UI에 반영
+	UFUNCTION()
+	void UpdateWeaponImage(UTGWeaponBase* Weapon);
 
 	// Enemy 제거 시 호출
 	UFUNCTION()

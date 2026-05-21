@@ -7,6 +7,7 @@
 #include "Components/TextBlock.h"
 #include "Components/HorizontalBox.h"
 #include "Components/HorizontalBoxSlot.h"
+#include "Components/Image.h"
 #include "Player/TGPlayer.h"
 #include "Enemies/TGNavigationManager.h"
 #include "Enemies/TGCoreBase.h"
@@ -27,6 +28,7 @@ void UTGPlayerWidget::NativeConstruct()
 		player->OnFocusedEnemyChanged.AddUniqueDynamic(this, &UTGPlayerWidget::HandleFocusedEnemyChanged);
 		player->OnPlayerHpChanged.AddUniqueDynamic(this, &UTGPlayerWidget::UpdatePlayerHPBar);
 		player->OnEvadeChanged.AddUniqueDynamic(this, &UTGPlayerWidget::UpdateEvadeBar);
+		player->OnWeaponChanged.AddDynamic(this, &UTGPlayerWidget::UpdateWeaponImage);
 
 		// 회피 게이지 생성
 		for (int i = 0; i < player->GetMaxEvadeCount(); i++)
@@ -256,6 +258,18 @@ void UTGPlayerWidget::UpdateEvadeBar(int32 CurrentEvadeCount, float CooldownRate
 				Evade_Bars[idx]->SetPercent(0.f);
 		}
 	}
+}
+
+void UTGPlayerWidget::UpdateWeaponImage(UTGWeaponBase* Weapon)
+{
+	UMaterialInstanceDynamic* mat = WeaponImage->GetDynamicMaterial();
+	if (Weapon->GetAsset()->WeaponImage)
+	{
+		WeaponImage->SetVisibility(ESlateVisibility::Visible);
+		mat->SetTextureParameterValue(TEXT("WeaponTex"), Weapon->GetAsset()->WeaponImage);
+	}
+	else
+		WeaponImage->SetVisibility(ESlateVisibility::Hidden);
 }
 
 void UTGPlayerWidget::HandleFocusedEnemyRemoved(ATGEnemyBase* RemovedEnemy)
