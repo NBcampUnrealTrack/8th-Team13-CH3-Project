@@ -51,6 +51,15 @@ void UTGWeaponSingleShot::Shoot(ATGPlayer* Instigator, class UMeshComponent* Wea
 
 	// 발포 이펙트
 	SpawnAttachedNiagaraEffects(status.Asset.FireParticle, WeaponComponent, MuzzlePos, status.Asset.FireParticleScale);
+	UGameplayStatics::SpawnSoundAttached(
+		status.Asset.FireSound,
+		WeaponComponent,
+		NAME_None,
+		MuzzlePos,
+		EAttachLocation::KeepWorldPosition,
+		false,
+		GetAsset()->FireSoundScale
+	);
 	Instigator->PlayRecoil(status.ShotCoolTime, status.Asset.RecoilInputScale);
 
 	LineTrace(MuzzlePos, Direction, Distance);
@@ -62,6 +71,15 @@ void UTGWeaponSingleShot::Shoot(ATGPlayer* Instigator, class UMeshComponent* Wea
 	{
 		// 착탄 이펙트
 		SpawnAttachedEffects(status.Asset.HitParticle, TraceHit.GetActor()->GetRootComponent(), TraceHit.Location, status.Asset.HitParticleScale, true);
+		UGameplayStatics::SpawnSoundAttached(
+			status.Asset.HitSound,
+			TraceHit.GetActor()->GetRootComponent(),
+			NAME_None,
+			TraceHit.Location,
+			EAttachLocation::KeepWorldPosition,
+			false,
+			GetAsset()->HitSoundScale, 1.0f, 0.0f, status.Asset.HitSoundAttenuation
+		);
 
 		AActor* HitActor = TraceHit.GetActor();
 		if (ATGEnemyBase* Enemy = Cast<ATGEnemyBase>(HitActor))
