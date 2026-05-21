@@ -14,6 +14,7 @@ struct FInputActionValue;
 class ATGInteractiveActor;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFocusedEnemyChanged, ATGEnemyBase*, FocusedEnemy);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTurretTypeSelected, ETGTurretType, SelectedType);
 
 UCLASS()
 class TOWERGAME_API ATGPlayer : public ACharacter
@@ -53,6 +54,9 @@ public:
 	// 델리게이트 이벤트
 	UPROPERTY(BlueprintAssignable, Category = "Enemy")
 	FOnFocusedEnemyChanged OnFocusedEnemyChanged;
+
+	UPROPERTY(BlueprintAssignable, Category = "TowerGame|Tower")
+	FOnTurretTypeSelected OnTurretTypeSelected;
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -81,6 +85,9 @@ public:
 	const float GetPlayerHP() { return HP; }
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Status")
 	const float GetPlayerMaxHP() { return MaxHP; }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "TowerGame|Tower")
+	ETGTurretType GetSelectedTurretType() const { return SelectedTurretType; }
 	//UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Skill")
 	//const bool GetLookingPoint(FVector& result, float MaxDistance = 5000.0f);	// 카메라가 바라보는 위치 가져오기
 	//UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Skill")
