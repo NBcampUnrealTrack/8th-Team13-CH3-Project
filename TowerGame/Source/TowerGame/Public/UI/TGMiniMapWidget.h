@@ -5,6 +5,7 @@
 #include "TGMiniMapWidget.generated.h"
 
 class UCanvasPanel;
+class UBorder;
 class UTextBlock;
 class ATGGridBase;
 class AActor;
@@ -22,6 +23,7 @@ public:
 
 	void RegisterMonsterActor(AActor* InMonsterActor);
 	void UnregisterMonsterActor(AActor* InMonsterActor);
+	void MarkWallAtGrid(const FIntPoint& GridPoint);
 protected:
 	virtual void NativeDestruct() override;
 
@@ -48,7 +50,7 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Minimap")
 	FVector2D MinimapSize = FVector2D(280.0f, 280.0f);
-
+	TMap<FIntPoint, UBorder*> TileWidgetMap;
 private:
 	void BuildDebugMinimap();
 

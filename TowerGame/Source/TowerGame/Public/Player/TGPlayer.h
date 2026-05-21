@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -16,6 +16,7 @@ class ATGInteractiveActor;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPlayerHpChanged, float, CurrentHP, float, MaxHP);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnEvadeChanged, int32, EvadeCount, float, CooldownRate);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFocusedEnemyChanged, ATGEnemyBase*, FocusedEnemy);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTurretTypeSelected, ETGTurretType, SelectedType);
 
 UCLASS()
 class TOWERGAME_API ATGPlayer : public ACharacter
@@ -56,6 +57,9 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Enemy")
 	FOnFocusedEnemyChanged OnFocusedEnemyChanged;
 
+	UPROPERTY(BlueprintAssignable, Category = "TowerGame|Tower")
+	FOnTurretTypeSelected OnTurretTypeSelected;
+
 	FOnPlayerHpChanged OnPlayerHpChanged;
 	FOnEvadeChanged OnEvadeChanged;
 public:
@@ -86,6 +90,9 @@ public:
 	const float GetPlayerHP() { return HP; }
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Status")
 	const float GetPlayerMaxHP() { return MaxHP; }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "TowerGame|Tower")
+	ETGTurretType GetSelectedTurretType() const { return SelectedTurretType; }
 	//UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Skill")
 	//const bool GetLookingPoint(FVector& result, float MaxDistance = 5000.0f);	// 카메라가 바라보는 위치 가져오기
 	//UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Skill")

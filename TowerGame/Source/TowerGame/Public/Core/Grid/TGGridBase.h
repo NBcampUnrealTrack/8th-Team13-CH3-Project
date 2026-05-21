@@ -11,10 +11,16 @@ class ATGCoreBase;
 class ATGEnemySpawner;
 class ATGSingleGrid;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTGGridBuildingPlaced, FIntPoint, GridPoint);
+
 UCLASS()
 class TOWERGAME_API ATGGridBase : public ATGActorBase
 {
 	GENERATED_BODY()
+	// 미니맵에 벽 건설시 발생할 델리게이트입니다.
+public:
+	UPROPERTY(BlueprintAssignable, Category = "Grid")
+	FOnTGGridBuildingPlaced OnGridBuildingPlaced;
 	//	월드에 배치되는 그리드 관리 클래스입니다.
 public:
 	ATGGridBase();

@@ -47,6 +47,9 @@ private:
 	TObjectPtr<ATGWaveManager> WaveManager;
 
 	UPROPERTY()
+	TObjectPtr<ATGGridBase> GridBase;
+
+	UPROPERTY()
 	TObjectPtr<ATGNavigationManager> NavigationManager;
 
 	UPROPERTY()
@@ -141,8 +144,11 @@ private:
 	UFUNCTION()
 	void HandleEnergyChanged(int32 NewEnergy);
 
+	UFUNCTION()
 	void HideFocusedEnemyInfo();
 
+	UFUNCTION()
+	void HandleGridBuildingPlaced(FIntPoint GridPoint);
 	// UI에 연결된 enemy 관리
 	void BindFocusedEnemy(ATGEnemyBase* NewEnemy);
 	void UnbindFocusedEnemy();

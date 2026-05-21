@@ -1,4 +1,5 @@
 #include "UI/TGMainMenuWidget.h"
+#include "TimerManager.h"
 #include "Components/Button.h"
 #include "Components/Widget.h"
 #include "Components/Image.h"
@@ -29,11 +30,6 @@ void UTGMainMenuWidget::NativeConstruct()
 		GuideButton->OnClicked.AddDynamic(this, &UTGMainMenuWidget::HandleGuideClicked);
 	}
 
-	//if (GuideClickButton)
-	//{
-	//	GuideClickButton->OnClicked.AddDynamic(this, &UTGMainMenuWidget::HandleGuidePageClicked);
-	//}
-
 	if (PrevGuideButton)
 	{
 		PrevGuideButton->OnClicked.AddDynamic(this, &UTGMainMenuWidget::HandlePrevGuideClicked);
@@ -56,15 +52,29 @@ void UTGMainMenuWidget::NativeConstruct()
 	UpdateGuideDots();
 
 	HideGuide();
+	if (LoadingPanel)
+	{
+		LoadingPanel->SetVisibility(ESlateVisibility::Collapsed);
+	}
 }
 
 void UTGMainMenuWidget::HandleStartClicked()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Start Button Clicked"));
 
-	if (ATGMenuGameMode* MGM = Cast<ATGMenuGameMode>(UGameplayStatics::GetGameMode(this)))
+	ShowLoading();
+
+	if (UWorld* World = GetWorld())
 	{
-		MGM->StartGame();
+		FTimerHandle LoadingDelayTimerHandle;
+
+		World->GetTimerManager().SetTimer(
+			LoadingDelayTimerHandle,
+			this,
+			&UTGMainMenuWidget::OpenStageAfterLoading,
+			0.1f,
+			false
+		);
 	}
 }
 
@@ -90,28 +100,6 @@ void UTGMainMenuWidget::HandleGuideClicked()
 
 	ShowGuide();
 }
-
-//void UTGMainMenuWidget::HandleGuidePageClicked()
-//{
-//	if (GuideTextures.Num() == 0)
-//	{
-//		HideGuide();
-//		return;
-//	}
-//
-//	// 마지막 페이지에서 클릭하면 메인메뉴로 복귀
-//	if (CurrentGuideIndex >= GuideTextures.Num() - 1)
-//	{
-//		HideGuide();
-//		return;
-//	}
-//
-//	// 아직 마지막 페이지가 아니면 다음 페이지로 이동
-//	CurrentGuideIndex++;
-//
-//	UpdateGuideImage();
-//	UpdateGuideDots();
-//}
 
 void UTGMainMenuWidget::HandlePrevGuideClicked()
 {
@@ -274,5 +262,41 @@ void UTGMainMenuWidget::UpdateGuideButton()
 	if (NextGuideButton)
 	{
 		NextGuideButton->SetIsEnabled(bHasGuidePages && !bIsLastPage);
+	}
+}
+
+void UTGMainMenuWidget::ShowLoading()
+{
+	if (LoadingPanel)
+	{
+		LoadingPanel->SetVisibility(ESlateVisibility::Visible);
+	}
+
+	if (Anim_LoadingSpin)
+	{
+		PlayAnimation(Anim_LoadingSpin, 0.0f, 0);
+	}
+
+	if (StartButton)
+	{
+		StartButton->SetIsEnabled(false);
+	}
+
+	if (EndButton)
+	{
+		EndButton->SetIsEnabled(false);
+	}
+
+	if (GuideButton)
+	{
+		GuideButton->SetIsEnabled(false);
+	}
+}
+
+void UTGMainMenuWidget::OpenStageAfterLoading()
+{
+	if (ATGMenuGameMode* MGM = Cast<ATGMenuGameMode>(UGameplayStatics::GetGameMode(this)))
+	{
+		MGM->StartGame();
 	}
 }

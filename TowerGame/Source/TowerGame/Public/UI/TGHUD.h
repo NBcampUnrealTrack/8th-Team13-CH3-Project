@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
 #include "Core/GameFlow/TGGameFlowState.h"
+#include "BaseTower/TGTurretType.h"
 #include "TGHUD.generated.h"
 
 class UTGGameOverWidget;
@@ -12,6 +13,7 @@ class UTGBuildWidget;
 class ATGGameMode;
 class ATGWaveManager;
 class ATGEnemyBase;
+class ATGPlayer;
 
 UCLASS()
 class TOWERGAME_API ATGHUD : public AHUD
@@ -24,6 +26,9 @@ protected:
 
 	UFUNCTION()
 	void HandleFlowStateChanged(ETGGameFlowState NewState);
+
+	UFUNCTION()
+	void HandleTurretTypeSelected(ETGTurretType SelectedType);
 
 	void HideAllWidgets();
 	void UpdateUIByState(ETGGameFlowState NewState);
@@ -55,6 +60,9 @@ protected:
 	UTGGameOverWidget* GameOverWidget;
 	UPROPERTY()
 	UTGBuildWidget* BuildWidget;
+
+public:
+	UTGBuildWidget* GetBuildWidget() const { return BuildWidget; }
 
 private:
 	void BindWaveManager();

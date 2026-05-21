@@ -70,7 +70,7 @@ bool ATGGridBase::CanBePlacedBuilding(FIntPoint Point)
 void ATGGridBase::PlacingBuilding(FIntPoint Point)
 {
 	bBuildingPlaced[Point.Y][Point.X] = true;
-
+	OnGridBuildingPlaced.Broadcast(Point);
 	ATGNavigationManager::Get(this)->NotifyBuildingPlaced();
 }
 

@@ -201,7 +201,7 @@ void ATGBossBase::ApplyBossDamage(float DamageAmount)
 
 	if (CurrentHP <= 0){
 		if (ATGGameMode* GameMode = Cast<ATGGameMode>(UGameplayStatics::GetGameMode(this))){
-			GameMode->HandleGameClear();
+			GameMode->HandleGameOver();
 		}
 
 		if (DeathSound){

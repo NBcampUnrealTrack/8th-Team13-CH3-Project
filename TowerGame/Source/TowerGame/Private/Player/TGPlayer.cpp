@@ -220,8 +220,7 @@ void ATGPlayer::SelectTower(const FInputActionValue& InputValue)
 	default: break;
 	}
 
-	//GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow,
-	//	FString::Printf(TEXT("[SelectTower] Slot %d → %s"), SlotIndex, *UEnum::GetValueAsString(SelectedTurretType)));
+	OnTurretTypeSelected.Broadcast(SelectedTurretType);
 }
 
 void ATGPlayer::Shot(const FInputActionValue& InputValue)

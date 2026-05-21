@@ -62,6 +62,7 @@ void UTGMiniMapWidget::BuildDebugMinimap()
 
 	const float TileWidth = MinimapSize.X / GridX;
 	const float TileHeight = MinimapSize.Y / GridY;
+	TileWidgetMap.Empty();
 
 	for (int32 Y = 0; Y < GridY; ++Y)
 	{
@@ -89,6 +90,9 @@ void UTGMiniMapWidget::BuildDebugMinimap()
 				);
 			}
 
+			const FIntPoint GridPoint(X, Y);
+			TileWidgetMap.Add(GridPoint, TileWidget);
+
 			UCanvasPanelSlot* CanvasSlot = TileLayer->AddChildToCanvas(TileWidget);
 
 			if (CanvasSlot)
@@ -107,7 +111,7 @@ void UTGMiniMapWidget::BuildDebugMinimap()
 	AddGridPointMarker(
 		0,
 		0,
-		FLinearColor(0.0f, 1.0f, 0.0f, 1.0f),
+		FLinearColor(1.0f, 0.0f, 0.0f, 1.0f),
 		TEXT("EntryPoint"),
 		TileWidth,
 		TileHeight
@@ -116,7 +120,7 @@ void UTGMiniMapWidget::BuildDebugMinimap()
 	AddGridPointMarker(
 		GridX - 1,
 		GridY - 1,
-		FLinearColor(1.0f, 0.0f, 0.0f, 1.0f),
+		FLinearColor(0.0f, 1.0f, 0.0f, 1.0f),
 		TEXT("ExitPoint"),
 		TileWidth,
 		TileHeight
@@ -280,6 +284,28 @@ void UTGMiniMapWidget::UnregisterMonsterActor(AActor* InMonsterActor)
 	MonsterMarkerMap.Remove(InMonsterActor);
 }
 
+void UTGMiniMapWidget::MarkWallAtGrid(const FIntPoint& GridPoint)
+{
+	UBorder** FoundTile = TileWidgetMap.Find(GridPoint);
+
+	if (!FoundTile || !(*FoundTile))
+	{
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("MiniMapWidget: Tile not found. X: %d, Y: %d"),
+			GridPoint.X,
+			GridPoint.Y
+		);
+		return;
+	}
+
+	// 벽 설치된 칸 표시 색상
+	(*FoundTile)->SetBrushColor(
+		FLinearColor(0.55f, 0.55f, 0.55f, 1.0f)
+	);
+}
+
 void UTGMiniMapWidget::NativeDestruct()
 {
 	if (UWorld* World = GetWorld())
@@ -321,7 +347,7 @@ void UTGMiniMapWidget::CreatePlayerMarker()
 	PlayerMarker->SetVisibility(ESlateVisibility::HitTestInvisible);
 
 	FSlateFontInfo PlayerFont = PlayerMarker->GetFont();
-	PlayerFont.Size = 16;
+	PlayerFont.Size = 25;
 	PlayerMarker->SetFont(PlayerFont);
 
 	UCanvasPanelSlot* PlayerSlot = MarkerLayer->AddChildToCanvas(PlayerMarker);

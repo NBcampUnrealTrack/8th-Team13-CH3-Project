@@ -2,6 +2,7 @@
 #include "Enemies/TGCoreBase.h"
 #include "Enemies/TGWaveManager.h"
 #include "Kismet/GameplayStatics.h"
+#include "Engine/AssetManager.h"
 
 ATGGameMode::ATGGameMode()
 	: SetWaveStartTime(10.0f), CurrentEnergy(500)
@@ -16,6 +17,27 @@ void ATGGameMode::BeginPlay()
 	if (GameBGM)
 	{
 		UGameplayStatics::SpawnSound2D(this, GameBGM);
+	}
+
+	// 에셋 사전 로드
+	TArray<FSoftObjectPath> Paths;
+	for (const TSoftObjectPtr<UObject>& Asset : PreloadAssets)
+	{
+		if (!Asset.IsNull())
+		{
+			Paths.Add(Asset.ToSoftObjectPath());
+		}
+	}
+
+	if (!Paths.IsEmpty())
+	{
+		PreloadHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(
+			Paths,
+			FStreamableDelegate::CreateLambda([this]()
+			{
+				UE_LOG(LogTemp, Log, TEXT("[TGGameMode] 에셋 사전 로드 완료 (%d개)"), PreloadAssets.Num());
+			})
+		);
 	}
 
 	StartGameFlow();
