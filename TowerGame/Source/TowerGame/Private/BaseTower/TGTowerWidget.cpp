@@ -1,4 +1,6 @@
 #include "BaseTower/TGTowerWidget.h"
+#include "BaseTower/BuffTower.h"
+#include "BaseTower/DebuffTower.h"
 #include "Components/TextBlock.h"
 #include "TGMountedTower.h"
 #include "TGWeaponTower.h"
@@ -57,20 +59,39 @@ void UTGTowerWidget::RefreshUI()
 	ATGWeaponTower* WeaponTower = Cast<ATGWeaponTower>(OwnerTower);
 	if (WeaponTower)
 	{
-		// 공격 데미지 표시
 		if (DamageText)
-		{
 			DamageText->SetText(FText::FromString(
 				FString::Printf(TEXT("Damage: %.1f"), WeaponTower->GetAttackDamage())
 			));
-		}
-
-		// 공격 사거리 표시
 		if (RangeText)
-		{
 			RangeText->SetText(FText::FromString(
 				FString::Printf(TEXT("Range: %.1f"), WeaponTower->GetAttackRange())
 			));
-		}
+	}
+	// 버프타워인 경우
+	ATGBuffTower* BuffTower = Cast<ATGBuffTower>(OwnerTower);
+	if (BuffTower)
+	{
+		if (DamageText)
+			DamageText->SetText(FText::FromString(
+				FString::Printf(TEXT("Heal: %d"), BuffTower->GetHealAmount())
+			));
+		if (RangeText)
+			RangeText->SetText(FText::FromString(
+				FString::Printf(TEXT("Range: %.1f"), BuffTower->GetBuffRange())
+			));
+	}
+	// 디버프타워인 경우
+	ATGDebuffTower* DebuffTower = Cast<ATGDebuffTower>(OwnerTower);
+	if (DebuffTower)
+	{
+		if (DamageText)
+			DamageText->SetText(FText::FromString(
+				FString::Printf(TEXT("Slow: %.0f%%"), (1.f - DebuffTower->GetSlowRate()) * 100.f)
+			));
+		if (RangeText)
+			RangeText->SetText(FText::FromString(
+				FString::Printf(TEXT("Range: %.1f"), DebuffTower->GetDebuffRange())
+			));
 	}
 }
