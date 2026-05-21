@@ -69,6 +69,7 @@ void ATGPlayer::BeginPlay()
 	bCanSwitch = true;
 	CurrentEvadeCount = EvadeCount;
 	CurrentEvadeCooldown = 0.0f;
+	OnEvadeChanged.Broadcast(CurrentEvadeCount, CurrentEvadeCooldown / EvadeCooldown);
 	DefaultWalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
 
 	if (GetWorld()->GetFirstPlayerController())
@@ -118,7 +119,10 @@ void ATGPlayer::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		GetWorld()->GetTimerManager().ClearTimer(SlowDebuffTimerHandle);
 
 	for (TPair<FString, UTGWeaponBase*> w : OwnedWeapons)
+	{
 		w.Value->MarkAsGarbage();
+		w.Value = nullptr;
+	}
 
 	Super::EndPlay(EndPlayReason);
 }
@@ -179,6 +183,7 @@ void ATGPlayer::Evade(const FInputActionValue& value)
 		LaunchVel = LaunchVel * XYVelocity + FVector(0.0f, 0.0f, ZVelocity);
 	}
 
+	OnEvadeChanged.Broadcast(CurrentEvadeCount, CurrentEvadeCooldown / EvadeCooldown);
 	LaunchCharacter(LaunchVel, true, true);
 }
 
@@ -352,6 +357,7 @@ void ATGPlayer::RestoreEvadeCooldown(float DeltaTime)
 			CurrentEvadeCooldown = 0.0f;
 			CurrentEvadeCount++;
 		}
+		OnEvadeChanged.Broadcast(CurrentEvadeCount, CurrentEvadeCooldown / EvadeCooldown);
 	}
 	else
 	{
@@ -430,6 +436,7 @@ int32 ATGPlayer::ChangePlayerHP(int32 value)
 	HP += value;
 	if (HP > MaxHP)
 		HP = MaxHP;
+	OnPlayerHpChanged.Broadcast(HP, MaxHP);
 	if (HP <= 0 && GetWorld()->GetFirstPlayerController())
 	{
 		DisableInput(GetWorld()->GetFirstPlayerController());

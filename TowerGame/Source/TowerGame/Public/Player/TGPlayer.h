@@ -13,6 +13,8 @@ class ATGEnemyBase;
 struct FInputActionValue;
 class ATGInteractiveActor;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPlayerHpChanged, float, CurrentHP, float, MaxHP);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnEvadeChanged, int32, EvadeCount, float, CooldownRate);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFocusedEnemyChanged, ATGEnemyBase*, FocusedEnemy);
 
 UCLASS()
@@ -53,6 +55,9 @@ public:
 	// 델리게이트 이벤트
 	UPROPERTY(BlueprintAssignable, Category = "Enemy")
 	FOnFocusedEnemyChanged OnFocusedEnemyChanged;
+
+	FOnPlayerHpChanged OnPlayerHpChanged;
+	FOnEvadeChanged OnEvadeChanged;
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
