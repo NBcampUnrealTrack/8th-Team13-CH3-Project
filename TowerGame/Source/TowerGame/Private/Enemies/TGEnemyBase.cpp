@@ -3,27 +3,27 @@
 
 #include "Enemies/TGEnemyBase.h"
 
-#include "EngineUtils.h"
-#include "NavigationSystem.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
-#include "BaseTower/TGBaseTower.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Core/GameFlow/TGGameMode.h"
-#include "Enemies/TGCoreBase.h"
 #include "Enemies/TGEnemyAIController.h"
+#include "Enemies/TGEnemyMovementComponent.h"
 
 #include "Enemies/TGNavigationManager.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
-#include "Navigation/PathFollowingComponent.h"
+// Enemy Base의 책임 과다로 이동 로직은 분리대상
 
 // Sets default values
 ATGEnemyBase::ATGEnemyBase() :
-	EnergyDropAmount(0),
 	EnemyType("Enemy"),
+	MaxHP(1),
+	CurrentHP(MaxHP),
+	EnergyDropAmount(0),
+	NavigationHeightOffset(FVector::ZeroVector),
 	StructureAttackDamage(0),
 	StructureAttackInterval(0.5f),
 	StructureAttackRange(200),
@@ -33,11 +33,7 @@ ATGEnemyBase::ATGEnemyBase() :
 	StructureAttackEffect(nullptr),
 	EffectScale(100.0f),
 	DeathEffect(nullptr),
-	DeathEffectScale(1.0f),
-	MaxHP(1),
-	CurrentHP(MaxHP),
-	NavigationHeightOffset(FVector::ZeroVector),
-	GridSize(300)
+	DeathEffectScale(1.0f)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
@@ -51,6 +47,8 @@ ATGEnemyBase::ATGEnemyBase() :
 
 	// 충돌 무시
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+
+	EnemyMovementComponent = CreateDefaultSubobject<UTGEnemyMovementComponent>(TEXT("EnemyMovementComponent"));
 }
 
 void ATGEnemyBase::BeginPlay()
@@ -84,74 +82,22 @@ void ATGEnemyBase::InitializeEnemy(ATGNavigationManager* InNavigationManager)
 	NavigationManager = InNavigationManager;
 	NavigationManager->RegisterEnemy(this);
 
+	if (EnemyMovementComponent){
+		EnemyMovementComponent->Initialize(this, NavigationManager);
+		EnemyMovementComponent->OnAttackRangeReached.AddUniqueDynamic(
+			this, &ATGEnemyBase::HandleAttackRangeReached);
+	}
+
 	// 경로 탐색
 	RequestRepath();
 }
 
-FVector ATGEnemyBase::GetNavigationHeightOffset() const
-{
-	return NavigationHeightOffset;
-}
-
 void ATGEnemyBase::RequestRepath()
 {
-	if (!NavigationManager) return;
+	if (!EnemyMovementComponent) return;
 
-	AAIController* AIController = Cast<AAIController>(GetController());
-	if (!AIController) return;
-
-	// 이동 완료 콜백 중복 바인딩 방지
-	AIController->ReceiveMoveCompleted.RemoveDynamic(this, &ATGEnemyBase::HandleMoveCompleted);
-	AIController->StopMovement();
 	StopStructureAttack();
-	StopStructureAttackRangeCheck();
-	AIController->ReceiveMoveCompleted.AddDynamic(this, &ATGEnemyBase::HandleMoveCompleted);
-
-	// 목적지 위치 get
-	const UCapsuleComponent* CapsuleCollision = GetCapsuleComponent();
-	const float CapsuleHalfHeight = CapsuleCollision ? CapsuleCollision->GetScaledCapsuleHalfHeight() : 0.0f;
-	const FVector CoreLocation = NavigationManager->GetCoreLocation()
-		+ NavigationHeightOffset
-		+ FVector(0, 0, CapsuleHalfHeight);
-
-	//목적지로 이동
-	EPathFollowingRequestResult::Type MoveResult = AIController->MoveToLocation(
-		CoreLocation,
-		StructureAttackRange,
-		false,
-		true,
-		false,
-		true,
-		nullptr,
-		false
-	);
-
-	if (MoveResult == EPathFollowingRequestResult::Failed){
-		// 위치 보정
-		if (TryRecoverToNearestNavMesh()){
-			UE_LOG(LogNavigation, Warning, TEXT("[Enemy:%s] 위치 보정 성공 - 보정된 위치에서 다시 RequestRepath"),
-			*GetName());
-
-			RequestRepath();
-			return;
-		}
-
-		return;
-		// 건물 공격 - 현시점 고려하지 않음
-		//MoveToBlockingBuilding();
-		//return;
-	}
-
-	CurrentStructureTarget = NavigationManager->GetCurrentCoreActor();
-
-	// 이미 목적지에 도착한 상태
-	if (MoveResult == EPathFollowingRequestResult::AlreadyAtGoal){
-		if (CurrentStructureTarget && IsStructureTargetInAttackRange(CurrentStructureTarget)){
-			StartStructureAttack();
-		}else{
-			MoveDirectlyToStructureTarget();
-		}
-	}
+	EnemyMovementComponent->RequestMoveToCore();
 }
 
 void ATGEnemyBase::SetNavigationManager(ATGNavigationManager* InNavigationManager)
@@ -176,117 +122,6 @@ void ATGEnemyBase::StartStructureAttack()
 		StructureAttackInterval,
 		true
 	);
-}
-
-void ATGEnemyBase::StopStructureAttackRangeCheck()
-{
-	if (UWorld* World = GetWorld()){
-		World->GetTimerManager().ClearTimer(StructureAttackRangeCheckTimerHandle);
-	}
-}
-
-void ATGEnemyBase::CheckStructureAttackRange()
-{
-	// 공격 목표가 지정되지 않은 경우
-	if (!CurrentStructureTarget){
-		StopStructureAttackRangeCheck();
-		return;
-	}
-
-	// 범위 밖
-	if (!IsStructureTargetInAttackRange(CurrentStructureTarget)) return;
-
-	// 이동 중지
-	if (AAIController* AIController = Cast<AAIController>(GetController())){
-		AIController->StopMovement();
-	}
-
-	// 공격범위 X 이동
-	StopStructureAttackRangeCheck();
-	StartStructureAttack();
-}
-
-void ATGEnemyBase::MoveDirectlyToStructureTarget()
-{
-	if (!CurrentStructureTarget) return;
-
-	AAIController* AIController = Cast<AAIController>(GetController());
-	if (!AIController) return;
-
-	const UCapsuleComponent* CapsuleCollision = GetCapsuleComponent();
-	const float CapsuleHalfHeight = CapsuleCollision ? CapsuleCollision->GetScaledCapsuleHalfHeight() : 0.0f;
-	const FVector TargetLocation = CurrentStructureTarget->GetActorLocation()
-		+ NavigationHeightOffset
-		+ FVector(0, 0, CapsuleHalfHeight);
-
-	// 공격 범위 보정 없이 목표 위치까지 이동
-	AIController->MoveToLocation(
-		TargetLocation,
-		0.f,
-		false,
-		true,
-		false,
-		true,
-		nullptr,
-		false
-	);
-
-	UWorld* World = GetWorld();
-	if (!World) return;
-
-	// 공격 범위 안으로 들어왔는지 확인
-	World->GetTimerManager().SetTimer(
-		StructureAttackRangeCheckTimerHandle,
-		this,
-		&ATGEnemyBase::CheckStructureAttackRange,
-		0.1f,
-		true
-	);
-}
-
-void ATGEnemyBase::StopStructureAttack()
-{
-	UWorld* World = GetWorld();
-	if (!World) return;
-
-	World->GetTimerManager().ClearTimer(StructureAttackTimerHandle);
-	CurrentStructureTarget = nullptr;
-}
-
-float ATGEnemyBase::TakeDamage(float DamageAmount,
-	const FDamageEvent& DamageEvent,
-	AController* EventInstigator,
-	AActor* DamageCauser)
-{
-	float AppliedDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-
-	CurrentHP -= AppliedDamage;
-	OnEnemyHpChanged.Broadcast(CurrentHP, MaxHP);
-
-	if (CurrentHP <= 0){
-		if (ATGGameMode* GM = Cast<ATGGameMode>(UGameplayStatics::GetGameMode(GetWorld())))
-		{
-			GM->AddEnergy(EnergyDropAmount);
-		}
-		DestroyUnit();
-	}
-
-	return AppliedDamage;
-}
-
-FString ATGEnemyBase::GetEnemyType()
-{
-	return EnemyType;
-}
-
-float ATGEnemyBase::GetCurrentHP()
-{
-	return CurrentHP;
-}
-
-float ATGEnemyBase::GetMaxHP()
-{
-	return MaxHP;
 }
 
 void ATGEnemyBase::AttackStructureTarget()
@@ -347,73 +182,65 @@ void ATGEnemyBase::AttackStructureTarget()
 	}
 }
 
-void ATGEnemyBase::HandleMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result)
-{
-	// 이동 성공 시 공격 시작
-	if (Result == EPathFollowingResult::Success){
-		if (CurrentStructureTarget && IsStructureTargetInAttackRange(CurrentStructureTarget)){
-			StartStructureAttack();
-			return;
-		}
-		MoveDirectlyToStructureTarget();
-		return;
-	}else if (Result == EPathFollowingResult::Aborted){
-		//if (TryRecoverToNearestNavMesh()){
-			RequestRepath();
-			return;
-		//}
-
-		return;
-		// 건물 공격 - 현 시점 고려하지 않음
-		//MoveToBlockingBuilding();
-		//return;
-	}
-}
-
-bool ATGEnemyBase::TryRecoverToNearestNavMesh()
+void ATGEnemyBase::StopStructureAttack()
 {
 	UWorld* World = GetWorld();
-	if (!World) return false;
+	if (!World) return;
 
-	UNavigationSystemV1* NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(World);
-	if (!NavSystem) return false;
+	World->GetTimerManager().ClearTimer(StructureAttackTimerHandle);
+	CurrentStructureTarget = nullptr;
+}
 
-	// 보정된 위치와 거리 비교할 현재 위치
-	const FVector CurrentLocation = GetActorLocation();
-	const UCapsuleComponent* CapsuleCollision = GetCapsuleComponent();
-	if (!CapsuleCollision) return false;
+float ATGEnemyBase::TakeDamage(float DamageAmount,
+	const FDamageEvent& DamageEvent,
+	AController* EventInstigator,
+	AActor* DamageCauser)
+{
+	float AppliedDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
-	// enemy 타입별 기준층에서 NavMesh를 탐색한다.
-	FVector QueryLocation = CurrentLocation;
-	QueryLocation.Z = NavigationManager->GetCoreLocation().Z + NavigationHeightOffset.Z;
+	CurrentHP -= AppliedDamage;
+	OnEnemyHpChanged.Broadcast(CurrentHP, MaxHP);
 
-	// ProjectPointToNavigation의 결과를 저장할 변수
-	FNavLocation ProjectedLocation;
+	if (CurrentHP <= 0){
+		if (ATGGameMode* GM = Cast<ATGGameMode>(UGameplayStatics::GetGameMode(GetWorld())))
+		{
+			GM->AddEnergy(EnergyDropAmount);
+		}
+		DestroyBodyParts();
+	}
 
-	// XY는 가까운 위치를 넓게 찾고, Z는 enemy 타입별 NavMesh 층 안에서만 찾는다.
-	const FVector QueryExtent(GridSize, GridSize, GridSize * 0.5f);
+	return AppliedDamage;
+}
 
-	// QueryExtent 범위 안에서 NavMesh 위의 위치를 탐색
-	// 성공 - ProjectedLocation에 NavMesh 위 좌표 반환 / 실패 - 탐색 실패
-	const bool bProjected = NavSystem->ProjectPointToNavigation(
-		QueryLocation,
-		ProjectedLocation,
-		QueryExtent
-	);
+FVector ATGEnemyBase::GetNavigationHeightOffset() const
+{
+	return NavigationHeightOffset;
+}
 
-	if (!bProjected) return false;
+float ATGEnemyBase::GetStructureAttackRange() const
+{
+	return StructureAttackRange;
+}
 
-	// Enemy의 보정 후의 좌표가 바닥과 충돌하지 않도록 HalfHeight을 합산
-	ProjectedLocation.Location.Z += CapsuleCollision->GetScaledCapsuleHalfHeight();
+FString ATGEnemyBase::GetEnemyType()
+{
+	return EnemyType;
+}
 
-	const float Dist = FVector::Dist(CurrentLocation, ProjectedLocation.Location);
+float ATGEnemyBase::GetCurrentHP()
+{
+	return CurrentHP;
+}
 
-	// 위치가 유사하면 위치 보정하지 않음
-	if (Dist <= 10) return false;
+float ATGEnemyBase::GetMaxHP()
+{
+	return MaxHP;
+}
 
-	SetActorLocation(ProjectedLocation.Location);
-
-	return true;
+void ATGEnemyBase::HandleAttackRangeReached(AActor* TargetActor)
+{
+	CurrentStructureTarget = TargetActor;
+	StartStructureAttack();
 }
 
 bool ATGEnemyBase::IsStructureTargetInAttackRange(const AActor* Target) const
@@ -470,79 +297,7 @@ FVector ATGEnemyBase::GetRandomCollisionSurfaceLocation(UPrimitiveComponent* Com
 	return Component->GetComponentLocation();
 }
 
-bool ATGEnemyBase::MoveToBlockingBuilding()
-{
-	CurrentStructureTarget = nullptr;
-
-	UWorld* World = GetWorld();
-	if (!World) return false;
-
-	TArray<ABaseTower*> Buildings;
-
-	// 모든 BaseTower을 탐색
-	for (TActorIterator<ABaseTower> It(World); It; ++It){
-		ABaseTower* Building = *It;
-		if (!Building) continue;
-
-		// ToDo 설치 여부 확인 - 보류
-		// if(!설치 여부) continue;
-
-		Buildings.Add(Building);
-	}
-
-	// 거리 순으로 정렬
-	Buildings.Sort([this](const ABaseTower& A, const ABaseTower& B)
-	{
-		return FVector::DistSquared(GetActorLocation(), A.GetActorLocation())
-			< FVector::DistSquared(GetActorLocation(), B.GetActorLocation());
-	});
-
-	// Tower 배열을 순회하며 이동 가능한 Building을 탐색
-	for (ABaseTower* Building : Buildings){
-		if (!Building) continue;
-
-		// 건물 옆칸으로 이동 여부 확인 후 가능하다면 이동
-		if (TryMoveToAttackRangeOfBuilding(Building)) return true;
-	}
-
-	return false;
-}
-
-bool ATGEnemyBase::TryMoveToAttackRangeOfBuilding(ABaseTower* Building)
-{
-	AAIController* AIController = Cast<AAIController>(GetController());
-	if (!AIController) return false;
-
-	const FVector BuildingLocation = Building->GetActorLocation();
-
-	// 목표로 이동
-	const EPathFollowingRequestResult::Type MoveResult = AIController->MoveToLocation(
-		BuildingLocation,
-		StructureAttackRange,
-		false,
-		true,
-		true,
-		true,
-		nullptr,
-		false
-		);
-
-	// 이미 공격 위치에 있는 경우
-	if (MoveResult == EPathFollowingRequestResult::AlreadyAtGoal){
-		CurrentStructureTarget = Building;
-		StartStructureAttack();
-		return true;
-	}
-	// 이동 요청 성공
-	else if (MoveResult == EPathFollowingRequestResult::RequestSuccessful){
-		CurrentStructureTarget = Building;
-		return true;
-	}
-
-	return false;
-}
-
-void ATGEnemyBase::DestroyUnit()
+void ATGEnemyBase::DestroyBodyParts()
 {
 	StopStructureAttack();
 
