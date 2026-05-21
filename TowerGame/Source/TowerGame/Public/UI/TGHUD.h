@@ -10,6 +10,8 @@ class UTGPlayerWidget;
 class UTGPauseWidget;
 class UTGBuildWidget;
 class ATGGameMode;
+class ATGWaveManager;
+class ATGEnemyBase;
 
 UCLASS()
 class TOWERGAME_API ATGHUD : public AHUD
@@ -32,6 +34,8 @@ protected:
 protected:
 	UPROPERTY()
 	ATGGameMode* CachedGameMode;
+	UPROPERTY()
+	ATGWaveManager* CachedWaveManager;
 
 	ETGGameFlowState OldState;
 
@@ -51,4 +55,13 @@ protected:
 	UTGGameOverWidget* GameOverWidget;
 	UPROPERTY()
 	UTGBuildWidget* BuildWidget;
+
+private:
+	void BindWaveManager();
+
+	UFUNCTION()
+	void HandleEnemySpawned(ATGEnemyBase* SpawnedEnemy);
+
+	UFUNCTION()
+	void HandleEnemyRemovedForMiniMap(ATGEnemyBase* RemovedEnemy);
 };

@@ -18,6 +18,9 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWaveSpawnCompleted, int32, WaveI
 
 //보스 생성 이벤트
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBossSpawned, ATGBossBase*, SpawnedBoss);
+//몬스터 스폰 이벤트
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTGEnemySpawned, ATGEnemyBase*, SpawnedEnemy);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTGEnemyRemovedForMiniMap, ATGEnemyBase*, RemovedEnemy);
 
 UCLASS()
 class TOWERGAME_API ATGWaveManager : public AActor
@@ -96,6 +99,13 @@ public:
 	// Boss Spawn Event
 	UPROPERTY(BlueprintAssignable, Category = "Boss")
 	FOnBossSpawned OnBossSpawned;
+
+	//Monster Spawn Event
+	UPROPERTY(BlueprintAssignable, Category = "Enemy")
+	FOnTGEnemySpawned OnEnemySpawned;
+
+	UPROPERTY(BlueprintAssignable, Category = "Enemy")
+	FOnTGEnemyRemovedForMiniMap OnEnemyRemovedForMiniMap;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Boss")
 	AActor* GetBoss() const;

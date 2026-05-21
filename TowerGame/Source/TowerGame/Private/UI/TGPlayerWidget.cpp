@@ -330,3 +330,23 @@ void UTGPlayerWidget::SetGridBase(ATGGridBase* InGridBase)
 		UE_LOG(LogTemp, Warning, TEXT("PlayerWidget: PlayerPawn is null"));
 	}
 }
+
+void UTGPlayerWidget::RegisterMonsterToMiniMap(AActor* MonsterActor)
+{
+	if (!MiniMapWidget)
+	{
+		return;
+	}
+
+	MiniMapWidget->RegisterMonsterActor(MonsterActor);
+}
+
+void UTGPlayerWidget::UnregisterMonsterFromMiniMap(AActor* MonsterActor)
+{
+	if (!MiniMapWidget)
+	{
+		return;
+	}
+
+	MiniMapWidget->UnregisterMonsterActor(MonsterActor);
+}

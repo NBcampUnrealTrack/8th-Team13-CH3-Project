@@ -8,13 +8,16 @@
 #include "Kismet/GameplayStatics.h"
 #include "Core/GameFlow/TGGameMode.h"
 #include "Core/Grid/TGGridBase.h"
+#include "Enemies/TGWaveManager.h"
+#include "Enemies/TGEnemyBase.h"
 
 ATGHUD::ATGHUD()
 	: CachedGameMode(nullptr),
 	PlayerWidget(nullptr),
 	PauseWidget(nullptr),
 	GameOverWidget(nullptr),
-	BuildWidget(nullptr)
+	BuildWidget(nullptr),
+	CachedWaveManager(nullptr)
 {
 }
 
@@ -130,6 +133,8 @@ void ATGHUD::AddtoViewportPlayerWidget(APlayerController* PC)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("HUD: GridBase not found"));
 		}
+
+		BindWaveManager();
 	}
 
 	PC->bShowMouseCursor = false;
@@ -182,4 +187,62 @@ void ATGHUD::AddtoViewportGameOverWidget(APlayerController* PC)
 
 	PC->bShowMouseCursor = true;
 	PC->SetInputMode(FInputModeUIOnly());
+}
+
+void ATGHUD::BindWaveManager()
+{
+	if (CachedWaveManager)
+	{
+		return;
+	}
+
+	CachedWaveManager = ATGWaveManager::Get(this);
+
+	if (!CachedWaveManager)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("HUD: WaveManager not found"));
+		return;
+	}
+
+	CachedWaveManager->OnEnemySpawned.AddUniqueDynamic(
+		this,
+		&ATGHUD::HandleEnemySpawned
+	);
+
+	CachedWaveManager->OnEnemyRemovedForMiniMap.AddUniqueDynamic(
+		this,
+		&ATGHUD::HandleEnemyRemovedForMiniMap
+	);
+
+	UE_LOG(LogTemp, Warning, TEXT("HUD: WaveManager Bound"));
+}
+
+void ATGHUD::HandleEnemySpawned(ATGEnemyBase* SpawnedEnemy)
+{
+	if (!IsValid(SpawnedEnemy))
+	{
+		return;
+	}
+
+	if (!PlayerWidget)
+	{
+		return;
+	}
+
+	PlayerWidget->RegisterMonsterToMiniMap(SpawnedEnemy);
+}
+
+void ATGHUD::HandleEnemyRemovedForMiniMap(ATGEnemyBase* RemovedEnemy)
+{
+	if (!RemovedEnemy)
+	{
+		return;
+	}
+
+	if (!PlayerWidget)
+	{
+		return;
+	}
+
+	PlayerWidget->UnregisterMonsterFromMiniMap(RemovedEnemy);
 }

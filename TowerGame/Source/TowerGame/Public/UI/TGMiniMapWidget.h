@@ -20,6 +20,8 @@ public:
 	// 플레이어 액터 등록
 	void SetPlayerActor(AActor* InPlayerActor);
 
+	void RegisterMonsterActor(AActor* InMonsterActor);
+	void UnregisterMonsterActor(AActor* InMonsterActor);
 protected:
 	virtual void NativeDestruct() override;
 
@@ -40,6 +42,9 @@ private:
 	UTextBlock* PlayerMarker = nullptr;
 
 	FTimerHandle PlayerMarkerUpdateTimerHandle;
+	FTimerHandle MonsterMarkerUpdateTimerHandle;
+	UPROPERTY()
+	TMap<AActor*, UTextBlock*> MonsterMarkerMap;
 
 	UPROPERTY(EditAnywhere, Category = "Minimap")
 	FVector2D MinimapSize = FVector2D(280.0f, 280.0f);
@@ -58,6 +63,9 @@ private:
 
 	void CreatePlayerMarker();
 	void UpdatePlayerMarkerPosition();
+
+	void UpdateMonsterMarkers();
+	void StartMonsterMarkerUpdateTimer();
 
 	FVector2D WorldLocationToMinimapPosition(const FVector& WorldLocation) const;
 };

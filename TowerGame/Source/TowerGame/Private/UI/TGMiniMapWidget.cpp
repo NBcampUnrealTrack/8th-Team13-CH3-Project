@@ -206,11 +206,86 @@ void UTGMiniMapWidget::SetPlayerActor(AActor* InPlayerActor)
 	}
 }
 
+void UTGMiniMapWidget::RegisterMonsterActor(AActor* InMonsterActor)
+{
+	if (!IsValid(InMonsterActor))
+	{
+		return;
+	}
+
+	if (!MarkerLayer)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("MiniMapWidget: MarkerLayer is null"));
+		return;
+	}
+
+	if (MonsterMarkerMap.Contains(InMonsterActor))
+	{
+		return;
+	}
+
+	UTextBlock* MonsterMarker = WidgetTree->ConstructWidget<UTextBlock>(
+		UTextBlock::StaticClass()
+	);
+
+	if (!MonsterMarker)
+	{
+		return;
+	}
+
+	MonsterMarker->SetText(FText::FromString(TEXT("●")));
+	MonsterMarker->SetColorAndOpacity(
+		FSlateColor(FLinearColor(1.0f, 0.15f, 0.0f, 1.0f))
+	);
+	MonsterMarker->SetJustification(ETextJustify::Center);
+	MonsterMarker->SetVisibility(ESlateVisibility::HitTestInvisible);
+
+	FSlateFontInfo MonsterFont = MonsterMarker->GetFont();
+	MonsterFont.Size = 12;
+	MonsterMarker->SetFont(MonsterFont);
+
+	UCanvasPanelSlot* MonsterSlot = MarkerLayer->AddChildToCanvas(MonsterMarker);
+
+	if (MonsterSlot)
+	{
+		MonsterSlot->SetSize(FVector2D(14.0f, 14.0f));
+		MonsterSlot->SetAlignment(FVector2D(0.5f, 0.5f));
+	}
+
+	MonsterMarkerMap.Add(InMonsterActor, MonsterMarker);
+
+	UpdateMonsterMarkers();
+	StartMonsterMarkerUpdateTimer();
+}
+
+void UTGMiniMapWidget::UnregisterMonsterActor(AActor* InMonsterActor)
+{
+	if (!InMonsterActor)
+	{
+		return;
+	}
+
+	UTextBlock** FoundMarker = MonsterMarkerMap.Find(InMonsterActor);
+
+	if (!FoundMarker)
+	{
+		return;
+	}
+
+	if (*FoundMarker)
+	{
+		(*FoundMarker)->RemoveFromParent();
+	}
+
+	MonsterMarkerMap.Remove(InMonsterActor);
+}
+
 void UTGMiniMapWidget::NativeDestruct()
 {
 	if (UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().ClearTimer(PlayerMarkerUpdateTimerHandle);
+		World->GetTimerManager().ClearTimer(MonsterMarkerUpdateTimerHandle);
 	}
 
 	Super::NativeDestruct();
@@ -280,6 +355,55 @@ void UTGMiniMapWidget::UpdatePlayerMarkerPosition()
 	if (PlayerSlot)
 	{
 		PlayerSlot->SetPosition(MinimapPosition);
+	}
+}
+
+void UTGMiniMapWidget::UpdateMonsterMarkers()
+{
+	for (auto It = MonsterMarkerMap.CreateIterator(); It; ++It)
+	{
+		AActor* MonsterActor = It.Key();
+		UTextBlock* MonsterMarker = It.Value();
+
+		if (!IsValid(MonsterActor) || !IsValid(MonsterMarker))
+		{
+			if (IsValid(MonsterMarker))
+			{
+				MonsterMarker->RemoveFromParent();
+			}
+
+			It.RemoveCurrent();
+			continue;
+		}
+
+		const FVector MonsterWorldLocation = MonsterActor->GetActorLocation();
+		const FVector2D MinimapPosition = WorldLocationToMinimapPosition(MonsterWorldLocation);
+
+		UCanvasPanelSlot* MonsterSlot = Cast<UCanvasPanelSlot>(MonsterMarker->Slot);
+
+		if (MonsterSlot)
+		{
+			MonsterSlot->SetPosition(MinimapPosition);
+		}
+	}
+}
+
+void UTGMiniMapWidget::StartMonsterMarkerUpdateTimer()
+{
+	if (UWorld* World = GetWorld())
+	{
+		FTimerManager& TimerManager = World->GetTimerManager();
+
+		if (!TimerManager.IsTimerActive(MonsterMarkerUpdateTimerHandle))
+		{
+			TimerManager.SetTimer(
+				MonsterMarkerUpdateTimerHandle,
+				this,
+				&UTGMiniMapWidget::UpdateMonsterMarkers,
+				0.1f,
+				true
+			);
+		}
 	}
 }
 

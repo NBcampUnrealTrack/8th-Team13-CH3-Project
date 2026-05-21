@@ -165,6 +165,8 @@ void ATGWaveManager::SpawnNextEnemy()
 	if (ATGEnemyBase* SpawnedEnemy = Spawner ? Spawner->SpawnEnemy(EnemyClass) : nullptr){
 		AliveEnemyCount++;
 		SpawnedEnemy->OnEnemyRemoved.AddDynamic(this, &ATGWaveManager::HandleEnemyRemoved);
+		//미니맵 관련 몬스터 생성 Delegate
+		OnEnemySpawned.Broadcast(SpawnedEnemy);
 		PendingSpawnIndex++;
 	}
 }
@@ -240,6 +242,9 @@ void ATGWaveManager::HandleEnemyRemoved(ATGEnemyBase* RemoveEnemy)
 
 	RemoveEnemy->OnEnemyRemoved.RemoveDynamic(this, &ATGWaveManager::HandleEnemyRemoved);
 	AliveEnemyCount = FMath::Max(AliveEnemyCount - 1, 0);
+
+	//몬스터 제거 델리게이트
+	OnEnemyRemovedForMiniMap.Broadcast(RemoveEnemy);
 
 	// 마지막 Wave에서 모든 적이 제거 되었을 때 보스 생성
 	if (!HasNextWave() && !bIsSpawning && AliveEnemyCount == 0){

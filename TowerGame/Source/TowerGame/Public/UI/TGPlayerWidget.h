@@ -17,7 +17,7 @@ class UTextBlock;
 //미니맵 위젯 수정사항
 class UTGMiniMapWidget;
 class ATGGridBase;
-
+class AActor;
 /**
  *
  */
@@ -140,7 +140,8 @@ private:
 //미니맵 위젯
 public:
 	void SetGridBase(ATGGridBase* InGridBase);
-
+	void RegisterMonsterToMiniMap(AActor* MonsterActor);
+	void UnregisterMonsterFromMiniMap(AActor* MonsterActor);
 protected:
 	UPROPERTY(meta = (BindWidget))
 	UTGMiniMapWidget* MiniMapWidget;
