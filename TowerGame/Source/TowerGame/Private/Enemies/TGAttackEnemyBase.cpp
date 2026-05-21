@@ -116,6 +116,9 @@ void ATGAttackEnemyBase::StopPlayerAttack()
 
 void ATGAttackEnemyBase::AreaAttack()
 {
+	// 죽은 뒤 파괴 대기 시간 동안의 공격 실행 조기 종료
+	if (CurrentHP <= 0) return;
+
 	UWorld* World = GetWorld();
 	if (!World){
 		StopPlayerAttack();

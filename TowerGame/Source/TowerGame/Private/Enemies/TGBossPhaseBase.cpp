@@ -4,22 +4,54 @@
 #include "Enemies/TGBossPhaseBase.h"
 
 #include "Enemies/TGBossBase.h"
-#include "Kismet/GameplayStatics.h"
-#include "Particles/ParticleSystem.h"
+#include "Enemies/TGPatternBase.h"
 
 UTGBossPhaseBase::UTGBossPhaseBase() :
 	OwnerBoss(nullptr),
-	PatternInterval(3.f),
-	AttackSound(nullptr),
-	AttackSoundVolume(0.1f),
-	AttackEffect(nullptr),
-	AttackEffectScale(10.0f)
+	CurrentPattern(nullptr),
+	WarningDrawTime(1.5f),
+	PatternInterval(3.f)
 {
 }
 
 void UTGBossPhaseBase::Initialize(ATGBossBase* InOwnerBoss)
 {
 	OwnerBoss = InOwnerBoss;
+
+	CreatePatterns();
+}
+
+void UTGBossPhaseBase::CreatePatterns()
+{
+	Patterns.Empty();
+
+	if (!OwnerBoss) return;
+
+	// pattern 생성하여 저장
+	for (const FTGBossPatternEntry& Entry: PatternEntries){
+		if (!Entry.PatternClass) continue;
+
+		UTGPatternBase* Pattern = NewObject<UTGPatternBase>(this, Entry.PatternClass);
+		if (!Pattern) continue;
+
+		Pattern->Initialize(
+			this,
+			OwnerBoss,
+			Entry.WarningRadius,
+			Entry.AttackDamage,
+			Entry.AttackEffectScale
+		);
+
+		Patterns.Add(Pattern);
+	}
+}
+
+void UTGBossPhaseBase::ExecuteDelayedAttack()
+{
+	if (!CurrentPattern) return;
+
+	CurrentPattern->ExecuteAttack();
+	CurrentPattern = nullptr;
 }
 
 void UTGBossPhaseBase::EnterPhase()
@@ -64,6 +96,7 @@ void UTGBossPhaseBase::ExitPhase()
 	if (OwnerBoss){
 		if (UWorld* World = OwnerBoss->GetWorld()){
 			World->GetTimerManager().ClearTimer(PatternTimerHandle);
+			World->GetTimerManager().ClearTimer(AttackDelayTimerHandle);
 		}
 	}
 
@@ -72,7 +105,29 @@ void UTGBossPhaseBase::ExitPhase()
 
 void UTGBossPhaseBase::ExecutePattern()
 {
-	UE_LOG(LogTemp, Log, TEXT("%s ExecutePattern"), *GetName());
+	if (!OwnerBoss || Patterns.IsEmpty()) return;
+
+	UWorld* World = OwnerBoss->GetWorld();
+	if (!World) return;
+
+	// 임시로 현재 패턴을 첫번째 패턴으로 고정
+	CurrentPattern = Patterns[0];
+
+	if (!CurrentPattern) return;
+
+	// 공격 위치 전달 및 공격 범위 표시
+	CurrentPattern->GetAttackLocation();
+	CurrentPattern->DrawWarning(WarningDrawTime);
+
+	World->GetTimerManager().ClearTimer(AttackDelayTimerHandle);
+	World->GetTimerManager().SetTimer(
+		AttackDelayTimerHandle,
+		this,
+		&UTGBossPhaseBase::ExecuteDelayedAttack,
+		WarningDrawTime,
+		false
+	);
+
 }
 
 FTGBossBreakablePartData* UTGBossPhaseBase::FindBreakablePart(FName PartTag)
@@ -93,26 +148,4 @@ void UTGBossPhaseBase::RemoveBreakablePart(FName PartTag)
 	{
 		return Part.PartTag == PartTag;
 	});
-}
-
-void UTGBossPhaseBase::PlayAttackSoundAtLocation(const FVector& Location) const
-{
-	if (!OwnerBoss || !AttackSound) return;
-
-	UGameplayStatics::PlaySoundAtLocation(
-		OwnerBoss, AttackSound, Location, AttackSoundVolume);
-}
-
-void UTGBossPhaseBase::SpawnAttackEffectAtLocation(const FVector& Location) const
-{
-	if (!OwnerBoss || !AttackEffect) return;
-
-	// Effect 생성 (UParticleSystem)
-	UGameplayStatics::SpawnEmitterAtLocation(
-		OwnerBoss,
-		AttackEffect,
-		Location,
-		FRotator::ZeroRotator,
-		FVector(AttackEffectScale)
-	);
 }

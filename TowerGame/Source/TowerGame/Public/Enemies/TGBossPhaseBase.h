@@ -6,9 +6,29 @@
 #include "UObject/NoExportTypes.h"
 #include "TGBossPhaseBase.generated.h"
 
+class UTGPatternBase;
 class ATGBossBase;
-class UParticleSystem;
-class USoundBase;
+
+USTRUCT(BlueprintType)
+struct FTGBossPatternEntry
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Pattern")
+	FName LinkedPartTag = NAME_None;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Pattern")
+	TSubclassOf<UTGPatternBase> PatternClass = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Pattern")
+	float WarningRadius = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Pattern")
+	float AttackDamage = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Pattern")
+	float AttackEffectScale = 1.f;
+};
 
 USTRUCT(BlueprintType)
 struct FTGBossBreakablePartData
@@ -48,13 +68,32 @@ public:
 	FTGBossBreakablePartData* FindBreakablePart(FName PartTag);
 	void RemoveBreakablePart(FName PartTag);
 
-	void PlayAttackSoundAtLocation(const FVector& Location) const;
-	void SpawnAttackEffectAtLocation(const FVector& Location) const;
-
 protected:
+	void CreatePatterns();
+	void ExecuteDelayedAttack();
+
 	// 이 Phase를 소유하고 실행하는 Boss.
 	UPROPERTY()
 	TObjectPtr<ATGBossBase> OwnerBoss;
+
+	// Phase의 Pattern
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Pattern")
+	TArray<FTGBossPatternEntry> PatternEntries;
+
+	// PatternEntries를 기반으로 생성된 실제 런타임 Pattern 객체들
+	UPROPERTY()
+	TArray<TObjectPtr<UTGPatternBase>> Patterns;
+
+	// 현재 경고 표시 후 공격 대기 중인 Pattern
+	UPROPERTY()
+	TObjectPtr<UTGPatternBase> CurrentPattern;
+
+	// 경고 후 실제 공격 실행 타이머
+	FTimerHandle AttackDelayTimerHandle;
+
+	// 경고 표시 유지 시간
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Pattern")
+	float WarningDrawTime;
 
 	// Phase 진입 후 ExecutePattern을 반복 호출하는 간격.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Pattern")
@@ -67,16 +106,4 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Part")
 	TArray<FTGBossBreakablePartData> BreakableParts;
 
-	// 공격 Sound
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Pattern|Sound")
-	TObjectPtr<USoundBase> AttackSound;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Pattern|Sound", meta = (ClampMin = "0.0"))
-	float AttackSoundVolume;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Effect")
-	TObjectPtr<UParticleSystem> AttackEffect;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Effect")
-	float AttackEffectScale;
 };
