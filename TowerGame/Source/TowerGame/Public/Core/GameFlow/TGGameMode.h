@@ -4,6 +4,7 @@
 #include "GameFramework/GameMode.h"
 #include "TGGameFlowState.h"
 #include "BaseTower/TGTurretType.h"
+#include "Engine/StreamableManager.h"
 #include "TGGameMode.generated.h"
 
 class USoundBase;
@@ -33,6 +34,13 @@ protected:
 	// 플레이 배경음 에셋
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BGM")
 	USoundBase* GameBGM;
+
+	// 레벨 로드 시 미리 로드할 에셋 목록
+	UPROPERTY(EditAnywhere, Category = "Preload")
+	TArray<TSoftObjectPtr<UObject>> PreloadAssets;
+
+	// 로드 핸들 — 멤버로 유지해야 에셋이 GC되지 않음
+	TSharedPtr<FStreamableHandle> PreloadHandle;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TowerGame")
 	TMap<ETGTurretType, TSubclassOf<ATGMountedTower>> TowerMap;
