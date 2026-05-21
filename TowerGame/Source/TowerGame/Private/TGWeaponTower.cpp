@@ -4,10 +4,19 @@
 #include "DrawDebugHelpers.h"
 #include "Enemies/TGEnemyBase.h"
 #include "Enemies/TGWaveManager.h"
+#include "Components/SceneComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystem.h"
 
 ATGWeaponTower::ATGWeaponTower()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	MuzzlePoint1 = CreateDefaultSubobject<USceneComponent>(TEXT("MuzzlePoint1"));
+	MuzzlePoint1->SetupAttachment(WeaponMesh);
+
+	MuzzlePoint2 = CreateDefaultSubobject<USceneComponent>(TEXT("MuzzlePoint2"));
+	MuzzlePoint2->SetupAttachment(WeaponMesh);
 
 	//	기본적으로 인터랙션을 끕니다
 	SetInteractionEnabled(false);
@@ -25,9 +34,13 @@ void ATGWeaponTower::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	//	적 탐지
-	DetectingEnemy();
 	AttackTarget(DeltaTime);
+
+	//	딜레이가 끝났을 때만 적 탐지 (공격 후 쿨다운 중에는 추적 안 함)
+	if (AttackPrepareTime <= DamageInterval / 2.f)
+	{
+		DetectingEnemy();
+	}
 
 	//	사거리 그려줄 디버그스피어
 	//DrawDebugSphere(GetWorld(), GetActorLocation(), AttackRange, 16, FColor::Green);
@@ -39,6 +52,8 @@ void ATGWeaponTower::AttackTarget(float& DeltaTime)
 	if (AttackPrepareTime > 0.0f)	return;
 	if (Target == nullptr)	return;
 
+	SpawnFireEffect();
+
 	UGameplayStatics::ApplyDamage(
 		Target,
 		AttackDamage,
@@ -47,6 +62,29 @@ void ATGWeaponTower::AttackTarget(float& DeltaTime)
 		UDamageType::StaticClass()
 	);
 	AttackPrepareTime = DamageInterval;
+	Target = nullptr;
+}
+
+void ATGWeaponTower::SpawnFireEffect()
+{
+	USceneComponent* Muzzle = (CurrentMuzzleIndex == 0) ? MuzzlePoint1 : MuzzlePoint2;
+	CurrentMuzzleIndex = 1 - CurrentMuzzleIndex;
+
+	if (FireEffect)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			FireEffect,
+			Muzzle->GetComponentLocation(),
+			Muzzle->GetComponentRotation(),
+			FVector(FireEffectScale)
+		);
+	}
+
+	if (FireSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, FireSound, Muzzle->GetComponentLocation(), FireSoundVolume);
+	}
 }
 
 void ATGWeaponTower::StartAttack()
