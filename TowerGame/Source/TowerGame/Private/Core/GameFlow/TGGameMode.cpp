@@ -13,6 +13,11 @@ void ATGGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (GameBGM)
+	{
+		UGameplayStatics::SpawnSound2D(this, GameBGM);
+	}
+
 	StartGameFlow();
 
 	//CachedCore = Cast<ATGCoreBase>(UGameplayStatics::GetActorOfClass(this, ATGCoreBase::StaticClass()));

@@ -2,16 +2,27 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "GameFramework/PlayerController.h"
+#include "Components/AudioComponent.h"
 
 void ATGMenuGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 
 	UE_LOG(LogTemp, Warning, TEXT("MenuGameMode BeginPlay"));
+
+	if (MenuBGM)
+	{
+		BGMComp = UGameplayStatics::SpawnSound2D(this, MenuBGM);
+	}
 }
 
 void ATGMenuGameMode::StartGame()
 {
+	if (BGMComp)
+	{
+		BGMComp->Stop();
+	}
+
 	UGameplayStatics::OpenLevel(this, FName(TEXT("L_Stage01")));
 }
 

@@ -6,6 +6,8 @@
 #include "BaseTower/TGTurretType.h"
 #include "TGGameMode.generated.h"
 
+class USoundBase;
+
 //class ATGCoreBase;
 
 class ATGMountedTower;
@@ -27,6 +29,10 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Flow")
 	float SetWaveStartTime;
+
+	// 플레이 배경음 에셋
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BGM")
+	USoundBase* GameBGM;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TowerGame")
 	TMap<ETGTurretType, TSubclassOf<ATGMountedTower>> TowerMap;
