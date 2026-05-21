@@ -7,6 +7,8 @@
 #include "TGBossPhaseBase.generated.h"
 
 class ATGBossBase;
+class UParticleSystem;
+class USoundBase;
 
 USTRUCT(BlueprintType)
 struct FTGBossBreakablePartData
@@ -47,6 +49,7 @@ public:
 	void RemoveBreakablePart(FName PartTag);
 
 	void PlayAttackSoundAtLocation(const FVector& Location) const;
+	void SpawnAttackEffectAtLocation(const FVector& Location) const;
 
 protected:
 	// 이 Phase를 소유하고 실행하는 Boss.
@@ -70,4 +73,10 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Pattern|Sound", meta = (ClampMin = "0.0"))
 	float AttackSoundVolume;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Effect")
+	TObjectPtr<UParticleSystem> AttackEffect;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Effect")
+	float AttackEffectScale;
 };
