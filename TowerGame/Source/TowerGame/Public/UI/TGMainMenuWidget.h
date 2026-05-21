@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Animation/WidgetAnimation.h"
 #include "Blueprint/UserWidget.h"
 #include "TGMainMenuWidget.generated.h"
 
@@ -37,9 +38,8 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> GuideImage;
 
-	// 가이드 화면 전체 클릭용 투명 버튼
-	//UPROPERTY(meta = (BindWidget))
-	//TObjectPtr<UButton> GuideClickButton;
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UWidget> LoadingPanel;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UButton> PrevGuideButton;
@@ -67,6 +67,9 @@ protected:
 	int32 CurrentGuideIndex = 0;
 
 	TArray<TObjectPtr<UTextBlock>> GuideDotTexts;
+
+	UPROPERTY(Transient, meta = (BindWidgetAnim))
+	UWidgetAnimation* Anim_LoadingSpin;
 
 	UFUNCTION()
 	void HandleStartClicked();
@@ -96,4 +99,7 @@ protected:
 	void RebuildGuideDots();
 	void UpdateGuideDots();
 	void UpdateGuideButton();
+
+	void ShowLoading();
+	void OpenStageAfterLoading();
 };
