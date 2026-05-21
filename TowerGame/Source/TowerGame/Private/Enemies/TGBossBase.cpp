@@ -8,6 +8,7 @@
 #include "Enemies/TGBossPhaseBase.h"
 #include "Engine/DamageEvents.h"
 #include "Kismet/GameplayStatics.h"
+#include "Particles/ParticleSystem.h"
 #include "Player/TGPlayer.h"
 
 ATGBossBase::ATGBossBase() :
@@ -23,6 +24,8 @@ ATGBossBase::ATGBossBase() :
 	PartBreakSound(nullptr),
 	DeathSound(nullptr),
 	SoundVolume(0.2f),
+	PartBreakEffect(nullptr),
+	EffectScale(1.0f),
 	TargetPlayer(nullptr)
 {
 	PrimaryActorTick.bCanEverTick = false;
@@ -264,7 +267,7 @@ void ATGBossBase::DestroyBreakableParts(FName PartTag)
 	TArray<UStaticMeshComponent*> StaticMeshComponents;
 	GetComponents<UStaticMeshComponent>(StaticMeshComponents);
 
-	bool bPlayedPartBreakSound = false;
+	bool bPlayedPartBreak = false;
 
 	for (UStaticMeshComponent* StaticMesh: StaticMeshComponents){
 		// 태그가 일치하는 컴포넌트만 필터링
@@ -294,10 +297,23 @@ void ATGBossBase::DestroyBreakableParts(FName PartTag)
 		));
 
 		// 폭발 사운드(1회)
-		if (!bPlayedPartBreakSound && PartBreakSound){
-			UGameplayStatics::PlaySoundAtLocation(
-				this, PartBreakSound, GetActorLocation(), SoundVolume);
-			bPlayedPartBreakSound = true;
+		if (!bPlayedPartBreak){
+			if (PartBreakSound){
+				UGameplayStatics::PlaySoundAtLocation(
+					this, PartBreakSound, StaticMesh->GetComponentLocation(), SoundVolume);
+			}
+
+			if (PartBreakEffect){
+				UGameplayStatics::SpawnEmitterAtLocation(
+					this,
+					PartBreakEffect,
+					StaticMesh->GetComponentLocation(),
+					StaticMesh->GetComponentRotation(),
+					FVector(EffectScale)
+				);
+			}
+
+			bPlayedPartBreak = true;
 		}
 
 		FTimerHandle DestroyPartTimerHandle;

@@ -5,8 +5,11 @@
 
 #include "EngineUtils.h"
 #include "NavigationSystem.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "BaseTower/TGBaseTower.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "Core/GameFlow/TGGameMode.h"
 #include "Enemies/TGCoreBase.h"
 #include "Enemies/TGEnemyAIController.h"
@@ -27,6 +30,10 @@ ATGEnemyBase::ATGEnemyBase() :
 	StructureAttackSound(nullptr),
 	DeathSound(nullptr),
 	SoundVolume(0.1f),
+	StructureAttackEffect(nullptr),
+	EffectScale(100.0f),
+	DeathEffect(nullptr),
+	DeathEffectScale(1.0f),
 	MaxHP(1),
 	CurrentHP(MaxHP),
 	NavigationHeightOffset(FVector::ZeroVector),
@@ -311,6 +318,33 @@ void ATGEnemyBase::AttackStructureTarget()
 		UGameplayStatics::PlaySoundAtLocation(
 			this, StructureAttackSound, GetActorLocation(), SoundVolume);
 	}
+
+	// Effect 생성
+	if (StructureAttackEffect){
+		USceneComponent* AttachComponent = FindTargetEffectAttachComponent(CurrentStructureTarget);
+		if (!AttachComponent) return;
+
+		// 이펙트 생성 위치 계산
+		UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(AttachComponent);
+		const FVector EffectLocation = PrimitiveComponent
+			? GetRandomCollisionSurfaceLocation(PrimitiveComponent)
+			: AttachComponent->GetComponentLocation();
+
+		// NiagaraEffect 생성
+		UNiagaraComponent* NiagaraComp = UNiagaraFunctionLibrary::SpawnSystemAttached(
+			StructureAttackEffect,
+			AttachComponent,
+			NAME_None,
+			EffectLocation,
+			FRotator::ZeroRotator,
+			EAttachLocation::KeepWorldPosition,
+			true
+		);
+
+		if (NiagaraComp){
+			NiagaraComp->SetWorldScale3D(FVector(EffectScale));
+		}
+	}
 }
 
 void ATGEnemyBase::HandleMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result)
@@ -389,6 +423,53 @@ bool ATGEnemyBase::IsStructureTargetInAttackRange(const AActor* Target) const
 	return FVector::Dist2D(GetActorLocation(), Target->GetActorLocation()) < StructureAttackRange;
 }
 
+USceneComponent* ATGEnemyBase::FindTargetEffectAttachComponent(AActor* Target) const
+{
+	if (!Target) return nullptr;
+
+	USceneComponent* TargetRootComponent = Target->GetRootComponent();
+	if (!TargetRootComponent) return nullptr;
+
+	// SceneRoot 바로 아래 자식만 확인한다. 그 아래 손자 Mesh들은 이펙트 대상에서 제외한다.
+	for (USceneComponent* ChildComponent : TargetRootComponent->GetAttachChildren()){
+		UStaticMeshComponent* StaticMeshComponent = Cast<UStaticMeshComponent>(ChildComponent);
+		if (StaticMeshComponent && StaticMeshComponent->GetStaticMesh()){
+			return StaticMeshComponent;
+		}
+	}
+
+	// StaticMeshComponent가 없는 경우
+	return TargetRootComponent;
+}
+
+FVector ATGEnemyBase::GetRandomCollisionSurfaceLocation(UPrimitiveComponent* Component) const
+{
+	if (!Component) return FVector::ZeroVector;
+
+	// Component의 월드 기준 Bounds 정보를 가져온다.
+	const FBoxSphereBounds Bounds = Component->Bounds;
+	const FVector Origin = Bounds.Origin;
+	const FVector Extent = Bounds.BoxExtent;
+
+	// Bounds 박스 내부에서 임의의 월드 위치를 하나 뽑는다.
+	const FVector RandomPoint(
+		FMath::FRandRange(Origin.X - Extent.X, Origin.X + Extent.X),
+		FMath::FRandRange(Origin.Y - Extent.Y, Origin.Y + Extent.Y),
+		FMath::FRandRange(Origin.Z - Extent.Z, Origin.Z + Extent.Z)
+	);
+
+	FVector ClosestPoint = RandomPoint;
+	// RandomPoint에서 가장 가까운 Collision 표면 위치를 찾는다.
+	const float Distance = Component->GetClosestPointOnCollision(RandomPoint, ClosestPoint);
+	// 유효한 표면 위치를 찾은 경우
+	if (Distance >= 0.f){
+		return ClosestPoint;
+	}
+
+	// Collision 표면 계산에 실패 -> 컴포넌트 중심 위치
+	return Component->GetComponentLocation();
+}
+
 bool ATGEnemyBase::MoveToBlockingBuilding()
 {
 	CurrentStructureTarget = nullptr;
@@ -462,7 +543,7 @@ bool ATGEnemyBase::TryMoveToAttackRangeOfBuilding(ABaseTower* Building)
 }
 
 void ATGEnemyBase::DestroyUnit()
-{	//	사망을 이 함수로 대체해야합니다.
+{
 	StopStructureAttack();
 
 	// NavigationManger 등록 해제
@@ -494,6 +575,15 @@ void ATGEnemyBase::DestroyUnit()
 	}
 
 	//	파괴 이펙트 출력
+	if (DeathEffect){
+		UGameplayStatics::SpawnEmitterAtLocation(
+			this,
+			DeathEffect,
+			GetActorLocation(),
+			GetActorRotation(),
+			FVector(DeathEffectScale)
+		);
+	}
 
 	SetLifeSpan(5.0f);
 }

@@ -5,12 +5,15 @@
 
 #include "Enemies/TGBossBase.h"
 #include "Kismet/GameplayStatics.h"
+#include "Particles/ParticleSystem.h"
 
 UTGBossPhaseBase::UTGBossPhaseBase() :
 	OwnerBoss(nullptr),
 	PatternInterval(3.f),
 	AttackSound(nullptr),
-	AttackSoundVolume(0.1f)
+	AttackSoundVolume(0.1f),
+	AttackEffect(nullptr),
+	AttackEffectScale(10.0f)
 {
 }
 
@@ -98,4 +101,18 @@ void UTGBossPhaseBase::PlayAttackSoundAtLocation(const FVector& Location) const
 
 	UGameplayStatics::PlaySoundAtLocation(
 		OwnerBoss, AttackSound, Location, AttackSoundVolume);
+}
+
+void UTGBossPhaseBase::SpawnAttackEffectAtLocation(const FVector& Location) const
+{
+	if (!OwnerBoss || !AttackEffect) return;
+
+	// Effect 생성 (UParticleSystem)
+	UGameplayStatics::SpawnEmitterAtLocation(
+		OwnerBoss,
+		AttackEffect,
+		Location,
+		FRotator::ZeroRotator,
+		FVector(AttackEffectScale)
+	);
 }

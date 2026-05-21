@@ -10,6 +10,10 @@
 class ABaseTower;
 struct FAIRequestID;
 class ATGNavigationManager;
+class UNiagaraSystem;
+class USoundBase;
+class UPrimitiveComponent;
+class USceneComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnEnemyHpChanged, float, CurrentHP, float, MaxHP);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEnemyRemoved, ATGEnemyBase*, RemovedEnemy);
@@ -102,6 +106,19 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Sound")
 	float SoundVolume;
 
+	// Effect
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy|Effect")
+	TObjectPtr<UNiagaraSystem> StructureAttackEffect;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Effect")
+	float EffectScale;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy|Effect")
+	TObjectPtr<UParticleSystem> DeathEffect;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Effect")
+	float DeathEffectScale;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Stat")
 	float MaxHP;
 
@@ -130,6 +147,10 @@ protected:
 	bool IsStructureTargetInAttackRange(const AActor* Target) const;
 
 private:
+	// Structure 공격 이펙트 위치 계산
+	USceneComponent* FindTargetEffectAttachComponent(AActor* Target) const;
+	FVector GetRandomCollisionSurfaceLocation(UPrimitiveComponent* Component) const;
+
 	// 가까운 건물 반환 추후 우선도 고려
 	bool MoveToBlockingBuilding();
 	bool TryMoveToAttackRangeOfBuilding(ABaseTower* Building);

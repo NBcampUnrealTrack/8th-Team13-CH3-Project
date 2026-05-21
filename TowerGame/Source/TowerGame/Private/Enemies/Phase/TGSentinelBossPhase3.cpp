@@ -7,6 +7,7 @@
 #include "Enemies/TGBossBase.h"
 #include "Enemies/TGCoreBase.h"
 #include "Kismet/GameplayStatics.h"
+#include "Particles/ParticleSystem.h"
 #include "Player/TGPlayer.h"
 
 UTGSentinelBossPhase3::UTGSentinelBossPhase3() :
@@ -19,6 +20,14 @@ UTGSentinelBossPhase3::UTGSentinelBossPhase3() :
 	static ConstructorHelpers::FObjectFinder<USoundBase> AttackSoundAsset(TEXT("/Game/Enemies/Sound/Enemy_Shot_00.Enemy_Shot_00"));
 	if (AttackSoundAsset.Succeeded()){
 		AttackSound = AttackSoundAsset.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UParticleSystem> AttackEffectAsset(
+		TEXT("/Game/Particle/P_Explosion.P_Explosion")
+	);
+
+	if (AttackEffectAsset.Succeeded()){
+		AttackEffect = AttackEffectAsset.Object;
 	}
 }
 
@@ -96,6 +105,7 @@ void UTGSentinelBossPhase3::ExecuteDelayedAttack()
 	);
 
 	PlayAttackSoundAtLocation(PendingAttackLocation);
+	SpawnAttackEffectAtLocation(PendingAttackLocation);
 
 	for (AActor* OverlapActor : OverlapActors){
 		if (!OverlapActor) continue;

@@ -8,6 +8,8 @@
 
 class ATGPlayer;
 class UTGBossPhaseBase;
+class UParticleSystem;
+class USoundBase;
 
 // 보스 체력, 삭제 이벤트
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnBossHpChanged, float, CurrentHP, float, MaxHP);
@@ -141,6 +143,13 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Sound")
 	float SoundVolume;
+
+	// 부위 파괴 Effect
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Effect")
+	TObjectPtr<UParticleSystem> PartBreakEffect;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Effect")
+	float EffectScale;
 
 
 	// 싱글 플레이 기준 Boss가 공격 대상으로 사용할 Player.
