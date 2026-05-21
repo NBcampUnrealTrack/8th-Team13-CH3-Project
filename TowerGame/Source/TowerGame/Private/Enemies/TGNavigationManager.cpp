@@ -41,6 +41,11 @@ void ATGNavigationManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		Instance.Reset();
 	}
 
+	if (UNavigationSystemV1* NavigationSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld())){
+		NavigationSystem->OnNavigationGenerationFinishedDelegate.RemoveDynamic(
+			this, &ATGNavigationManager::HandleNavigationGenerationFinished);
+	}
+
 	Super::EndPlay(EndPlayReason);
 }
 

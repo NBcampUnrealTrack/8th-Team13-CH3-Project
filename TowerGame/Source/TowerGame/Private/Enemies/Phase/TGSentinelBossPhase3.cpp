@@ -16,6 +16,10 @@ UTGSentinelBossPhase3::UTGSentinelBossPhase3() :
 	AttackDamage(20.f),
 	PendingAttackLocation(FVector::ZeroVector)
 {
+	static ConstructorHelpers::FObjectFinder<USoundBase> AttackSoundAsset(TEXT("/Game/Enemies/Sound/Enemy_Shot_00.Enemy_Shot_00"));
+	if (AttackSoundAsset.Succeeded()){
+		AttackSound = AttackSoundAsset.Object;
+	}
 }
 
 void UTGSentinelBossPhase3::EnterPhase()
@@ -90,6 +94,8 @@ void UTGSentinelBossPhase3::ExecuteDelayedAttack()
 		IgnoreActors,
 		OverlapActors
 	);
+
+	PlayAttackSoundAtLocation(PendingAttackLocation);
 
 	for (AActor* OverlapActor : OverlapActors){
 		if (!OverlapActor) continue;

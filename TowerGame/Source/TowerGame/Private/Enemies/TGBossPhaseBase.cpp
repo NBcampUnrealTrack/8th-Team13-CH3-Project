@@ -4,10 +4,13 @@
 #include "Enemies/TGBossPhaseBase.h"
 
 #include "Enemies/TGBossBase.h"
+#include "Kismet/GameplayStatics.h"
 
 UTGBossPhaseBase::UTGBossPhaseBase() :
 	OwnerBoss(nullptr),
-	PatternInterval(3.f)
+	PatternInterval(3.f),
+	AttackSound(nullptr),
+	AttackSoundVolume(0.1f)
 {
 }
 
@@ -87,4 +90,12 @@ void UTGBossPhaseBase::RemoveBreakablePart(FName PartTag)
 	{
 		return Part.PartTag == PartTag;
 	});
+}
+
+void UTGBossPhaseBase::PlayAttackSoundAtLocation(const FVector& Location) const
+{
+	if (!OwnerBoss || !AttackSound) return;
+
+	UGameplayStatics::PlaySoundAtLocation(
+		OwnerBoss, AttackSound, Location, AttackSoundVolume);
 }

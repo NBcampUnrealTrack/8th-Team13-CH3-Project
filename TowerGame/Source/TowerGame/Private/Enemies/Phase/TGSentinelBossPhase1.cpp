@@ -30,6 +30,11 @@ UTGSentinelBossPhase1::UTGSentinelBossPhase1() :
 	RightArmPart.HPRatio = 0.1f;
 	RightArmPart.DestroyBonusDamageRatio = 0.05f;
 	BreakableParts.Add(RightArmPart);
+
+	static ConstructorHelpers::FObjectFinder<USoundBase> AttackSoundAsset(TEXT("/Game/Enemies/Sound/Enemy_Shot_00.Enemy_Shot_00"));
+	if (AttackSoundAsset.Succeeded()){
+		AttackSound = AttackSoundAsset.Object;
+	}
 }
 
 void UTGSentinelBossPhase1::EnterPhase()
@@ -95,6 +100,7 @@ void UTGSentinelBossPhase1::ExecuteDelayedAttack()
 	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Pawn));
 	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldDynamic));
 
+	// 데미지를 줄 대상을 찾기 위한 Overlap Actor 탐색
 	UKismetSystemLibrary::SphereOverlapActors(
 		World,
 		PendingAttackLocation,
@@ -104,6 +110,8 @@ void UTGSentinelBossPhase1::ExecuteDelayedAttack()
 		IgnoreActors,
 		OverlapActors
 	);
+
+	PlayAttackSoundAtLocation(PendingAttackLocation);
 
 	for (AActor* OverlapActor : OverlapActors){
 		if (!OverlapActor) continue;

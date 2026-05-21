@@ -20,6 +20,9 @@ ATGBossBase::ATGBossBase() :
 	PartsLifeSpan(3.f),
 	ExplodeRadius(100.f),
 	ExplodeForce(50.f),
+	PartBreakSound(nullptr),
+	DeathSound(nullptr),
+	SoundVolume(0.2f),
 	TargetPlayer(nullptr)
 {
 	PrimaryActorTick.bCanEverTick = false;
@@ -197,6 +200,16 @@ void ATGBossBase::ApplyBossDamage(float DamageAmount)
 		if (ATGGameMode* GameMode = Cast<ATGGameMode>(UGameplayStatics::GetGameMode(this))){
 			GameMode->HandleGameClear();
 		}
+
+		if (DeathSound){
+			UGameplayStatics::PlaySoundAtLocation(
+				this,
+				DeathSound,
+				GetActorLocation(),
+				SoundVolume
+			);
+		}
+
 		Destroy();
 	}
 }
@@ -251,6 +264,8 @@ void ATGBossBase::DestroyBreakableParts(FName PartTag)
 	TArray<UStaticMeshComponent*> StaticMeshComponents;
 	GetComponents<UStaticMeshComponent>(StaticMeshComponents);
 
+	bool bPlayedPartBreakSound = false;
+
 	for (UStaticMeshComponent* StaticMesh: StaticMeshComponents){
 		// 태그가 일치하는 컴포넌트만 필터링
 		if (!StaticMesh || !StaticMesh->ComponentHasTag(PartTag)) continue;
@@ -277,6 +292,13 @@ void ATGBossBase::DestroyBreakableParts(FName PartTag)
 			FMath::FRandRange(-180.f,180.f),
 			FMath::FRandRange(-180.f,180.f)
 		));
+
+		// 폭발 사운드(1회)
+		if (!bPlayedPartBreakSound && PartBreakSound){
+			UGameplayStatics::PlaySoundAtLocation(
+				this, PartBreakSound, GetActorLocation(), SoundVolume);
+			bPlayedPartBreakSound = true;
+		}
 
 		FTimerHandle DestroyPartTimerHandle;
 		FTimerDelegate DestroyPartDelegate;
@@ -316,7 +338,6 @@ void ATGBossBase::DestroyDetachedPartComponent()
 
 	// Set -> Array
 	TArray<FName> PartTags = ActiveBreakablePartTags.Array();
-
 
 	for (const FName& PartTag : PartTags){
 		FTGBossBreakablePartData* PartData = CurrentPhase->FindBreakablePart(PartTag);

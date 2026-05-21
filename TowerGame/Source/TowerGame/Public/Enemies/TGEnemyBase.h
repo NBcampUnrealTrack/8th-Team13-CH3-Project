@@ -92,6 +92,16 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Attack", meta = (ClampMin = "50.0"))
 	float StructureAttackRange;
 
+	// Sound
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy|Sound")
+	TObjectPtr<USoundBase> StructureAttackSound;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy|Sound")
+	TObjectPtr<USoundBase> DeathSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Sound")
+	float SoundVolume;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Stat")
 	float MaxHP;
 

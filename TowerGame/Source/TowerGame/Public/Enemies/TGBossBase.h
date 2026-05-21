@@ -132,6 +132,17 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Part")
 	float ExplodeForce;
 
+	// 부위 파괴, 제거 Sound
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Sound")
+	TObjectPtr<USoundBase> PartBreakSound;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Sound")
+	TObjectPtr<USoundBase> DeathSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Sound")
+	float SoundVolume;
+
+
 	// 싱글 플레이 기준 Boss가 공격 대상으로 사용할 Player.
 	UPROPERTY()
 	TObjectPtr<ATGPlayer> TargetPlayer;

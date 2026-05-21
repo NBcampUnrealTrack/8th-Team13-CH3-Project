@@ -24,6 +24,9 @@ ATGEnemyBase::ATGEnemyBase() :
 	StructureAttackDamage(0),
 	StructureAttackInterval(0.5f),
 	StructureAttackRange(200),
+	StructureAttackSound(nullptr),
+	DeathSound(nullptr),
+	SoundVolume(0.1f),
 	MaxHP(1),
 	CurrentHP(MaxHP),
 	NavigationHeightOffset(FVector::ZeroVector),
@@ -302,6 +305,12 @@ void ATGEnemyBase::AttackStructureTarget()
 		this,
 		nullptr
 	);
+
+	// Sound 적용
+	if (StructureAttackSound){
+		UGameplayStatics::PlaySoundAtLocation(
+			this, StructureAttackSound, GetActorLocation(), SoundVolume);
+	}
 }
 
 void ATGEnemyBase::HandleMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result)
@@ -478,8 +487,13 @@ void ATGEnemyBase::DestroyUnit()
 			);
 	}
 
+	// Sound 출력
+	if (DeathSound){
+		UGameplayStatics::PlaySoundAtLocation(
+			this, DeathSound, GetActorLocation(), SoundVolume);
+	}
+
 	//	파괴 이펙트 출력
-	//	파괴 사운드 출력
 
 	SetLifeSpan(5.0f);
 }

@@ -46,6 +46,8 @@ public:
 	FTGBossBreakablePartData* FindBreakablePart(FName PartTag);
 	void RemoveBreakablePart(FName PartTag);
 
+	void PlayAttackSoundAtLocation(const FVector& Location) const;
+
 protected:
 	// 이 Phase를 소유하고 실행하는 Boss.
 	UPROPERTY()
@@ -61,4 +63,11 @@ protected:
 	// 파괴 가능한 파츠/부위
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Part")
 	TArray<FTGBossBreakablePartData> BreakableParts;
+
+	// 공격 Sound
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Pattern|Sound")
+	TObjectPtr<USoundBase> AttackSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Pattern|Sound", meta = (ClampMin = "0.0"))
+	float AttackSoundVolume;
 };
