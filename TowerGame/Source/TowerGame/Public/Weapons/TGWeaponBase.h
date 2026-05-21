@@ -48,8 +48,10 @@ public:
 		TObjectPtr<class UCurveVector> RecoilCurveLoc = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VisualEffects")	// 반동 회전커브
 		TObjectPtr<class UCurveVector> RecoilCurveRot = nullptr;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VisualEffects")
-	TObjectPtr<class UNiagaraSystem> BeamEffect = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VisualEffects")	// 반동 시 시점이동 스케일
+		float RecoilInputScale = 1.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VisualEffects")	// 빔 이펙트
+		TObjectPtr<class UNiagaraSystem> BeamEffect = nullptr;
 };
 
 USTRUCT(BlueprintType)

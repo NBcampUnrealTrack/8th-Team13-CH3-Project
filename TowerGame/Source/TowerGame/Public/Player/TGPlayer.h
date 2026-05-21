@@ -99,7 +99,7 @@ public:
 	void ApplySlowDebuff(float Duration);
 
 	// 총기반동 실행
-	void PlayRecoil(float ShotInterval);
+	void PlayRecoil(float ShotInterval, float RecoilInputScale);
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
 	TObjectPtr<class UCameraComponent> Camera;
@@ -145,6 +145,7 @@ protected:
 	FVector2D MoveDir;	// 현재 이동중인 방향, 정규화벡터
 	FVector CurrentRecoilLocScale;
 	FRotator CurrentRecoilRotScale;
+	float CurrentRecoilInputScale;
 	bool bBuildMode;	// 빌드모드
 	ETGTurretType SelectedTurretType = ETGTurretType::None;	// 숫자키로 선택한 타워 타입
 

@@ -51,7 +51,7 @@ void UTGWeaponSingleShot::Shoot(ATGPlayer* Instigator, class UMeshComponent* Wea
 
 	// 발포 이펙트
 	SpawnAttachedNiagaraEffects(status.Asset.FireParticle, WeaponComponent, MuzzlePos, status.Asset.FireParticleScale);
-	Instigator->PlayRecoil(status.ShotCoolTime);
+	Instigator->PlayRecoil(status.ShotCoolTime, status.Asset.RecoilInputScale);
 
 	LineTrace(MuzzlePos, Direction, Distance);
 	//	레이저 이펙트

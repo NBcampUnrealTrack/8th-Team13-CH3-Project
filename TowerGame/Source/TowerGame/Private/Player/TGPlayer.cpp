@@ -501,8 +501,8 @@ void ATGPlayer::OnAddRecoilWeaponOffset_Location(FVector Loc)
 void ATGPlayer::OnAddRecoilWeaponOffset_Rotation(FVector Rot)
 {
 	WeaponRotationOffset.Add(FRotator(Rot.X * CurrentRecoilRotScale.Pitch, Rot.Y * CurrentRecoilRotScale.Yaw, Rot.Z * CurrentRecoilRotScale.Roll));
-	AddControllerPitchInput(-Rot.X * CurrentRecoilRotScale.Pitch);
-	AddControllerYawInput(Rot.Y * CurrentRecoilRotScale.Yaw);
+	AddControllerPitchInput(-Rot.X * CurrentRecoilRotScale.Pitch * CurrentRecoilInputScale * GetWorld()->GetDeltaSeconds());
+	AddControllerYawInput(Rot.Y * CurrentRecoilRotScale.Yaw * CurrentRecoilInputScale * GetWorld()->GetDeltaSeconds());
 }
 
 void ATGPlayer::OwnWeapon(ETGWeaponTriggerType TriggerType, FName RowName, bool equip)
@@ -604,10 +604,11 @@ FString ATGPlayer::GetWeaponKey(ETGWeaponTriggerType TriggerType, FName WeaponNa
 	return FString::Printf(TEXT("%d_%s"), TriggerType, *WeaponName.ToString());
 }
 
-void ATGPlayer::PlayRecoil(float ShotInterval)
+void ATGPlayer::PlayRecoil(float ShotInterval, float RecoilInputScale)
 {
 	CurrentRecoilLocScale = FVector(FMath::RandRange(0.75f, 1.0f), FMath::RandRange(-1.0f, 1.0f), FMath::RandRange(0.75f, 1.0f));
 	CurrentRecoilRotScale = FRotator(FMath::RandRange(0.75f, 1.0f), FMath::RandRange(-1.0f, 1.0f), 0.f);
+	CurrentRecoilInputScale = RecoilInputScale;
 	RecoilTimelineComp->SetPlayRate(1.0f / ShotInterval);
 	RecoilTimelineComp->PlayFromStart();
 }

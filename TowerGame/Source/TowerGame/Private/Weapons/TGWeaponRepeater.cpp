@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Weapons/TGWeaponRepeater.h"
@@ -62,7 +62,7 @@ void UTGWeaponRepeater::Shoot(ATGPlayer* Instigator, class UMeshComponent* Weapo
 
 	// 발포 이펙트
 	SpawnAttachedNiagaraEffects(status.Asset.FireParticle, WeaponComponent, MuzzlePos, status.Asset.FireParticleScale);
-	Instigator->PlayRecoil(status.ShotInterval);
+	Instigator->PlayRecoil(status.ShotInterval, status.Asset.RecoilInputScale);
 
 	FVector SpreadDir = FMath::VRandCone(Direction, FMath::DegreesToRadians(FMath::Lerp(0.0f,status.MaxBulletSpread,(CurSpreadTime/status.MaxSpreadTime))));	//탄퍼짐 각도
 	LineTrace(MuzzlePos, SpreadDir, Distance);
