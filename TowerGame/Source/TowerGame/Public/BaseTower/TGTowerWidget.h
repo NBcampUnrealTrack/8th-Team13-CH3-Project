@@ -30,13 +30,24 @@ protected:
 	UTextBlock* UpgradeCostText;
 
 	// 공격 데미지 텍스트
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(meta = (BindWidgetOptional))
 	UTextBlock* DamageText;
 
 	// 공격 사거리 텍스트
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(meta = (BindWidgetOptional))
 	UTextBlock* RangeText;
-
+	// 버프타워용 텍스트
+	UPROPERTY(meta = (BindWidgetOptional))
+	UTextBlock* HealAmountText;
+	UPROPERTY(meta = (BindWidgetOptional))
+	UTextBlock* BuffRangeText;
+	UPROPERTY(meta = (BindWidgetOptional))
+	UTextBlock* HealIntervalText;
+	// 디버프타워용 텍스트
+	UPROPERTY(meta = (BindWidgetOptional))
+	UTextBlock* SlowRateText;
+	UPROPERTY(meta = (BindWidgetOptional))
+	UTextBlock* DebuffRangeText;
 	// 연결된 타워 참조
 	UPROPERTY()
 	ATGMountedTower* OwnerTower;
