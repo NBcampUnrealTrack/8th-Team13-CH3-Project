@@ -33,7 +33,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Offset")	// 위치 오프셋 (오차수정)
 		FVector LocationOffset = FVector::ZeroVector;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VisualEffects")	// 무기 UI이미지
-		UTexture2D* WeaponImage = nullptr;
+		TObjectPtr<UTexture2D> WeaponImage = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VisualEffects")	// 발포 이펙트
 		TObjectPtr<class UNiagaraSystem> FireParticle = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VisualEffects")	// 발포 이펙트 스케일

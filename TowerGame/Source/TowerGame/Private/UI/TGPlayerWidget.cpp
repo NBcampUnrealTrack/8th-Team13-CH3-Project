@@ -263,7 +263,7 @@ void UTGPlayerWidget::UpdateEvadeBar(int32 CurrentEvadeCount, float CooldownRate
 void UTGPlayerWidget::UpdateWeaponImage(UTGWeaponBase* Weapon)
 {
 	UMaterialInstanceDynamic* mat = WeaponImage->GetDynamicMaterial();
-	if (Weapon->GetAsset()->WeaponImage)
+	if (Weapon && Weapon->GetAsset()->WeaponImage)
 	{
 		WeaponImage->SetVisibility(ESlateVisibility::Visible);
 		mat->SetTextureParameterValue(TEXT("WeaponTex"), Weapon->GetAsset()->WeaponImage);
