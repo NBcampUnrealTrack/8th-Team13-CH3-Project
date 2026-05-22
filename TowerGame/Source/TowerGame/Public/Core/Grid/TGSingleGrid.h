@@ -1,8 +1,9 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BaseTower/TGTurretType.h"
 #include "TGInteractiveActor.h"
 #include "TGSingleGrid.generated.h"
 
@@ -31,6 +32,11 @@ public:
 	virtual void OnFocused_Implementation(ATGPlayer* Player) override;
 	virtual void OnUnfocused_Implementation(ATGPlayer* Player) override;
 	virtual void OnInteract_Implementation(ATGPlayer* Player) override;
+
+	// 미니맵 데이터 전달용 함수
+public:
+	UFUNCTION()
+	void HandleMountedTowerInstalled(ETGTurretType TurretType);
 protected:
 
 	virtual void BeginPlay() override;

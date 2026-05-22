@@ -144,6 +144,30 @@ FVector ATGGridBase::ConvertIndexToVector(FIntPoint Point)
 	);
 }
 
+inline TSubclassOf<ABaseTower> ATGGridBase::GetTowerClassOf()
+{
+	return TowerBaseClass;
+}
+
+void ATGGridBase::PlacingTower(FIntPoint Point, ETGTurretType TurretType)
+{
+	if (Point.X < 0 || Point.X >= GridX || Point.Y < 0 || Point.Y >= GridY)
+	{
+		return;
+	}
+
+	OnGridTowerPlaced.Broadcast(Point, TurretType);
+
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("GridBase: Tower Placed. X: %d, Y: %d, Type: %d"),
+		Point.X,
+		Point.Y,
+		static_cast<int32>(TurretType)
+	);
+}
+
 int ATGGridBase::GetGridX() const
 {
 	return GridX;

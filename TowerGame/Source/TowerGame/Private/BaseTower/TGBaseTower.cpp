@@ -169,5 +169,7 @@ void ABaseTower::OnInteract_Implementation(ATGPlayer* Player)
 		MountedTower->SetActorLocation(GetActorLocation() + (MountPoint->GetRelativeLocation() * GetActorRelativeScale3D().Z));
 		MountedTower->SetInteractionEnabled(true);
 		SetInteractionEnabled(false);
+
+		OnMountedTowerInstalled.Broadcast(SelectedTurretType);
 	}
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BaseTower/TGTurretType.h"
 #include "Blueprint/UserWidget.h"
 #include "TGMiniMapWidget.generated.h"
 
@@ -22,8 +23,12 @@ public:
 	void SetPlayerActor(AActor* InPlayerActor);
 
 	void RegisterMonsterActor(AActor* InMonsterActor);
+
 	void UnregisterMonsterActor(AActor* InMonsterActor);
+
 	void MarkWallAtGrid(const FIntPoint& GridPoint);
+
+	void MarkTowerAtGrid(const FIntPoint& GridPoint, ETGTurretType TurretType);
 protected:
 	virtual void NativeDestruct() override;
 
@@ -51,6 +56,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Minimap")
 	FVector2D MinimapSize = FVector2D(280.0f, 280.0f);
 	TMap<FIntPoint, UBorder*> TileWidgetMap;
+
+	UPROPERTY()
+	TMap<FIntPoint, UTextBlock*> TowerMarkerMap;
 private:
 	void BuildDebugMinimap();
 
@@ -70,4 +78,6 @@ private:
 	void StartMonsterMarkerUpdateTimer();
 
 	FVector2D WorldLocationToMinimapPosition(const FVector& WorldLocation) const;
+
+	FLinearColor GetTowerMarkerColor(ETGTurretType TurretType) const;
 };

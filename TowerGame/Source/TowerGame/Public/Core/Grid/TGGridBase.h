@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BaseTower/TGTurretType.h"
 #include "TGActorBase.h"
 #include "TGGridBase.generated.h"
 
@@ -12,15 +13,20 @@ class ATGEnemySpawner;
 class ATGSingleGrid;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTGGridBuildingPlaced, FIntPoint, GridPoint);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnTGGridTowerPlaced, FIntPoint, GridPoint, ETGTurretType, TurretType);
 
 UCLASS()
 class TOWERGAME_API ATGGridBase : public ATGActorBase
 {
 	GENERATED_BODY()
-	// 미니맵에 벽 건설시 발생할 델리게이트입니다.
+	// 미니맵에 벽 건설시 발생할 델리게이트
 public:
 	UPROPERTY(BlueprintAssignable, Category = "Grid")
 	FOnTGGridBuildingPlaced OnGridBuildingPlaced;
+	// 타워 건설시 발생할 델리게이트
+	UPROPERTY(BlueprintAssignable, Category = "Grid")
+	FOnTGGridTowerPlaced OnGridTowerPlaced;
+
 	//	월드에 배치되는 그리드 관리 클래스입니다.
 public:
 	ATGGridBase();
@@ -65,7 +71,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category="TowerGame|Grid")
 	FVector ConvertIndexToVector(FIntPoint Point);
 
-	TSubclassOf<ABaseTower> GetTowerClassOf()	{return TowerBaseClass;};
+	TSubclassOf<ABaseTower> GetTowerClassOf();
+
+	// 미니맵 타워 표시 이벤트 발생
+	void PlacingTower(FIntPoint Point, ETGTurretType TurretType);
 
 	int GetGridX() const;
 	int GetGridY() const;

@@ -9,6 +9,8 @@ class ATGMountedTower;
 class UNavModifierComponent;
 class UStaticMeshComponent;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTGMountedTowerInstalled, ETGTurretType, TurretType);
+
 UCLASS()
 class TOWERGAME_API ABaseTower : public ATGInteractiveActor
 {
@@ -17,6 +19,10 @@ class TOWERGAME_API ABaseTower : public ATGInteractiveActor
 public:
 	ABaseTower();
 	virtual void BeginPlay() override;
+
+	// 미니맵용 델리게이트
+	UPROPERTY(BlueprintAssignable, Category = "Tower")
+	FOnTGMountedTowerInstalled OnMountedTowerInstalled;
 
 	// 기본 메시 (몸통)
 	UPROPERTY(VisibleAnywhere, Category = "Tower|Base")

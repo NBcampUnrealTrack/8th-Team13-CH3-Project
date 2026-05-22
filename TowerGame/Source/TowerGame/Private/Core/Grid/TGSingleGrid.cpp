@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Core/Grid/TGSingleGrid.h"
@@ -111,11 +111,28 @@ void ATGSingleGrid::OnInteract_Implementation(ATGPlayer* Player)
 	}
 
 	PlacedTower->FinalizeInstallation();
+
+	// 미니맵 이벤트
+	PlacedTower->OnMountedTowerInstalled.AddUniqueDynamic(
+		this,
+		&ATGSingleGrid::HandleMountedTowerInstalled
+	);
+
 	bIsPlacedTower = true;
 	SetInteractionEnabled(false);
 	Visualizer->SetRenderCustomDepth(false);
 
 	GridBase->PlacingBuilding(MyPoint);
+}
+
+void ATGSingleGrid::HandleMountedTowerInstalled(ETGTurretType TurretType)
+{
+	if (!GridBase)
+	{
+		return;
+	}
+
+	GridBase->PlacingTower(MyPoint, TurretType);
 }
 
 void ATGSingleGrid::BeginPlay()

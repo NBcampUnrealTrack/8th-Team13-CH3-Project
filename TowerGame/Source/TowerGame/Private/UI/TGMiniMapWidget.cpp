@@ -306,6 +306,84 @@ void UTGMiniMapWidget::MarkWallAtGrid(const FIntPoint& GridPoint)
 	);
 }
 
+void UTGMiniMapWidget::MarkTowerAtGrid(const FIntPoint& GridPoint, ETGTurretType TurretType)
+{
+	if (!MarkerLayer)
+	{
+		return;
+	}
+
+	if (!IsValid(CachedGridBase))
+	{
+		return;
+	}
+
+	const FLinearColor MarkerColor = GetTowerMarkerColor(TurretType);
+
+	if (UTextBlock** ExistingMarker = TowerMarkerMap.Find(GridPoint))
+	{
+		if (*ExistingMarker)
+		{
+			(*ExistingMarker)->SetColorAndOpacity(FSlateColor(MarkerColor));
+		}
+
+		return;
+	}
+
+	const int32 GridX = CachedGridBase->GetGridX();
+	const int32 GridY = CachedGridBase->GetGridY();
+
+	if (GridX <= 0 || GridY <= 0)
+	{
+		return;
+	}
+
+	const float TileWidth = MinimapSize.X / GridX;
+	const float TileHeight = MinimapSize.Y / GridY;
+	const float MarkerSize = FMath::Min(TileWidth, TileHeight) * 1.f;
+
+	UTextBlock* TowerMarker = WidgetTree->ConstructWidget<UTextBlock>(
+		UTextBlock::StaticClass()
+	);
+
+	if (!TowerMarker)
+	{
+		return;
+	}
+
+	TowerMarker->SetText(FText::FromString(TEXT("◆")));
+	TowerMarker->SetColorAndOpacity(FSlateColor(MarkerColor));
+	TowerMarker->SetJustification(ETextJustify::Center);
+	TowerMarker->SetVisibility(ESlateVisibility::HitTestInvisible);
+
+	FSlateFontInfo TowerFont = TowerMarker->GetFont();
+	TowerFont.Size = FMath::Max(8, FMath::RoundToInt(MarkerSize));
+	TowerMarker->SetFont(TowerFont);
+
+	UCanvasPanelSlot* TowerSlot = MarkerLayer->AddChildToCanvas(TowerMarker);
+
+	if (TowerSlot)
+	{
+		const float CenterX = (GridPoint.X + 0.5f) * TileWidth;
+		const float CenterY = (GridPoint.Y + 0.5f) * TileHeight;
+
+		TowerSlot->SetPosition(FVector2D(CenterX, CenterY));
+		TowerSlot->SetSize(FVector2D(MarkerSize, MarkerSize));
+		TowerSlot->SetAlignment(FVector2D(0.5f, 0.5f));
+	}
+
+	TowerMarkerMap.Add(GridPoint, TowerMarker);
+
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("MiniMapWidget: Tower marked. X: %d, Y: %d, Type: %d"),
+		GridPoint.X,
+		GridPoint.Y,
+		static_cast<int32>(TurretType)
+	);
+}
+
 void UTGMiniMapWidget::NativeDestruct()
 {
 	if (UWorld* World = GetWorld())
@@ -464,4 +542,26 @@ FVector2D UTGMiniMapWidget::WorldLocationToMinimapPosition(const FVector& WorldL
 		NormalizedX * MinimapSize.X,
 		NormalizedY * MinimapSize.Y
 	);
+}
+
+FLinearColor UTGMiniMapWidget::GetTowerMarkerColor(ETGTurretType TurretType) const
+{
+	switch (TurretType)
+	{
+	case ETGTurretType::None:
+		return FLinearColor(0.5f, 0.5f, 0.5f, 1.0f);
+
+		// 실제 enum 이름에 맞게 수정하세요.
+	case ETGTurretType::WeaponTower:
+		return FLinearColor(0.1f, 0.4f, 1.0f, 1.0f);
+
+	case ETGTurretType::DebuffTower:
+		return FLinearColor(0.7f, 0.1f, 1.0f, 1.0f);
+
+	case ETGTurretType::BuffTower:
+		return FLinearColor(0.1f, 1.0f, 0.3f, 1.0f);
+
+	default:
+		return FLinearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	}
 }

@@ -116,6 +116,13 @@ void UTGPlayerWidget::NativeDestruct()
 		GameMode->OnEnergyChanged.RemoveDynamic(this, &UTGPlayerWidget::HandleEnergyChanged);
 	}
 
+	if (GridBase)
+	{
+		GridBase->OnGridBuildingPlaced.RemoveDynamic(this, &UTGPlayerWidget::HandleGridBuildingPlaced);
+
+		GridBase->OnGridTowerPlaced.RemoveDynamic(this, &UTGPlayerWidget::HandleGridTowerPlaced);
+	}
+
 	UnbindFocusedEnemy();
 	Super::NativeDestruct();
 }
@@ -399,6 +406,11 @@ void UTGPlayerWidget::SetGridBase(ATGGridBase* InGridBase)
 		&UTGPlayerWidget::HandleGridBuildingPlaced
 	);
 
+	GridBase->OnGridTowerPlaced.AddUniqueDynamic(
+		this,
+		&UTGPlayerWidget::HandleGridTowerPlaced
+	);
+
 	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
 
 	if (PlayerPawn)
@@ -429,4 +441,14 @@ void UTGPlayerWidget::UnregisterMonsterFromMiniMap(AActor* MonsterActor)
 	}
 
 	MiniMapWidget->UnregisterMonsterActor(MonsterActor);
+}
+
+void UTGPlayerWidget::HandleGridTowerPlaced(FIntPoint GridPoint, ETGTurretType TurretType)
+{
+	if (!MiniMapWidget)
+	{
+		return;
+	}
+
+	MiniMapWidget->MarkTowerAtGrid(GridPoint, TurretType);
 }

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BaseTower/TGTurretType.h"
 #include "Blueprint/UserWidget.h"
 #include "TGPlayerWidget.generated.h"
 
@@ -170,6 +171,9 @@ public:
 	void SetGridBase(ATGGridBase* InGridBase);
 	void RegisterMonsterToMiniMap(AActor* MonsterActor);
 	void UnregisterMonsterFromMiniMap(AActor* MonsterActor);
+	// 타워 연결
+	UFUNCTION()
+	void HandleGridTowerPlaced(FIntPoint GridPoint, ETGTurretType TurretType);
 protected:
 	UPROPERTY(meta = (BindWidget))
 	UTGMiniMapWidget* MiniMapWidget;
