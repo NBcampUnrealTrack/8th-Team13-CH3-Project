@@ -89,6 +89,7 @@ void UTGPlayerWidget::NativeDestruct()
 		b = nullptr;
 	}
 	Evade_Bars.Empty();
+	Evade_BarGroup->ClearChildren();
 
 	// 구독했던 델리게이트들 해제
 	if (player){
