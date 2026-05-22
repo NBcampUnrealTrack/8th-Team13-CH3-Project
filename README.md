@@ -1,4 +1,4 @@
-# TRON-DEFENSE
+# CYBER QUARANTINE
 
 **FPS × Tower Defense Hybrid**  
 실시간 FPS 전투와 그리드 기반 타워 디펜스가 결합된 하이퍼 액션 전략 게임입니다.
