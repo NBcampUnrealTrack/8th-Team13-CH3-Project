@@ -26,12 +26,28 @@ ATGBossBase::ATGBossBase() :
 	SoundVolume(0.2f),
 	PartBreakEffect(nullptr),
 	EffectScale(1.0f),
+	bIsPatternYawRotating(false),
+	PatternYawRotationSpeed(0.f),
 	TargetPlayer(nullptr)
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
 	BossName = FText::FromString("Boss");
 
+}
+
+void ATGBossBase::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	// 패턴으로 인한 회전
+	if (bIsPatternYawRotating){
+		AddActorWorldRotation(FRotator(0.f, PatternYawRotationSpeed * DeltaTime, 0.f));
+		return;
+	}
+
+	// 플레이어 방향 주시
+	FocusTargetPlayer();
 }
 
 void ATGBossBase::BeginPlay()
@@ -139,6 +155,35 @@ void ATGBossBase::SetActiveBreakablePartTags(const TArray<FName>& InBreakablePar
 	}
 }
 
+void ATGBossBase::StartPatternYawRotation(float InYawRotationSpeed)
+{
+	PatternYawRotationSpeed = InYawRotationSpeed;
+	bIsPatternYawRotating = !FMath::IsNearlyZero(PatternYawRotationSpeed);
+}
+
+void ATGBossBase::StopPatternYawRotation()
+{
+	bIsPatternYawRotating = false;
+	PatternYawRotationSpeed = 0.f;
+}
+
+void ATGBossBase::FocusTargetPlayer()
+{
+	if (!TargetPlayer) return;
+
+	// Player 방향 계산
+	FVector DirectionToPlayer = TargetPlayer->GetActorLocation() - GetActorLocation();
+	DirectionToPlayer.Z = 0.f;
+
+	if (!DirectionToPlayer.Normalize()) return;
+
+	const FRotator CurrentRotation = GetActorRotation();
+	const FRotator TargetRotation = DirectionToPlayer.Rotation();
+
+	//Yaw값만 적용
+	SetActorRotation(FRotator(CurrentRotation.Pitch, TargetRotation.Yaw, CurrentRotation.Roll));
+}
+
 void ATGBossBase::ChangeToNextPhase()
 {
 	const int32 NewPhaseIndex = CurrentPhaseIndex + 1;
@@ -196,9 +241,6 @@ void ATGBossBase::ApplyBossDamage(float DamageAmount)
 	CurrentHP = FMath::Clamp(CurrentHP - DamageAmount, MinHpRatio * MaxHP, MaxHP);
 	OnBossHpChanged.Broadcast(CurrentHP, MaxHP);
 
-	UE_LOG(LogTemp, Warning, TEXT("[BossBase]BossDamaged - Damage: %.1f / HP: %.1f / %.1f "),
-		DamageAmount, CurrentHP, MaxHP);
-
 	if (CurrentHP <= 0){
 		if (ATGGameMode* GameMode = Cast<ATGGameMode>(UGameplayStatics::GetGameMode(this))){
 			GameMode->HandleGameOver();
@@ -243,15 +285,9 @@ float ATGBossBase::ApplyBreakablePartDamage(UActorComponent* HitComponent, float
 		const float MaxPartHp = PartData->HPRatio* MaxHP;
 		UpdateBreakablePartDamageVisual(ComponentTag, PartData->CurrentHP, MaxPartHp);
 
-		UE_LOG(LogTemp, Warning, TEXT("[BossPart] Damaged - Part: %s / Damage: %.1f / HP: %.1f"),
-					*ComponentTag.ToString(), AppliedPartDamage, PartData->CurrentHP);
-
 		// 파츠의 체력이 0일 경우 파괴 추가 데미지 적용
 		if (PartData->CurrentHP <= 0){
 			AppliedPartDamage += MaxHP * PartData->DestroyBonusDamageRatio;
-
-			UE_LOG(LogTemp, Warning, TEXT("[BossPart] Destroyed - Part: %s / Damage: %.1f"),
-				*ComponentTag.ToString(), AppliedPartDamage);
 
 			DestroyBreakableParts(ComponentTag);
 		}

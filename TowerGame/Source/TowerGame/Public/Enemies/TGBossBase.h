@@ -26,6 +26,7 @@ public:
 
 protected:
 	// Unreal LifeCycle
+	virtual void Tick(float DeltaTime) override;
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
@@ -63,6 +64,9 @@ public:
 	// 파괴 가능한 Part지정
 	void SetActiveBreakablePartTags(const TArray<FName>& InBreakablePartTags);
 
+	void StartPatternYawRotation(float InYawRotationSpeed);
+	void StopPatternYawRotation();
+
 public:
 	UPROPERTY(BlueprintAssignable, Category = "Boss|Stat")
 	FOnBossHpChanged OnBossHpChanged;
@@ -89,6 +93,7 @@ protected:
 	// Material 초기화 및 갱신
 	void RebuildPartDamageMaterialCache();
 	void UpdateBreakablePartDamageVisual(FName PartTag, float CurrentPartHP, float MaxPartHP);
+	void FocusTargetPlayer();
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss")
@@ -151,6 +156,11 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Effect")
 	float EffectScale;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Rotation")
+	bool bIsPatternYawRotating;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Rotation")
+	float PatternYawRotationSpeed;
 
 	// 싱글 플레이 기준 Boss가 공격 대상으로 사용할 Player.
 	UPROPERTY()

@@ -31,6 +31,12 @@ struct FTGBossPatternEntry
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Pattern", meta = (ClampMin = "0.0"))
 	float PatternCooldown = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Pattern", meta = (ClampMin = "0.0"))
+	float MinPlayerDistance = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Pattern", meta = (ClampMin = "0.0"))
+	float MaxPlayerDistance = 0.f;
 };
 
 USTRUCT(BlueprintType)
@@ -74,6 +80,7 @@ public:
 protected:
 	void CreatePatterns();
 	bool CanUsePatternEntry(int32 PatternIndex) const;
+	bool IsPlayerDistanceMatched(const FTGBossPatternEntry& Entry) const;
 
 	// 이 Phase를 소유하고 실행하는 Boss.
 	UPROPERTY()

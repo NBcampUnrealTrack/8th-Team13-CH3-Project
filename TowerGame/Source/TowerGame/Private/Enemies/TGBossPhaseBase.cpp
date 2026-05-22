@@ -5,6 +5,7 @@
 
 #include "Enemies/TGBossBase.h"
 #include "Enemies/TGPatternBase.h"
+#include "Player/TGPlayer.h"
 
 UTGBossPhaseBase::UTGBossPhaseBase() :
 	OwnerBoss(nullptr),
@@ -65,6 +66,9 @@ bool UTGBossPhaseBase::CanUsePatternEntry(int32 PatternIndex) const
 
 	// Pattern Cooldown 이 없는 경우
 	const FTGBossPatternEntry& Entry = PatternEntries[PatternIndex];
+
+	// 거리 검사
+	if (!IsPlayerDistanceMatched(Entry)) return false;
 	if (Entry.PatternCooldown <= 0.f) return true;
 
 	UWorld* World = OwnerBoss->GetWorld();
@@ -72,6 +76,26 @@ bool UTGBossPhaseBase::CanUsePatternEntry(int32 PatternIndex) const
 
 	// Pattern의 Cooldown 확인
 	return World->GetTimeSeconds() - LastPatternStartTimes[PatternIndex] >= Entry.PatternCooldown;
+}
+
+bool UTGBossPhaseBase::IsPlayerDistanceMatched(const FTGBossPatternEntry& Entry) const
+{
+	// 거리 제한 X
+	if (Entry.MinPlayerDistance <= 0.f && Entry.MaxPlayerDistance <= 0.f) return true;
+
+	if (!OwnerBoss) return false;
+
+	ATGPlayer* Player = OwnerBoss->GetPlayer();
+	if (!Player) return false;
+
+	const float PlayerDistance = FVector::Dist2D(OwnerBoss->GetActorLocation(), Player->GetActorLocation());
+
+	// MinDistance 안일 경우
+	if (Entry.MinPlayerDistance > 0.f && PlayerDistance < Entry.MinPlayerDistance) return false;
+	// Maxdistance 밖일 경우
+	if (Entry.MaxPlayerDistance > 0.f && PlayerDistance > Entry.MaxPlayerDistance) return false;
+
+	return true;
 }
 
 void UTGBossPhaseBase::EnterPhase()

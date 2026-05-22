@@ -2,6 +2,8 @@
 
 
 #include "Enemies/Phase/TGSentinelBossPhase1.h"
+
+#include "Enemies/Pattern/TGAreaKnockbackPattern.h"
 #include "Enemies/Pattern/TGGroundCylinderPattern.h"
 
 UTGSentinelBossPhase1::UTGSentinelBossPhase1()
@@ -18,6 +20,15 @@ UTGSentinelBossPhase1::UTGSentinelBossPhase1()
 	RightArmPart.HPRatio = 0.1f;
 	RightArmPart.DestroyBonusDamageRatio = 0.05f;
 	BreakableParts.Add(RightArmPart);
+
+	// 보스 주변 넉백 공격
+	FTGBossPatternEntry AreaKnockbackEntry;
+	AreaKnockbackEntry.PatternClass = UTGAreaKnockbackPattern::StaticClass();
+	AreaKnockbackEntry.WarningRadius = 800.f;
+	AreaKnockbackEntry.AttackDamage = 10.f;
+	AreaKnockbackEntry.MaxPlayerDistance = 700.f;
+
+	PatternEntries.Add(AreaKnockbackEntry);
 
 	// 플레이어 원통 공격
 	FTGBossPatternEntry GroundCylinderEntry;
