@@ -5,7 +5,7 @@
 
 ## 🚀 프로젝트 개요
 - **장르**: 실시간 FPS + 타워 디펜스
-- **엔진**: Unreal Engine 5.4 (Lumen, Nanite, Ray Tracing 활용)
+- **엔진**: Unreal Engine 5.4 
 - **비주얼 스타일**: '트론: 레거시' 스타일의 네온 사이버펑크
 - **플랫폼**: PC (Windows)
 
@@ -26,7 +26,7 @@
 ## 🛠 기술 스택
 - **Language**: C++, Blueprints
 - **Framework**: Enhanced Input System, Niagara VFX
-- **Graphics**: UE5 Lumen, Nanite, Ray Tracing, Virtual Shadow Maps
+- **Graphics**: Ray Tracing, Virtual Shadow Maps, Custom Depth Maps
 - **Architecture**: 데이터 테이블 기반 스탯 관리, 옵저버 패턴(Delegate) 활용
 
 ## 🏆 승리/패배 조건
