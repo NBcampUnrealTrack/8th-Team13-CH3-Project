@@ -18,7 +18,8 @@ ATGAttackEnemyBase::ATGAttackEnemyBase() :
 	AreaAttackDelay(0),
 	AreaAttackDamage(0),
 	KnockbackForce(0),
-	DebuffDuration(0)
+	DebuffDuration(0),
+	PlayerAttackSound(nullptr)
 {
 }
 
@@ -192,6 +193,11 @@ void ATGAttackEnemyBase::ApplyPlayerAttackEffect(ATGPlayer* Player)
 		this,
 		nullptr
 	);
+
+	if (PlayerAttackSound){
+		UGameplayStatics::PlaySoundAtLocation(
+			this, PlayerAttackSound, GetActorLocation(), SoundVolume);
+	}
 
 	if (KnockbackForce <= 0) return;
 

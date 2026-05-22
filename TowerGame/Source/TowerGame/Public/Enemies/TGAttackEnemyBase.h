@@ -8,6 +8,7 @@
 
 class ATGMountedTower;
 class ATGPlayer;
+class USoundBase;
 /**
  *
  */
@@ -40,6 +41,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy|PlayerAttack")
 	float DebuffDuration;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy|Sound")
+	TObjectPtr<USoundBase> PlayerAttackSound;
 
 	// Player 공격 및 탐지 타이머
 	FTimerHandle AreaAttackTimerHandle;
