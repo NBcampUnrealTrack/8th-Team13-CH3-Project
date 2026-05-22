@@ -28,6 +28,9 @@ struct FTGBossPatternEntry
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Pattern")
 	float AttackEffectScale = 1.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Pattern", meta = (ClampMin = "0.0"))
+	float PatternCooldown = 0.f;
 };
 
 USTRUCT(BlueprintType)
@@ -70,7 +73,7 @@ public:
 
 protected:
 	void CreatePatterns();
-	void ExecuteDelayedAttack();
+	bool CanUsePatternEntry(int32 PatternIndex) const;
 
 	// 이 Phase를 소유하고 실행하는 Boss.
 	UPROPERTY()
@@ -84,12 +87,13 @@ protected:
 	UPROPERTY()
 	TArray<TObjectPtr<UTGPatternBase>> Patterns;
 
+	// Patterns와 같은 인덱스로 관리되는 Pattern별 마지막 실행 시간
+	UPROPERTY()
+	TArray<float> LastPatternStartTimes;
+
 	// 현재 경고 표시 후 공격 대기 중인 Pattern
 	UPROPERTY()
 	TObjectPtr<UTGPatternBase> CurrentPattern;
-
-	// 경고 후 실제 공격 실행 타이머
-	FTimerHandle AttackDelayTimerHandle;
 
 	// 경고 표시 유지 시간
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Pattern")

@@ -37,6 +37,40 @@ void UTGPatternBase::Initialize(
 	AttackEffectScale = InAttackEffectScale;
 }
 
+// 단일 범위 공격(다른 방식은 가상함수로 구현)
+void UTGPatternBase::StartPattern(float WarningDrawTime)
+{
+	// 공격 범위 경고 표시
+	GetAttackLocation();
+	DrawWarning(WarningDrawTime);
+
+	if (!OwnerBoss) return;
+
+	UWorld* World = OwnerBoss->GetWorld();
+	if (!World) return;
+
+	// 지연 시간 후 공격 판정
+	World->GetTimerManager().ClearTimer(AttackDelayTimerHandle);
+	World->GetTimerManager().SetTimer(
+		AttackDelayTimerHandle,
+		this,
+		&UTGPatternBase::ExecuteAttack,
+		WarningDrawTime,
+		false
+	);
+}
+
+// 단일 범위 공격(다른 방식은 가상함수로 구현)
+void UTGPatternBase::StopPattern()
+{
+	if (!OwnerBoss) return;
+
+	UWorld* World = OwnerBoss->GetWorld();
+	if (!World) return;
+
+	World->GetTimerManager().ClearTimer(AttackDelayTimerHandle);
+}
+
 void UTGPatternBase::GetAttackLocation()
 {
 	AttackLocation = FVector::ZeroVector;

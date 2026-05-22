@@ -19,7 +19,7 @@ UTGSentinelBossPhase1::UTGSentinelBossPhase1()
 	RightArmPart.DestroyBonusDamageRatio = 0.05f;
 	BreakableParts.Add(RightArmPart);
 
-	// Pattern 1
+	// 플레이어 원통 공격
 	FTGBossPatternEntry GroundCylinderEntry;
 	GroundCylinderEntry.LinkedPartTag = TEXT("L_Arm");
 	GroundCylinderEntry.PatternClass = UTGGroundCylinderPattern::StaticClass();

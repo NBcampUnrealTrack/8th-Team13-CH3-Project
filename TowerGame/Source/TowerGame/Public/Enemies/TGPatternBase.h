@@ -24,6 +24,12 @@ public:
 		float InAttackDamage,
 		float InAttackEffectScale);
 
+	// Pattern 실행 시작
+	virtual void StartPattern(float WarningDrawTime);
+
+	// Pattern 내부 타이머 정리
+	virtual void StopPattern();
+
 	// 공격 위치 계산
 	virtual void GetAttackLocation();
 
@@ -80,4 +86,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Pattern|Effect", meta = (ClampMin = "0.0"))
 	float AttackEffectScale;
+
+	// 경고 후 공격 실행 타이머
+	FTimerHandle AttackDelayTimerHandle;
 };

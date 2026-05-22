@@ -13,7 +13,7 @@ UTGSentinelBossPhase2::UTGSentinelBossPhase2()
 	BodyPart.DestroyBonusDamageRatio = 0.05f;
 	BreakableParts.Add(BodyPart);
 
-	//Pattern 1
+	// 플레이어 구형 공격
 	FTGBossPatternEntry SphereEntry;
 	SphereEntry.PatternClass = UTGSphereAreaPattern::StaticClass();
 	SphereEntry.WarningRadius = 150.f;

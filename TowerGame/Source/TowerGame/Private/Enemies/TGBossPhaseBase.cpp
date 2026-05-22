@@ -24,15 +24,24 @@ void UTGBossPhaseBase::Initialize(ATGBossBase* InOwnerBoss)
 void UTGBossPhaseBase::CreatePatterns()
 {
 	Patterns.Empty();
+	LastPatternStartTimes.Empty();
 
 	if (!OwnerBoss) return;
 
 	// pattern 생성하여 저장
 	for (const FTGBossPatternEntry& Entry: PatternEntries){
-		if (!Entry.PatternClass) continue;
+		if (!Entry.PatternClass){
+			Patterns.Add(nullptr);
+			LastPatternStartTimes.Add(-TNumericLimits<float>::Max());
+			continue;
+		}
 
 		UTGPatternBase* Pattern = NewObject<UTGPatternBase>(this, Entry.PatternClass);
-		if (!Pattern) continue;
+		if (!Pattern){
+			Patterns.Add(nullptr);
+			LastPatternStartTimes.Add(-TNumericLimits<float>::Max());
+			continue;
+		}
 
 		Pattern->Initialize(
 			this,
@@ -43,15 +52,26 @@ void UTGBossPhaseBase::CreatePatterns()
 		);
 
 		Patterns.Add(Pattern);
+		LastPatternStartTimes.Add(-TNumericLimits<float>::Max());
 	}
 }
 
-void UTGBossPhaseBase::ExecuteDelayedAttack()
+bool UTGBossPhaseBase::CanUsePatternEntry(int32 PatternIndex) const
 {
-	if (!CurrentPattern) return;
+	// Pattern이 유효하지 않은 index일 경우
+	if (!PatternEntries.IsValidIndex(PatternIndex)) return false;
+	if (!Patterns.IsValidIndex(PatternIndex) || !Patterns[PatternIndex]) return false;
+	if (!LastPatternStartTimes.IsValidIndex(PatternIndex)) return false;
 
-	CurrentPattern->ExecuteAttack();
-	CurrentPattern = nullptr;
+	// Pattern Cooldown 이 없는 경우
+	const FTGBossPatternEntry& Entry = PatternEntries[PatternIndex];
+	if (Entry.PatternCooldown <= 0.f) return true;
+
+	UWorld* World = OwnerBoss->GetWorld();
+	if (!World) return false;
+
+	// Pattern의 Cooldown 확인
+	return World->GetTimeSeconds() - LastPatternStartTimes[PatternIndex] >= Entry.PatternCooldown;
 }
 
 void UTGBossPhaseBase::EnterPhase()
@@ -96,38 +116,49 @@ void UTGBossPhaseBase::ExitPhase()
 	if (OwnerBoss){
 		if (UWorld* World = OwnerBoss->GetWorld()){
 			World->GetTimerManager().ClearTimer(PatternTimerHandle);
-			World->GetTimerManager().ClearTimer(AttackDelayTimerHandle);
 		}
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("%s ExitPhase"), *GetName());
+	// Pattern Timer 정리
+	for (UTGPatternBase* Pattern : Patterns){
+		if (Pattern){
+			Pattern->StopPattern();
+		}
+	}
+
+	CurrentPattern = nullptr;
 }
 
 void UTGBossPhaseBase::ExecutePattern()
 {
 	if (!OwnerBoss || Patterns.IsEmpty()) return;
 
+	UTGPatternBase* SelectedPattern = nullptr;
+	int32 SelectedPatternIndex = INDEX_NONE;
+
+	// 사용할 패턴 선택
+	for (int32 PatternIndex = 0; PatternIndex < Patterns.Num(); ++PatternIndex){
+		if (!CanUsePatternEntry(PatternIndex)) continue;
+
+		SelectedPattern = Patterns[PatternIndex];
+		SelectedPatternIndex = PatternIndex;
+		break;
+	}
+
+	if (!SelectedPattern || SelectedPatternIndex == INDEX_NONE) return;
+
+	if (CurrentPattern){
+		CurrentPattern->StopPattern();
+	}
+
 	UWorld* World = OwnerBoss->GetWorld();
 	if (!World) return;
 
-	// 임시로 현재 패턴을 첫번째 패턴으로 고정
-	CurrentPattern = Patterns[0];
+	// 패턴 시작 시점 저장
+	LastPatternStartTimes[SelectedPatternIndex] = World->GetTimeSeconds();
 
-	if (!CurrentPattern) return;
-
-	// 공격 위치 전달 및 공격 범위 표시
-	CurrentPattern->GetAttackLocation();
-	CurrentPattern->DrawWarning(WarningDrawTime);
-
-	World->GetTimerManager().ClearTimer(AttackDelayTimerHandle);
-	World->GetTimerManager().SetTimer(
-		AttackDelayTimerHandle,
-		this,
-		&UTGBossPhaseBase::ExecuteDelayedAttack,
-		WarningDrawTime,
-		false
-	);
-
+	CurrentPattern = SelectedPattern;
+	CurrentPattern->StartPattern(WarningDrawTime);
 }
 
 FTGBossBreakablePartData* UTGBossPhaseBase::FindBreakablePart(FName PartTag)
