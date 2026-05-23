@@ -25,7 +25,7 @@ protected:
 
 public:
 	UFUNCTION(BlueprintCallable)
-	void StartGame();
+	void StartGame(FString OpenLevelPath);
 
 	UFUNCTION(BlueprintCallable)
 	void EndGame();

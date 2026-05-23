@@ -16,14 +16,14 @@ void ATGMenuGameMode::BeginPlay()
 	}
 }
 
-void ATGMenuGameMode::StartGame()
+void ATGMenuGameMode::StartGame(FString OpenLevelPath)
 {
 	if (BGMComp)
 	{
 		BGMComp->Stop();
 	}
 
-	UGameplayStatics::OpenLevel(this, FName(TEXT("L_Stage01")));
+	UGameplayStatics::OpenLevel(this, FName(*OpenLevelPath));
 }
 
 void ATGMenuGameMode::EndGame()

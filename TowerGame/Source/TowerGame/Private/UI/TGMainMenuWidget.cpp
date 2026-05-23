@@ -10,6 +10,7 @@
 #include "Engine/Texture2D.h"
 #include "Kismet/GameplayStatics.h"
 #include "Core/GameFlow/TGMenuGameMode.h"
+#include "UObject/Package.h"
 
 void UTGMainMenuWidget::NativeConstruct()
 {
@@ -68,13 +69,26 @@ void UTGMainMenuWidget::HandleStartClicked()
 	{
 		FTimerHandle LoadingDelayTimerHandle;
 
-		World->GetTimerManager().SetTimer(
-			LoadingDelayTimerHandle,
-			this,
-			&UTGMainMenuWidget::OpenStageAfterLoading,
-			0.1f,
-			false
-		);
+		//World->GetTimerManager().SetTimer(
+		//	LoadingDelayTimerHandle,
+		//	this,
+		//	&UTGMainMenuWidget::OpenStageAfterLoading,
+		//	0.1f,
+		//	false
+		//);
+
+		// 로딩할 레벨 패키지 경로
+		LoadLevelPath = TEXT("/Game/Maps/L_Stage01");
+
+		// 비동기적으로 패키지 로딩
+		FLoadPackageAsyncDelegate OnPackageLoadedDelegate;
+		OnPackageLoadedDelegate.BindUFunction(this, TEXT("OpenStageAfterLoading"));
+
+		// LoadPackageAsync로 비동기 패키지 로드
+		if(!LoadPackageAsync(LoadLevelPath, OnPackageLoadedDelegate))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("패키지 로드 실패: %s"), *LoadLevelPath);
+		}
 	}
 }
 
@@ -297,6 +311,6 @@ void UTGMainMenuWidget::OpenStageAfterLoading()
 {
 	if (ATGMenuGameMode* MGM = Cast<ATGMenuGameMode>(UGameplayStatics::GetGameMode(this)))
 	{
-		MGM->StartGame();
+		MGM->StartGame(LoadLevelPath);
 	}
 }

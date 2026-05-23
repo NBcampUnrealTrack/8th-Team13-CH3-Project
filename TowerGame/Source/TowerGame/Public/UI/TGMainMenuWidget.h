@@ -71,6 +71,8 @@ protected:
 	UPROPERTY(Transient, meta = (BindWidgetAnim))
 	UWidgetAnimation* Anim_LoadingSpin;
 
+	FString LoadLevelPath;
+
 	UFUNCTION()
 	void HandleStartClicked();
 
@@ -101,5 +103,7 @@ protected:
 	void UpdateGuideButton();
 
 	void ShowLoading();
+
+	UFUNCTION()
 	void OpenStageAfterLoading();
 };
