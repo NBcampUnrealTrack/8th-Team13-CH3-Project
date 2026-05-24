@@ -24,6 +24,9 @@ public:
 
 	void SetBoxSize(float Size) const;
 
+	UFUNCTION(BlueprintCallable, Category = "TowerGame|Grid")
+	bool IsTowerPlaced() {return bIsPlacedTower;};
+
 	// 그리드 위의 건물 파괴하고 초기상태로 되돌림.
 	void ResetGrid();
 	// void PlaceTower(TObjectPtr<ABaseTower> Tower);

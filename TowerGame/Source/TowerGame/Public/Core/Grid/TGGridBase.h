@@ -43,6 +43,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="TowerGame|Grid")
 	FIntPoint GetPointFromPosition(FVector Position) const;
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="TowerGame|Grid")
+	bool IsTowerPlacedInPosition(FIntPoint Point);
+
 	//	건설 가능한 위치인지 확인
 	UFUNCTION(BlueprintCallable, Category="TowerGame|Grid")
 	bool CanBePlacedBuilding(FIntPoint Point);

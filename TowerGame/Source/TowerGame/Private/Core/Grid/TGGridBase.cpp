@@ -42,6 +42,11 @@ FIntPoint ATGGridBase::GetPointFromPosition(FVector Position) const
 	return FIntPoint(X, Y);
 }
 
+bool ATGGridBase::IsTowerPlacedInPosition(FIntPoint Point)
+{
+	return GetSingleGridFromPoint(Point)->IsTowerPlaced();
+}
+
 bool ATGGridBase::CanBePlacedBuilding(FIntPoint Point)
 {
 	//	1. 진입점을 막으면 안됨
