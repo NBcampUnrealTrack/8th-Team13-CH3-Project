@@ -4,6 +4,7 @@
 #include "Enemies/Pattern/TGPlayerSequenceSpherePattern.h"
 
 #include "Enemies/TGBossBase.h"
+#include "Enemies/TGMissile.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Player/TGPlayer.h"
 
@@ -126,6 +127,27 @@ void UTGPlayerSequenceSpherePattern::SpawnWarningAtPlayerLocation()
 
 	SequenceAttackTimerHandles.Add(AttackTimerHandle);
 
+	//	투사체 테스트
+	if (!OwnerBoss->GetMissileClass()) return;
+	FTransform LauchTransform = OwnerBoss->GetActorTransform();
+	LauchTransform.AddToTranslation(FVector::UpVector * 600.f);
+
+	// 구 전체에서 무작위 방향 벡터 → 발사 회전값으로 변환
+	const FRotator RandomRotation = FRotator(FMath::RandRange(0.f, 180.f), FMath::RandRange(0.f, 360.f), 0.f);
+	LauchTransform.SetRotation(RandomRotation.Quaternion());
+
+	ATGMissile* Missile = GetWorld()->SpawnActor<ATGMissile>(OwnerBoss->GetMissileClass(), LauchTransform);
+	if (!Missile) return;
+
+	//	미사일 설정값
+	FTGMissileParams MissileParams;
+	MissileParams.Damage = AttackDamage;
+	MissileParams.ExplosionRadius = WarningRadius;
+
+	//	플레이어 위치로 추적설정
+	Missile->SetDamageInstigator(OwnerBoss);
+	Missile->SetHomingLocation(NewAttackLocation, 2.f, 50.f);
+	Missile->Launch(MissileParams);
 }
 
 void UTGPlayerSequenceSpherePattern::StopWarningSpawn()

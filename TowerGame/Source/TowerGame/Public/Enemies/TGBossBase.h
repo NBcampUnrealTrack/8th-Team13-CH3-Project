@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "TGBossBase.generated.h"
 
+class ATGMissile;
 class ATGPlayer;
 class UTGBossPhaseBase;
 class UParticleSystem;
@@ -161,6 +162,14 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Rotation")
 	float PatternYawRotationSpeed;
+
+	//	보스가 사용할 투사체
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Phase")
+	TSubclassOf<ATGMissile> MissileClass;
+
+public:
+	TSubclassOf<ATGMissile> GetMissileClass() { return MissileClass; };
+protected:
 
 	// 싱글 플레이 기준 Boss가 공격 대상으로 사용할 Player.
 	UPROPERTY()
