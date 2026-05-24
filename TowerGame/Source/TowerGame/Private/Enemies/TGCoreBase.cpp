@@ -43,15 +43,9 @@ float ATGCoreBase::TakeDamage(float DamageAmount, const FDamageEvent& DamageEven
 	return AppliedDamage;
 }
 
-float ATGCoreBase::GetCurrentHP()
-{
-	return CurrentHP;
-}
+float ATGCoreBase::GetCurrentHP() { return CurrentHP; }
 
-float ATGCoreBase::GetMaxHP()
-{
-	return MaxHP;
-}
+float ATGCoreBase::GetMaxHP() { return MaxHP; }
 
 // Called when the game starts or when spawned
 void ATGCoreBase::BeginPlay()
@@ -71,5 +65,4 @@ void ATGCoreBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 	Super::EndPlay(EndPlayReason);
 }
-
 

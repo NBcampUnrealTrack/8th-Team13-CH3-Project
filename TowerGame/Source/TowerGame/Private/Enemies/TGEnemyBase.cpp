@@ -29,7 +29,6 @@ ATGEnemyBase::ATGEnemyBase() :
 	StructureAttackRange(200),
 	StructureAttackSound(nullptr),
 	DeathSound(nullptr),
-	SoundVolume(0.1f),
 	StructureAttackEffect(nullptr),
 	EffectScale(100.0f),
 	DeathEffect(nullptr),
@@ -151,7 +150,7 @@ void ATGEnemyBase::AttackStructureTarget()
 	// Sound 적용
 	if (StructureAttackSound){
 		UGameplayStatics::PlaySoundAtLocation(
-			this, StructureAttackSound, GetActorLocation(), SoundVolume);
+			this, StructureAttackSound, GetActorLocation(), 1.f);
 	}
 
 	// Effect 생성
@@ -212,30 +211,15 @@ float ATGEnemyBase::TakeDamage(float DamageAmount,
 	return AppliedDamage;
 }
 
-FVector ATGEnemyBase::GetNavigationHeightOffset() const
-{
-	return NavigationHeightOffset;
-}
+FVector ATGEnemyBase::GetNavigationHeightOffset() const { return NavigationHeightOffset; }
 
-float ATGEnemyBase::GetStructureAttackRange() const
-{
-	return StructureAttackRange;
-}
+float ATGEnemyBase::GetStructureAttackRange() const { return StructureAttackRange; }
 
-FString ATGEnemyBase::GetEnemyType()
-{
-	return EnemyType;
-}
+FString ATGEnemyBase::GetEnemyType() { return EnemyType; }
 
-float ATGEnemyBase::GetCurrentHP()
-{
-	return CurrentHP;
-}
+float ATGEnemyBase::GetCurrentHP() { return CurrentHP; }
 
-float ATGEnemyBase::GetMaxHP()
-{
-	return MaxHP;
-}
+float ATGEnemyBase::GetMaxHP() { return MaxHP; }
 
 void ATGEnemyBase::HandleAttackRangeReached(AActor* TargetActor)
 {
@@ -326,7 +310,7 @@ void ATGEnemyBase::DestroyBodyParts()
 	// Sound 출력
 	if (DeathSound){
 		UGameplayStatics::PlaySoundAtLocation(
-			this, DeathSound, GetActorLocation(), SoundVolume);
+			this, DeathSound, GetActorLocation(), 1.f);
 	}
 
 	//	파괴 이펙트 출력

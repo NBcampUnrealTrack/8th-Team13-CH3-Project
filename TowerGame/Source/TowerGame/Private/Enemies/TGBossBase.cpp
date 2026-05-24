@@ -6,9 +6,9 @@
 #include "TGMountedTower.h"
 #include "Core/GameFlow/TGGameMode.h"
 #include "Enemies/TGBossPhaseBase.h"
+#include "Enemies/TGPartBreakComponent.h"
 #include "Engine/DamageEvents.h"
 #include "Kismet/GameplayStatics.h"
-#include "Particles/ParticleSystem.h"
 #include "Player/TGPlayer.h"
 
 ATGBossBase::ATGBossBase() :
@@ -18,22 +18,15 @@ ATGBossBase::ATGBossBase() :
 	SpawnClearRadius(0),
 	CurrentPhase(nullptr),
 	CurrentPhaseIndex(INDEX_NONE),
-	PartsLifeSpan(3.f),
-	ExplodeRadius(100.f),
-	ExplodeForce(50.f),
-	PartBreakSound(nullptr),
-	DeathSound(nullptr),
-	SoundVolume(0.2f),
-	PartBreakEffect(nullptr),
-	EffectScale(1.0f),
 	bIsPatternYawRotating(false),
 	PatternYawRotationSpeed(0.f),
+	DeathSound(nullptr),
 	TargetPlayer(nullptr)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
 	BossName = FText::FromString("Boss");
-
+	PartBreakComponent = CreateDefaultSubobject<UTGPartBreakComponent>(TEXT("PartBreakComponent"));
 }
 
 void ATGBossBase::Tick(float DeltaTime)
@@ -58,11 +51,25 @@ void ATGBossBase::BeginPlay()
 	OnBossHpChanged.Broadcast(CurrentHP, MaxHP);
 	TargetPlayer = Cast<ATGPlayer>(UGameplayStatics::GetPlayerPawn(this, 0));
 
+	// Initialize & 부위 제거 델리게이트 등록
+	if (PartBreakComponent){
+		PartBreakComponent->Initialize(this);
+		PartBreakComponent->OnDetachedPartRemoved.AddUObject(
+			this,
+			&ATGBossBase::HandleDetachedPartRemoved
+		);
+	}
+
 	ChangeToNextPhase();
 }
 
 void ATGBossBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	// 부위 제거 델리게이트 제거
+	if (PartBreakComponent){
+		PartBreakComponent->OnDetachedPartRemoved.RemoveAll(this);
+	}
+
 	if (CurrentPhase){
 		CurrentPhase->ExitPhase();
 		CurrentPhase = nullptr;
@@ -101,20 +108,11 @@ float ATGBossBase::TakeDamage(float DamageAmount, const FDamageEvent& DamageEven
 	return AppliedDamage;
 }
 
-FText ATGBossBase::GetBossName() const
-{
-	return BossName;
-}
+FText ATGBossBase::GetBossName() const { return BossName; }
 
-float ATGBossBase::GetCurrentHP() const
-{
-	return CurrentHP;
-}
+float ATGBossBase::GetCurrentHP() const { return CurrentHP; }
 
-float ATGBossBase::GetMaxHP() const
-{
-	return MaxHP;
-}
+float ATGBossBase::GetMaxHP() const { return MaxHP; }
 
 float ATGBossBase::GetCurrentPhaseMinHP() const
 {
@@ -133,15 +131,9 @@ float ATGBossBase::GetCurrentPhaseMaxHP() const
 	return PhaseHPRatio[PreviousPhaseIndex] * MaxHP;
 }
 
-float ATGBossBase::GetSpawnClearRadius() const
-{
-	return SpawnClearRadius;
-}
+float ATGBossBase::GetSpawnClearRadius() const { return SpawnClearRadius; }
 
-ATGPlayer* ATGBossBase::GetPlayer() const
-{
-	return TargetPlayer;
-}
+ATGPlayer* ATGBossBase::GetPlayer() const { return TargetPlayer; }
 
 void ATGBossBase::SetActiveBreakablePartTags(const TArray<FName>& InBreakablePartTags)
 {
@@ -194,7 +186,7 @@ void ATGBossBase::ChangeToNextPhase()
 
 	// 기존 페이즈 종료
 	if (CurrentPhase){
-		DestroyDetachedPartComponent();
+		DestroyRemainingBreakableParts();
 
 		CurrentPhase->ExitPhase();
 		CurrentPhase = nullptr;
@@ -210,7 +202,10 @@ void ATGBossBase::ChangeToNextPhase()
 	CurrentPhaseIndex = NewPhaseIndex;
 
 	CurrentPhase->EnterPhase();
-	RebuildPartDamageMaterialCache();
+	// 제거되지 않은 부위 제거
+	if (PartBreakComponent){
+		PartBreakComponent->RebuildPartDamageMaterialCache(ActiveBreakablePartTags);
+	}
 
 	// 페이즈 변경 완료 시 UI에 반영
 	OnBossHpChanged.Broadcast(CurrentHP, MaxHP);
@@ -251,7 +246,7 @@ void ATGBossBase::ApplyBossDamage(float DamageAmount)
 				this,
 				DeathSound,
 				GetActorLocation(),
-				SoundVolume
+				1.f
 			);
 		}
 
@@ -283,13 +278,19 @@ float ATGBossBase::ApplyBreakablePartDamage(UActorComponent* HitComponent, float
 		PartData->CurrentHP -= AppliedPartDamage;
 
 		const float MaxPartHp = PartData->HPRatio* MaxHP;
-		UpdateBreakablePartDamageVisual(ComponentTag, PartData->CurrentHP, MaxPartHp);
+		// 다이나믹 머터리얼 값 적용
+		if (PartBreakComponent){
+			PartBreakComponent->UpdateBreakablePartDamageVisual(ComponentTag, PartData->CurrentHP, MaxPartHp);
+		}
 
 		// 파츠의 체력이 0일 경우 파괴 추가 데미지 적용
 		if (PartData->CurrentHP <= 0){
 			AppliedPartDamage += MaxHP * PartData->DestroyBonusDamageRatio;
 
-			DestroyBreakableParts(ComponentTag);
+			// 부위 파괴
+			if (PartBreakComponent){
+				PartBreakComponent->BreakPartsByTag(ComponentTag);
+			}
 		}
 
 		return AppliedPartDamage;
@@ -297,94 +298,7 @@ float ATGBossBase::ApplyBreakablePartDamage(UActorComponent* HitComponent, float
 	return -1.f;
 }
 
-void ATGBossBase::DestroyBreakableParts(FName PartTag)
-{
-	// 보스의 하위 StaticMeshCompoenet 전체 수집
-	TArray<UStaticMeshComponent*> StaticMeshComponents;
-	GetComponents<UStaticMeshComponent>(StaticMeshComponents);
-
-	bool bPlayedPartBreak = false;
-
-	for (UStaticMeshComponent* StaticMesh: StaticMeshComponents){
-		// 태그가 일치하는 컴포넌트만 필터링
-		if (!StaticMesh || !StaticMesh->ComponentHasTag(PartTag)) continue;
-
-		// 부모로부터 분리 및 충돌/네비/물리 설정
-		StaticMesh->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
-		StaticMesh->SetCanEverAffectNavigation(false);
-		StaticMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
-		StaticMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
-		StaticMesh->SetSimulatePhysics(true);
-
-		// 폭발 적용(Force)
-		StaticMesh->AddRadialForce(
-			GetActorLocation(),
-			ExplodeRadius,
-			ExplodeForce,
-			RIF_Linear,
-			true
-		);
-
-		// 폭발 적용(Rotation)
-		StaticMesh->AddTorqueInDegrees(FVector(
-			FMath::FRandRange(-180.f,180.f),
-			FMath::FRandRange(-180.f,180.f),
-			FMath::FRandRange(-180.f,180.f)
-		));
-
-		// 폭발 사운드(1회)
-		if (!bPlayedPartBreak){
-			if (PartBreakSound){
-				UGameplayStatics::PlaySoundAtLocation(
-					this, PartBreakSound, StaticMesh->GetComponentLocation(), SoundVolume);
-			}
-
-			if (PartBreakEffect){
-				UGameplayStatics::SpawnEmitterAtLocation(
-					this,
-					PartBreakEffect,
-					StaticMesh->GetComponentLocation(),
-					StaticMesh->GetComponentRotation(),
-					FVector(EffectScale)
-				);
-			}
-
-			bPlayedPartBreak = true;
-		}
-
-		FTimerHandle DestroyPartTimerHandle;
-		FTimerDelegate DestroyPartDelegate;
-		DestroyPartDelegate.BindUObject(
-			this,
-			&ATGBossBase::DestroyDetachedPartComponent,
-			StaticMesh,
-			PartTag
-		);
-
-		// 파괴된 파츠가 Level에서 사라질 때 호출됨
-		GetWorldTimerManager().SetTimer(
-			DestroyPartTimerHandle,
-			DestroyPartDelegate,
-			PartsLifeSpan,
-			false
-		);
-	}
-}
-
-void ATGBossBase::DestroyDetachedPartComponent(UStaticMeshComponent* StaticMesh, FName PartTag)
-{
-	if (StaticMesh && !StaticMesh->IsBeingDestroyed()){
-		StaticMesh->DestroyComponent();
-	}
-
-	// Tag 제거
-	ActiveBreakablePartTags.Remove(PartTag);
-	if (CurrentPhase){
-		CurrentPhase->RemoveBreakablePart(PartTag);
-	}
-}
-
-void ATGBossBase::DestroyDetachedPartComponent()
+void ATGBossBase::DestroyRemainingBreakableParts()
 {
 	if (!CurrentPhase) return;
 
@@ -396,51 +310,17 @@ void ATGBossBase::DestroyDetachedPartComponent()
 		// PartData가 없거나 현재 체력이 없는 얘들은 이미 부위 파괴 처리 중인것으로 간주
 		if (!PartData || PartData->CurrentHP <= 0.f) continue;
 
-		DestroyBreakableParts(PartTag);
-	}
-}
-
-void ATGBossBase::RebuildPartDamageMaterialCache()
-{
-	PartDamageMaterialMap.Empty();
-
-	TArray<UStaticMeshComponent*> StaticMeshComponents;
-	GetComponents<UStaticMeshComponent>(StaticMeshComponents);
-
-	for (UStaticMeshComponent* StaticMesh : StaticMeshComponents){
-		if (!StaticMesh) continue;
-
-		for (const FName& PartTag : ActiveBreakablePartTags){
-			if (!StaticMesh->ComponentHasTag(PartTag)) continue;
-
-			//다이나믹 머티리얼 인스턴스 cast
-			UMaterialInstanceDynamic* DynamicMaterial =
-				Cast<UMaterialInstanceDynamic>(StaticMesh->GetMaterial(0));
-
-			if (!DynamicMaterial){
-				DynamicMaterial = StaticMesh->CreateAndSetMaterialInstanceDynamic(0);
-			}
-
-			// 다이나믹 머티리얼 캐시에 저장
-			if (DynamicMaterial){
-				PartDamageMaterialMap.FindOrAdd(PartTag).Add(DynamicMaterial);
-			}
+		// 부위 파괴
+		if (PartBreakComponent){
+			PartBreakComponent->BreakPartsByTag(PartTag);
 		}
 	}
 }
 
-void ATGBossBase::UpdateBreakablePartDamageVisual(FName PartTag, float CurrentPartHP, float MaxPartHP)
+void ATGBossBase::HandleDetachedPartRemoved(FName PartTag)
 {
-	// 체력 비율 적용
-	const float HPRatio = CurrentPartHP / MaxPartHP;
-	const float DamageAmount = 1.f - HPRatio;
-
-	TArray<UMaterialInstanceDynamic*>* PartMaterials = PartDamageMaterialMap.Find(PartTag);
-	if (!PartMaterials) return;
-
-	for (UMaterialInstanceDynamic* Material : *PartMaterials){
-		if (!Material) continue;
-
-		Material->SetScalarParameterValue(TEXT("PartDamageAmount"), static_cast<float>(DamageAmount * 2));
+	ActiveBreakablePartTags.Remove(PartTag);
+	if (CurrentPhase){
+		CurrentPhase->RemoveBreakablePart(PartTag);
 	}
 }

@@ -7,8 +7,8 @@
 #include "TGBossBase.generated.h"
 
 class ATGPlayer;
+class UTGPartBreakComponent;
 class UTGBossPhaseBase;
-class UParticleSystem;
 class USoundBase;
 
 // 보스 체력, 삭제 이벤트
@@ -64,6 +64,8 @@ public:
 	// 파괴 가능한 Part지정
 	void SetActiveBreakablePartTags(const TArray<FName>& InBreakablePartTags);
 
+public:
+	// 회전 패턴 관련 회전 함수
 	void StartPatternYawRotation(float InYawRotationSpeed);
 	void StopPatternYawRotation();
 
@@ -84,15 +86,10 @@ protected:
 	void ApplyBossDamage(float DamageAmount);
 	float ApplyBreakablePartDamage(UActorComponent* HitComponent, float DamageAmount);
 
-	// 부위 파괴
-	void DestroyBreakableParts(FName PartTag);
-	void DestroyDetachedPartComponent(UStaticMeshComponent* StaticMesh, FName PartTag);
 	// Phase 전환 시 해당 페이즈의 파괴되지 않은 부위 파괴
-	void DestroyDetachedPartComponent();
+	void DestroyRemainingBreakableParts();
+	void HandleDetachedPartRemoved(FName PartTag);
 
-	// Material 초기화 및 갱신
-	void RebuildPartDamageMaterialCache();
-	void UpdateBreakablePartDamageVisual(FName PartTag, float CurrentPartHP, float MaxPartHP);
 	void FocusTargetPlayer();
 
 protected:
@@ -111,6 +108,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Spawn")
 	float SpawnClearRadius;
 
+protected:
 	// 파생 Boss가 사용할 Phase 클래스를 순서대로 등록한다.
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Phase")
 	TArray<TSubclassOf<UTGBossPhaseBase>> PhaseClasses;
@@ -126,35 +124,14 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Phase")
 	TArray<float> PhaseHPRatio;
 
+	FTimerHandle PhaseTransitionTimerHandle;
+
+protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Part")
 	TSet<FName> ActiveBreakablePartTags;
 
-	// 부위 파괴 관련 설정
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Part")
-	float PartsLifeSpan;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Part")
-	float ExplodeRadius;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Part")
-	float ExplodeForce;
-
-	// 부위 파괴, 제거 Sound
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Sound")
-	TObjectPtr<USoundBase> PartBreakSound;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Sound")
-	TObjectPtr<USoundBase> DeathSound;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Sound")
-	float SoundVolume;
-
-	// 부위 파괴 Effect
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Effect")
-	TObjectPtr<UParticleSystem> PartBreakEffect;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Effect")
-	float EffectScale;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Part")
+	TObjectPtr<UTGPartBreakComponent> PartBreakComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Rotation")
 	bool bIsPatternYawRotating;
@@ -162,14 +139,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Rotation")
 	float PatternYawRotationSpeed;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Sound")
+	TObjectPtr<USoundBase> DeathSound;
+
 	// 싱글 플레이 기준 Boss가 공격 대상으로 사용할 Player.
 	UPROPERTY()
 	TObjectPtr<ATGPlayer> TargetPlayer;
-
-	FTimerHandle PhaseTransitionTimerHandle;
-
-private:
-	// 부위 외형 손상용 캐시
-	TMap<FName, TArray<UMaterialInstanceDynamic*>> PartDamageMaterialMap;
-
 };

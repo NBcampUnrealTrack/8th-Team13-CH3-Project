@@ -121,10 +121,7 @@ FVector ATGNavigationManager::GetCoreLocation() const
 	return CurrentCoreActor->GetActorLocation();
 }
 
-ATGCoreBase* ATGNavigationManager::GetCurrentCoreActor() const
-{
-	return CurrentCoreActor;
-}
+ATGCoreBase* ATGNavigationManager::GetCurrentCoreActor() const { return CurrentCoreActor; }
 
 void ATGNavigationManager::NotifyBuildingPlaced()
 {
