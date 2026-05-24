@@ -196,7 +196,7 @@ void ATGAttackEnemyBase::ApplyPlayerAttackEffect(ATGPlayer* Player)
 
 	if (PlayerAttackSound){
 		UGameplayStatics::PlaySoundAtLocation(
-			this, PlayerAttackSound, GetActorLocation(), SoundVolume);
+			this, PlayerAttackSound, GetActorLocation(), 1.f);
 	}
 
 	if (KnockbackForce <= 0) return;

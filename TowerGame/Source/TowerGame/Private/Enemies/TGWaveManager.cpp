@@ -231,10 +231,7 @@ void ATGWaveManager::InitializeSpawnState(int32 WaveIndex)
 	}
 }
 
-bool ATGWaveManager::HasNextWave() const
-{
-	return WaveDataList.IsValidIndex(NextWaveIndex);
-}
+bool ATGWaveManager::HasNextWave() const { return WaveDataList.IsValidIndex(NextWaveIndex); }
 
 void ATGWaveManager::HandleEnemyRemoved(ATGEnemyBase* RemoveEnemy)
 {
@@ -338,7 +335,4 @@ void ATGWaveManager::ResetGridsForBossSpawn(ATGGridBase* GridBase, FVector Cente
 	}
 }
 
-AActor* ATGWaveManager::GetBoss() const
-{
-	return CurrentBoss;
-}
+AActor* ATGWaveManager::GetBoss() const { return CurrentBoss; }

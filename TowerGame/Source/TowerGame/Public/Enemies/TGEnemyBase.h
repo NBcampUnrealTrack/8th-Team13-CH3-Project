@@ -97,9 +97,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy|Sound")
 	TObjectPtr<USoundBase> DeathSound;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Sound")
-	float SoundVolume;
-
 	// Effect
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy|Effect")
 	TObjectPtr<UNiagaraSystem> StructureAttackEffect;
