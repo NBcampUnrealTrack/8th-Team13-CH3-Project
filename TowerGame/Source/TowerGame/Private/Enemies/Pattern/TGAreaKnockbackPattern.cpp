@@ -3,7 +3,6 @@
 
 #include "Enemies/Pattern/TGAreaKnockbackPattern.h"
 
-#include "DrawDebugHelpers.h"
 #include "Enemies/TGBossBase.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Player/TGPlayer.h"
@@ -80,23 +79,7 @@ void UTGAreaKnockbackPattern::GetAttackLocation()
 
 void UTGAreaKnockbackPattern::DrawWarning(float WarningDrawTime)
 {
-	if (!OwnerBoss) return;
-
-	UWorld* World = OwnerBoss->GetWorld();
-	if (!World) return;
-
-	// 경고 범위 구형
-	DrawDebugSphere(
-		World,
-		AttackLocation,
-		WarningRadius,
-		32,
-		FColor::Red,
-		false,
-		WarningDrawTime,
-		0,
-		1.f
-	);
+	SpawnSphereWarning(AttackLocation, WarningRadius, WarningDrawTime);
 }
 
 void UTGAreaKnockbackPattern::CollectDamageTargets(TArray<AActor*>& OutTargets) const

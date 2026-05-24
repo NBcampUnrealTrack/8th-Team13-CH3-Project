@@ -4,7 +4,6 @@
 #include "Enemies/Pattern/TGSphereAreaPattern.h"
 
 #include "Components/CapsuleComponent.h"
-#include "DrawDebugHelpers.h"
 #include "Enemies/TGBossBase.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Particles/ParticleSystem.h"
@@ -41,23 +40,7 @@ void UTGSphereAreaPattern::GetAttackLocation()
 
 void UTGSphereAreaPattern::DrawWarning(float WarningDrawTime)
 {
-	if (!OwnerBoss) return;
-
-	UWorld* World = OwnerBoss->GetWorld();
-	if (!World) return;
-
-	// 구형 경고 표시
-	DrawDebugSphere(
-		World,
-		AttackLocation,
-		WarningRadius,
-		32,
-		FColor::Red,
-		false,
-		WarningDrawTime,
-		0,
-		1.f
-	);
+	SpawnSphereWarning(AttackLocation, WarningRadius, WarningDrawTime);
 }
 
 void UTGSphereAreaPattern::CollectDamageTargets(TArray<AActor*>& OutTargets) const

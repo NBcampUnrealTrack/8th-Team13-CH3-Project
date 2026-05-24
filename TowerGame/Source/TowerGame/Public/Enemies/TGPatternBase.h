@@ -40,6 +40,9 @@ public:
 	virtual void ExecuteAttack();
 
 protected:
+	void SpawnCircleWarning(const FVector& Location, float Radius, float LifeTime) const;
+	void SpawnSphereWarning(const FVector& Location, float Radius, float LifeTime) const;
+
 	// 범위 내 대상 탐색
 	virtual void CollectDamageTargets(TArray<AActor*>& OutTargets) const;
 
@@ -72,6 +75,13 @@ protected:
 	float AttackDamage;
 
 	FVector AttackLocation;
+
+	// 공격 범위 Material / Actor
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Pattern|Warning")
+	TSubclassOf<AActor> SphereWarningActorClass;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Pattern|Warning")
+	TObjectPtr<UMaterialInterface> CircleWarningMaterial;
 
 	// 공격 Sound
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Pattern|Sound")

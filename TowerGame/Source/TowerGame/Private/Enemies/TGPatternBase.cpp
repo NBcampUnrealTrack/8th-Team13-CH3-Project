@@ -8,7 +8,9 @@
 #include "Enemies/TGBossPhaseBase.h"
 #include "Enemies/TGCoreBase.h"
 #include "Kismet/GameplayStatics.h"
+#include "Materials/MaterialInterface.h"
 #include "Player/TGPlayer.h"
+#include "UObject/ConstructorHelpers.h"
 
 UTGPatternBase::UTGPatternBase() :
 	OwnerPhase(nullptr),
@@ -16,11 +18,24 @@ UTGPatternBase::UTGPatternBase() :
 	WarningRadius(0.f),
 	AttackDamage(0.f),
 	AttackLocation(FVector::ZeroVector),
+	SphereWarningActorClass(nullptr),
+	CircleWarningMaterial(nullptr),
 	AttackSound(nullptr),
 	AttackSoundVolume(1.f),
 	AttackEffect(nullptr),
 	AttackEffectScale(1.f)
 {
+	static ConstructorHelpers::FObjectFinder<UMaterialInterface> CircleWarningMaterialAsset(
+		TEXT("/Game/Materials/M_Radar.M_Radar"));
+	if (CircleWarningMaterialAsset.Succeeded()){
+		CircleWarningMaterial = CircleWarningMaterialAsset.Object;
+	}
+
+	static ConstructorHelpers::FClassFinder<AActor> SphereWarningActorAsset(
+		TEXT("/Game/Enemies/BP_WarningRange_Sphere"));
+	if (SphereWarningActorAsset.Succeeded()){
+		SphereWarningActorClass = SphereWarningActorAsset.Class;
+	}
 }
 
 void UTGPatternBase::Initialize(
@@ -93,8 +108,48 @@ void UTGPatternBase::ExecuteAttack()
 	ApplyDamageToTargets(DamageTargets, AttackDamage);
 }
 
+void UTGPatternBase::SpawnCircleWarning(const FVector& Location, float Radius, float LifeTime) const
+{
+	if (!OwnerBoss || !CircleWarningMaterial) return;
+
+	UWorld* World = OwnerBoss->GetWorld();
+	if (!World) return;
+
+	// 데칼을 공격 범위 크기로 생성
+	UGameplayStatics::SpawnDecalAtLocation(
+		World,
+		CircleWarningMaterial,
+		FVector(64.f, Radius, Radius),
+		Location,
+		FRotator(-90.f, 0.f, 0.f),
+		LifeTime
+	);
+}
+
+void UTGPatternBase::SpawnSphereWarning(const FVector& Location, float Radius, float LifeTime) const
+{
+	if (!OwnerBoss || !SphereWarningActorClass) return;
+
+	UWorld* World = OwnerBoss->GetWorld();
+	if (!World) return;
+
+	AActor* WarningActor = World->SpawnActor<AActor>(
+		SphereWarningActorClass,
+		Location,
+		FRotator::ZeroRotator
+	);
+
+	if (!WarningActor) return;
+
+	// Sphere 기본 Mesh가 반지름 50 기준일 때 WarningRadius에 맞춘다.
+	WarningActor->SetActorScale3D(FVector(Radius / 50.f));
+	WarningActor->SetLifeSpan(LifeTime);
+
+}
+
 void UTGPatternBase::CollectDamageTargets(TArray<AActor*>& OutTargets) const
 {
+	// 각자 구현
 }
 
 bool UTGPatternBase::PrepareOverlapQuery(

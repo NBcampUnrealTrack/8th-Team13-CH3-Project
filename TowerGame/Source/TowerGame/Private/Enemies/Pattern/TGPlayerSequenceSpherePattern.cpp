@@ -106,17 +106,7 @@ void UTGPlayerSequenceSpherePattern::SpawnWarningAtPlayerLocation()
 	WarningLocations.Add(NewAttackLocation);
 
 	// 구형 경고 범위
-	DrawDebugSphere(
-		World,
-		NewAttackLocation,
-		WarningRadius,
-		32,
-		FColor::Red,
-		false,
-		AttackDelayAfterWarning,
-		0,
-		1.f
-	);
+	SpawnSphereWarning(NewAttackLocation, WarningRadius, AttackDelayAfterWarning);
 
 	// Timer & 델리게이트로 공격 실행
 	FTimerHandle AttackTimerHandle;

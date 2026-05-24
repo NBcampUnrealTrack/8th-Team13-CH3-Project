@@ -4,7 +4,6 @@
 #include "Enemies/Pattern/TGGroundCylinderPattern.h"
 
 #include "Components/CapsuleComponent.h"
-#include "DrawDebugHelpers.h"
 #include "Enemies/TGBossBase.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Particles/ParticleSystem.h"
@@ -48,24 +47,7 @@ void UTGGroundCylinderPattern::GetAttackLocation()
 
 void UTGGroundCylinderPattern::DrawWarning(float WarningDrawTime)
 {
-	if (!OwnerBoss) return;
-
-	UWorld* World = OwnerBoss->GetWorld();
-	if (!World) return;
-
-	// 경고 범위 Draw
-	DrawDebugCylinder(
-		World,
-		AttackLocation,
-		AttackLocation + FVector(0.f, 0.f, CylinderHeight),
-		WarningRadius,
-		48,
-		FColor::Red,
-		false,
-		WarningDrawTime,
-		0,
-		4.f
-	);
+	SpawnCircleWarning(AttackLocation, WarningRadius, WarningDrawTime);
 }
 
 void UTGGroundCylinderPattern::CollectDamageTargets(TArray<AActor*>& OutTargets) const
