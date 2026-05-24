@@ -3,7 +3,6 @@
 
 #include "Enemies/Pattern/TGSphereAreaPattern.h"
 
-#include "Components/CapsuleComponent.h"
 #include "Enemies/TGBossBase.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Particles/ParticleSystem.h"
