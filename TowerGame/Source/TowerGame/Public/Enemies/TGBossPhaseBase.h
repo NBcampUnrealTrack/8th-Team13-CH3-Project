@@ -9,6 +9,8 @@
 class UTGPatternBase;
 class ATGBossBase;
 
+DECLARE_MULTICAST_DELEGATE(FOnTGBossPhaseTransitionReady);
+
 USTRUCT(BlueprintType)
 struct FTGBossPatternEntry
 {
@@ -77,10 +79,14 @@ public:
 	FTGBossBreakablePartData* FindBreakablePart(FName PartTag);
 	void RemoveBreakablePart(FName PartTag);
 
+	FOnTGBossPhaseTransitionReady OnPhaseTransitionReady;
+
 protected:
 	void CreatePatterns();
 	bool CanUsePatternEntry(int32 PatternIndex) const;
 	bool IsPlayerDistanceMatched(const FTGBossPatternEntry& Entry) const;
+	void HandlePatternFinished();
+	bool IsPhaseTransitionConditionMatched() const;
 
 	// 이 Phase를 소유하고 실행하는 Boss.
 	UPROPERTY()
@@ -101,6 +107,8 @@ protected:
 	// 현재 경고 표시 후 공격 대기 중인 Pattern
 	UPROPERTY()
 	TObjectPtr<UTGPatternBase> CurrentPattern;
+
+	bool bIsTransitionPatternRunning;
 
 	// 경고 표시 유지 시간
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Pattern")

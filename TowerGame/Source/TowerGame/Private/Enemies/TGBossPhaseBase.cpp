@@ -10,6 +10,7 @@
 UTGBossPhaseBase::UTGBossPhaseBase() :
 	OwnerBoss(nullptr),
 	CurrentPattern(nullptr),
+	bIsTransitionPatternRunning(false),
 	WarningDrawTime(1.5f),
 	PatternInterval(4.f)
 {
@@ -98,6 +99,14 @@ bool UTGBossPhaseBase::IsPlayerDistanceMatched(const FTGBossPatternEntry& Entry)
 	return true;
 }
 
+bool UTGBossPhaseBase::IsPhaseTransitionConditionMatched() const
+{
+	if (!OwnerBoss) return false;
+
+	return OwnerBoss->GetCurrentHP() > 0.f
+		&& OwnerBoss->GetCurrentHP() <= OwnerBoss->GetCurrentPhaseMinHP();
+}
+
 void UTGBossPhaseBase::EnterPhase()
 {
 	UE_LOG(LogTemp, Log, TEXT("%s EnterPhase"), *GetName());
@@ -129,7 +138,7 @@ void UTGBossPhaseBase::EnterPhase()
 		this,
 		&UTGBossPhaseBase::ExecutePattern,
 		PatternInterval,
-		true,
+		false,
 		PatternInterval
 	);
 }
@@ -146,11 +155,13 @@ void UTGBossPhaseBase::ExitPhase()
 	// Pattern Timer 정리
 	for (UTGPatternBase* Pattern : Patterns){
 		if (Pattern){
+			Pattern->OnPatternFinished.RemoveAll(this);
 			Pattern->StopPattern();
 		}
 	}
 
 	CurrentPattern = nullptr;
+	bIsTransitionPatternRunning = false;
 }
 
 void UTGBossPhaseBase::ExecutePattern()
@@ -159,9 +170,24 @@ void UTGBossPhaseBase::ExecutePattern()
 
 	UTGPatternBase* SelectedPattern = nullptr;
 	int32 SelectedPatternIndex = INDEX_NONE;
+	// 현재 페이즈의 체력 0
+	bIsTransitionPatternRunning =
+		OwnerBoss->GetCurrentHP() > 0.f &&
+		OwnerBoss->GetCurrentHP() <= OwnerBoss->GetCurrentPhaseMinHP();
+
+	// Phase 전환 조건일 경우 마지막 Pattern을 실행
+	if (bIsTransitionPatternRunning){
+		const int32 TransitionPatternIndex = Patterns.Num() - 1;
+
+		if (Patterns.IsValidIndex(TransitionPatternIndex) && Patterns[TransitionPatternIndex]){
+			SelectedPattern = Patterns[TransitionPatternIndex];
+			SelectedPatternIndex = TransitionPatternIndex;
+		}
+	}
 
 	// 사용할 패턴 선택
 	for (int32 PatternIndex = 0; PatternIndex < Patterns.Num(); ++PatternIndex){
+		if (SelectedPattern) break;
 		if (!CanUsePatternEntry(PatternIndex)) continue;
 
 		SelectedPattern = Patterns[PatternIndex];
@@ -172,6 +198,7 @@ void UTGBossPhaseBase::ExecutePattern()
 	if (!SelectedPattern || SelectedPatternIndex == INDEX_NONE) return;
 
 	if (CurrentPattern){
+		CurrentPattern->OnPatternFinished.RemoveAll(this);
 		CurrentPattern->StopPattern();
 	}
 
@@ -183,6 +210,36 @@ void UTGBossPhaseBase::ExecutePattern()
 
 	CurrentPattern = SelectedPattern;
 	CurrentPattern->StartPattern(WarningDrawTime);
+	CurrentPattern->OnPatternFinished.AddUObject(this, &UTGBossPhaseBase::HandlePatternFinished);
+}
+
+void UTGBossPhaseBase::HandlePatternFinished()
+{
+	if (!OwnerBoss) return;
+
+	if (CurrentPattern){
+		CurrentPattern->OnPatternFinished.RemoveAll(this);
+	}
+
+	UWorld* World = OwnerBoss->GetWorld();
+	if (!World) return;
+
+	// 페이즈 전환 패턴이었는지 확인
+	if (bIsTransitionPatternRunning){
+		bIsTransitionPatternRunning = false;
+		OnPhaseTransitionReady.Broadcast();
+		return;
+	}
+
+	// 패턴 종료 뒤 1초 뒤 다음 패턴 실행
+	World->GetTimerManager().ClearTimer(PatternTimerHandle);
+	World->GetTimerManager().SetTimer(
+		PatternTimerHandle,
+		this,
+		&UTGBossPhaseBase::ExecutePattern,
+		1.f,
+		false
+	);
 }
 
 FTGBossBreakablePartData* UTGBossPhaseBase::FindBreakablePart(FName PartTag)

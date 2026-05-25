@@ -51,6 +51,8 @@ void UTGAreaKnockbackPattern::StopPattern()
 	World->GetTimerManager().ClearTimer(AttackDelayTimerHandle);
 	World->GetTimerManager().ClearTimer(ActiveAttackTimerHandle);
 	World->GetTimerManager().ClearTimer(ActiveAttackEndTimerHandle);
+
+	OnPatternFinished.Broadcast();
 }
 
 void UTGAreaKnockbackPattern::ExecuteAttack()

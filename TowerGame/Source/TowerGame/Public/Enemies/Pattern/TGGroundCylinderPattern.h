@@ -20,6 +20,7 @@ public:
 	virtual void StartPattern(float WarningDrawTime) override;
 	virtual void StopPattern() override;
 	virtual void GetAttackLocation() override;
+	virtual void ExecuteAttack() override;
 
 protected:
 	virtual void CollectDamageTargets(TArray<AActor*>& OutTargets) const override;
@@ -28,6 +29,5 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Pattern")
 	float CylinderHeight;
 
-private:
 	FTimerHandle AttackDelayTimerHandle;
 };

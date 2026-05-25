@@ -5,6 +5,7 @@
 
 #include "Enemies/Pattern/TGAreaKnockbackPattern.h"
 #include "Enemies/Pattern/TGGroundCylinderPattern.h"
+#include "Enemies/Pattern/GridCheckerPattern.h"
 
 UTGSentinelBossPhase1::UTGSentinelBossPhase1()
 {
@@ -39,6 +40,15 @@ UTGSentinelBossPhase1::UTGSentinelBossPhase1()
 	GroundCylinderEntry.AttackEffectScale = 5.f;
 
 	PatternEntries.Add(GroundCylinderEntry);
+
+	// Grid 체커보드 원기둥 공격
+	FTGBossPatternEntry GridCheckerEntry;
+	GridCheckerEntry.PatternClass = UGridCheckerPattern::StaticClass();
+	GridCheckerEntry.WarningRadius = 150.f;
+	GridCheckerEntry.AttackDamage = 10.f;
+	GridCheckerEntry.AttackEffectScale = 2.f;
+
+	PatternEntries.Add(GridCheckerEntry);
 }
 
 void UTGSentinelBossPhase1::EnterPhase()

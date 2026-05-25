@@ -60,6 +60,12 @@ void UTGGroundCylinderPattern::StopPattern()
 	World->GetTimerManager().ClearTimer(AttackDelayTimerHandle);
 }
 
+void UTGGroundCylinderPattern::ExecuteAttack()
+{
+	Super::ExecuteAttack();
+	OnPatternFinished.Broadcast();
+}
+
 void UTGGroundCylinderPattern::GetAttackLocation()
 {
 	AttackLocation = FVector::ZeroVector;

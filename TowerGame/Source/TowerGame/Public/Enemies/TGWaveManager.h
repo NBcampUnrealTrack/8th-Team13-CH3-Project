@@ -110,6 +110,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Boss")
 	AActor* GetBoss() const;
 
+	// Stage GridBase 탐색
+	ATGGridBase* FindGridBase() const;
+
 private:
 	// Wave 관리
 	void SpawnNextEnemy();
@@ -129,7 +132,6 @@ private:
 	void SpawnBoss();
 
 	// 보스 생성 시 중앙 기준 Grid 초기화
-	ATGGridBase* FindGridBase() const;
 	FVector GetGridCenterLocation(const ATGGridBase* GridBase) const;
 	void ResetGridsForBossSpawn(ATGGridBase* GridBase, FVector CenterLocation, float ClearRadius);
 };

@@ -80,11 +80,21 @@ void UTGRandomGroundCylinderPattern::SpawnWarnings(float WarningDrawTime)
 		// 공격 타이머 델리게이트 받을 함수 생성
 		FTimerHandle AttackTimerHandle;
 		FTimerDelegate AttackTimerDelegate;
-		AttackTimerDelegate.BindUObject(
-			this,
-			&UTGRandomGroundCylinderPattern::ExecuteAttackLocation,
-			WarningLocation
-		);
+		if (Index == AttackCount - 1){
+			// 마지막 공격
+			AttackTimerDelegate.BindLambda([this, WarningLocation]()
+			{
+				ExecuteAttackLocation(WarningLocation);
+				OnPatternFinished.Broadcast();
+			});
+		}
+		else{
+			AttackTimerDelegate.BindUObject(
+				this,
+				&UTGRandomGroundCylinderPattern::ExecuteAttackLocation,
+				WarningLocation
+			);
+		}
 
 		// 공격 타이머
 		World->GetTimerManager().SetTimer(

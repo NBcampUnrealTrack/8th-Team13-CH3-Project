@@ -11,7 +11,9 @@
 UTGPlayerSequenceSpherePattern::UTGPlayerSequenceSpherePattern() :
 	WarningSpawnDuration(1.5f),
 	WarningSpawnInterval(0.3f),
-	AttackDelayAfterWarning(0.f)
+	AttackDelayAfterWarning(0.f),
+	bWarningSpawnFinished(false),
+	bPatternFinished(false)
 {
 	static ConstructorHelpers::FObjectFinder<USoundBase> AttackSoundAsset(
 		TEXT("/Game/Enemies/Sound/Enemy_Shot_00.Enemy_Shot_00"));
@@ -30,6 +32,8 @@ void UTGPlayerSequenceSpherePattern::StartPattern(float WarningDrawTime)
 	if (!World) return;
 
 	AttackDelayAfterWarning = WarningDrawTime;
+	bWarningSpawnFinished = false;
+	bPatternFinished = false;
 
 	// WarningSpawnInterval마다 플레이어 위치에 경고 생성
 	World->GetTimerManager().SetTimer(
@@ -74,6 +78,8 @@ void UTGPlayerSequenceSpherePattern::StopPattern()
 	}
 
 	MissileWarningActors.Empty();
+	bWarningSpawnFinished = false;
+	bPatternFinished = false;
 }
 
 void UTGPlayerSequenceSpherePattern::CollectDamageTargets(TArray<AActor*>& OutTargets) const
@@ -122,6 +128,8 @@ void UTGPlayerSequenceSpherePattern::StopWarningSpawn()
 	if (!World) return;
 
 	World->GetTimerManager().ClearTimer(WarningSpawnTimerHandle);
+	bWarningSpawnFinished = true;
+	CheckPatternFinished();
 }
 
 void UTGPlayerSequenceSpherePattern::HandleMissileHit(ATGMissile* Missile, const FHitResult& HitResult)
@@ -139,6 +147,7 @@ void UTGPlayerSequenceSpherePattern::HandleMissileHit(ATGMissile* Missile, const
 
 	AttackLocation = HitResult.ImpactPoint;
 	ExecuteAttack();
+	CheckPatternFinished();
 }
 
 void UTGPlayerSequenceSpherePattern::HandleMissileExpired(ATGMissile* Missile)
@@ -153,6 +162,17 @@ void UTGPlayerSequenceSpherePattern::HandleMissileExpired(ATGMissile* Missile)
 	}
 
 	MissileWarningActors.Remove(Missile);
+	CheckPatternFinished();
+}
+
+void UTGPlayerSequenceSpherePattern::CheckPatternFinished()
+{
+	if (bPatternFinished) return;
+	if (!bWarningSpawnFinished) return;
+	if (!MissileWarningActors.IsEmpty()) return;
+
+	bPatternFinished = true;
+	OnPatternFinished.Broadcast();
 }
 
 void UTGPlayerSequenceSpherePattern::LaunchMissileAtLocation(FVector InAttackLocaion, AActor* WarningActor)

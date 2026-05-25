@@ -71,6 +71,7 @@ void ATGBossBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 
 	if (CurrentPhase){
+		CurrentPhase->OnPhaseTransitionReady.RemoveAll(this);
 		CurrentPhase->ExitPhase();
 		CurrentPhase = nullptr;
 	}
@@ -188,6 +189,7 @@ void ATGBossBase::ChangeToNextPhase()
 	if (CurrentPhase){
 		DestroyRemainingBreakableParts();
 
+		CurrentPhase->OnPhaseTransitionReady.RemoveAll(this);
 		CurrentPhase->ExitPhase();
 		CurrentPhase = nullptr;
 	}
@@ -200,6 +202,7 @@ void ATGBossBase::ChangeToNextPhase()
 	NewPhase->Initialize(this);
 	CurrentPhase = NewPhase;
 	CurrentPhaseIndex = NewPhaseIndex;
+	CurrentPhase->OnPhaseTransitionReady.AddUObject(this, &ATGBossBase::ChangeToNextPhase);
 
 	CurrentPhase->EnterPhase();
 	// 제거되지 않은 부위 제거
@@ -213,17 +216,7 @@ void ATGBossBase::ChangeToNextPhase()
 
 void ATGBossBase::CheckPhaseTransition()
 {
-	if (GetWorldTimerManager().IsTimerActive(PhaseTransitionTimerHandle)) return;
-
-	const int32 NextPhaseIndex = CurrentPhaseIndex + 1;
-	if (!PhaseClasses.IsValidIndex(NextPhaseIndex) || !PhaseHPRatio.IsValidIndex(CurrentPhaseIndex)) return;
-
-	// HP 비율이 현재 페이즈의 전환 기준 이하로 내려가면 다음 페이즈로 전환
-	const float HPRatio = CurrentHP / MaxHP;
-	if (HPRatio > PhaseHPRatio[CurrentPhaseIndex]) return;
-
-	GetWorldTimerManager().SetTimer(
-		PhaseTransitionTimerHandle, this, &ATGBossBase::ChangeToNextPhase, 1, false);
+	// Phase 전환 조건은 Phase의 마지막 Pattern 실행 흐름에서 처리
 }
 
 void ATGBossBase::ApplyBossDamage(float DamageAmount)

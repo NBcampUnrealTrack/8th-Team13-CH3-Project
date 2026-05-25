@@ -106,7 +106,7 @@ AActor* UTGPatternBase::SpawnSphereWarning(const FVector& Location, float Radius
 	// Sphere 기본 Mesh가 반지름 50 기준일 때 WarningRadius에 맞춘다.
 	WarningActor->SetActorScale3D(FVector(Radius / 50.f));
 
-	// LifeTime이 0이 아닐 경우에만 LifrTime 적용
+	// LifeTime이 0이 아닐 경우에만 LifeTime 적용
 	if (LifeTime > 0.f) WarningActor->SetLifeSpan(LifeTime);
 
 	return WarningActor;
@@ -143,8 +143,10 @@ bool UTGPatternBase::IsValidDamageTarget(AActor* TargetActor) const
 	return Cast<ATGPlayer>(TargetActor) || Cast<ATGCoreBase>(TargetActor) || Cast<ATGMountedTower>(TargetActor);
 }
 
-void UTGPatternBase::PlayAttackFeedback(const FVector& Location) const
+void UTGPatternBase::PlayAttackFeedback(const FVector& Location, float SoundVolume) const
 {
+	if (SoundVolume == -1.f) SoundVolume = AttackSoundVolume;
+
 	if (!OwnerBoss) return;
 
 	UWorld* World = OwnerBoss->GetWorld();
@@ -156,7 +158,7 @@ void UTGPatternBase::PlayAttackFeedback(const FVector& Location) const
 			World,
 			AttackSound,
 			Location,
-			AttackSoundVolume
+			SoundVolume
 		);
 	}
 

@@ -122,6 +122,7 @@ void UTGSphereAreaPattern::HandleMissileHit(ATGMissile* Missile, const FHitResul
 	// 충돌 위치를 공격 위치로 지정
 	AttackLocation = HitResult.ImpactPoint;
 	ExecuteAttack();
+	OnPatternFinished.Broadcast();
 }
 
 void UTGSphereAreaPattern::HandleMissileExpired(ATGMissile* Missile)
@@ -140,6 +141,8 @@ void UTGSphereAreaPattern::HandleMissileExpired(ATGMissile* Missile)
 		ActiveWarningActor->Destroy();
 		ActiveWarningActor = nullptr;
 	}
+
+	OnPatternFinished.Broadcast();
 }
 
 void UTGSphereAreaPattern::LaunchMissileToWarningLocation()

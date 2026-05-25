@@ -3,6 +3,7 @@
 
 #include "Enemies/Phase/TGSentinelBossPhase2.h"
 
+#include "Enemies/Pattern/GridCheckerPattern.h"
 #include "Enemies/Pattern/TGRandomGroundCylinderPattern.h"
 #include "Enemies/Pattern/TGSphereAreaPattern.h"
 
@@ -34,6 +35,15 @@ UTGSentinelBossPhase2::UTGSentinelBossPhase2()
 	SphereEntry.AttackEffectScale = 2.f;
 
 	PatternEntries.Add(SphereEntry);
+
+	// Grid 체커보드 원기둥 공격
+	FTGBossPatternEntry GridCheckerEntry;
+	GridCheckerEntry.PatternClass = UGridCheckerPattern::StaticClass();
+	GridCheckerEntry.WarningRadius = 150.f;
+	GridCheckerEntry.AttackDamage = 12.f;
+	GridCheckerEntry.AttackEffectScale = 2.f;
+
+	PatternEntries.Add(GridCheckerEntry);
 }
 
 void UTGSentinelBossPhase2::EnterPhase()

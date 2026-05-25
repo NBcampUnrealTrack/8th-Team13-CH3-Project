@@ -9,6 +9,8 @@
 class ATGBossBase;
 class UTGBossPhaseBase;
 
+DECLARE_MULTICAST_DELEGATE(FOnTGPatternFinished);
+
 UCLASS(Abstract)
 class TOWERGAME_API UTGPatternBase : public UObject
 {
@@ -36,6 +38,8 @@ public:
 	//공격 실행
 	virtual void ExecuteAttack();
 
+	FOnTGPatternFinished OnPatternFinished;
+
 protected:
 	void SpawnCircleWarning(const FVector& Location, float Radius, float LifeTime) const;
 	AActor* SpawnSphereWarning(const FVector& Location, float Radius, float LifeTime = 0.f) const;
@@ -53,7 +57,7 @@ protected:
 	bool IsValidDamageTarget(AActor* TargetActor) const;
 
 	// Sound / Effect
-	void PlayAttackFeedback(const FVector& Location) const;
+	void PlayAttackFeedback(const FVector& Location, float SoundVolume = -1.f) const;
 
 	//탐색된 대상에게 데미지 적용
 	void ApplyDamageToTargets(const TArray<AActor*>& Targets, float Damage) const;

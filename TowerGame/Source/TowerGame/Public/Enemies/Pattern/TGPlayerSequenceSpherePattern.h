@@ -28,6 +28,7 @@ private:
 	// 경고 범위 및 공격
 	void SpawnWarningAtPlayerLocation();
 	void StopWarningSpawn();
+	void CheckPatternFinished();
 
 	UFUNCTION()
 	void HandleMissileHit(ATGMissile* Missile, const FHitResult& HitResult);
@@ -53,6 +54,12 @@ private:
 
 	UPROPERTY()
 	TMap<TObjectPtr<ATGMissile>, TObjectPtr<AActor>> MissileWarningActors;
+
+	UPROPERTY()
+	bool bWarningSpawnFinished;
+
+	UPROPERTY()
+	bool bPatternFinished;
 
 	FTimerHandle WarningSpawnTimerHandle;
 	FTimerHandle WarningSpawnStopTimerHandle;
