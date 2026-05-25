@@ -25,23 +25,20 @@ public:
 		float InAttackEffectScale);
 
 	// Pattern 실행 시작
-	virtual void StartPattern(float WarningDrawTime);
+	virtual void StartPattern(float WarningDrawTime) PURE_VIRTUAL(UTGPatternBase::StartPattern, );
 
 	// Pattern 내부 타이머 정리
-	virtual void StopPattern();
+	virtual void StopPattern() PURE_VIRTUAL(UTGPatternBase::StopPattern, );
 
 	// 공격 위치 계산
 	virtual void GetAttackLocation();
-
-	// 경고 범위 표시
-	virtual void DrawWarning(float WarningDrawTime);
 
 	//공격 실행
 	virtual void ExecuteAttack();
 
 protected:
 	void SpawnCircleWarning(const FVector& Location, float Radius, float LifeTime) const;
-	void SpawnSphereWarning(const FVector& Location, float Radius, float LifeTime) const;
+	AActor* SpawnSphereWarning(const FVector& Location, float Radius, float LifeTime = 0.f) const;
 
 	// 범위 내 대상 탐색
 	virtual void CollectDamageTargets(TArray<AActor*>& OutTargets) const;
@@ -96,7 +93,4 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Pattern|Effect", meta = (ClampMin = "0.0"))
 	float AttackEffectScale;
-
-	// 경고 후 공격 실행 타이머
-	FTimerHandle AttackDelayTimerHandle;
 };

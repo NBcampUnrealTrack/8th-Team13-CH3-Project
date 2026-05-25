@@ -21,7 +21,7 @@ void UTGAreaKnockbackPattern::StartPattern(float WarningDrawTime)
 
 	// 경고 범위 표시
 	GetAttackLocation();
-	DrawWarning(WarningDrawTime);
+	SpawnSphereWarning(AttackLocation, WarningRadius, WarningDrawTime);
 
 	if (!OwnerBoss) return;
 
@@ -40,8 +40,6 @@ void UTGAreaKnockbackPattern::StartPattern(float WarningDrawTime)
 
 void UTGAreaKnockbackPattern::StopPattern()
 {
-	Super::StopPattern();
-
 	if (!OwnerBoss) return;
 
 	OwnerBoss->StopPatternYawRotation();
@@ -50,6 +48,7 @@ void UTGAreaKnockbackPattern::StopPattern()
 	if (!World) return;
 
 	// Timer 정리
+	World->GetTimerManager().ClearTimer(AttackDelayTimerHandle);
 	World->GetTimerManager().ClearTimer(ActiveAttackTimerHandle);
 	World->GetTimerManager().ClearTimer(ActiveAttackEndTimerHandle);
 }
@@ -75,11 +74,6 @@ void UTGAreaKnockbackPattern::GetAttackLocation()
 
 	if (!OwnerBoss) return;
 	AttackLocation = OwnerBoss->GetActorLocation();
-}
-
-void UTGAreaKnockbackPattern::DrawWarning(float WarningDrawTime)
-{
-	SpawnSphereWarning(AttackLocation, WarningRadius, WarningDrawTime);
 }
 
 void UTGAreaKnockbackPattern::CollectDamageTargets(TArray<AActor*>& OutTargets) const

@@ -20,7 +20,6 @@ public:
 
 protected:
 	virtual void GetAttackLocation() override;
-	virtual void DrawWarning(float WarningDrawTime) override;
 	virtual void CollectDamageTargets(TArray<AActor*>& OutTargets) const override;
 
 private:
@@ -40,6 +39,7 @@ private:
 	UPROPERTY()
 	float KnockbackUpStrength;
 
+	FTimerHandle AttackDelayTimerHandle;
 	FTimerHandle ActiveAttackTimerHandle;
 	FTimerHandle ActiveAttackEndTimerHandle;
 };

@@ -6,6 +6,7 @@
 #include "Enemies/TGPatternBase.h"
 #include "TGSphereAreaPattern.generated.h"
 
+class ATGMissile;
 /**
  *
  */
@@ -17,10 +18,30 @@ class TOWERGAME_API UTGSphereAreaPattern : public UTGPatternBase
 public:
 	UTGSphereAreaPattern();
 
+	virtual void StartPattern(float WarningDrawTime) override;
+	virtual void StopPattern() override;
+
 	virtual void GetAttackLocation() override;
-	virtual void DrawWarning(float WarningDrawTime) override;
 
 protected:
 	virtual void CollectDamageTargets(TArray<AActor*>& OutTargets) const override;
+
+private:
+	UFUNCTION()
+	void HandleMissileHit(ATGMissile* Missile, const FHitResult& HitResult);
+
+	UFUNCTION()
+	void HandleMissileExpired(ATGMissile* Missile);
+
+	void LaunchMissileToWarningLocation();
+
+private:
+	UPROPERTY()
+	TObjectPtr<AActor> ActiveWarningActor;
+
+	UPROPERTY()
+	TObjectPtr<ATGMissile> ActiveMissile;
+
+	FTimerHandle MissileLaunchTimerHandle;
 
 };

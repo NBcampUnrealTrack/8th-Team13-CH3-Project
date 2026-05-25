@@ -26,6 +26,40 @@ UTGGroundCylinderPattern::UTGGroundCylinderPattern() : CylinderHeight(100)
 	}
 }
 
+void UTGGroundCylinderPattern::StartPattern(float WarningDrawTime)
+{
+	StopPattern();
+
+	// 공격 범위 경고 표시
+	GetAttackLocation();
+	SpawnCircleWarning(AttackLocation, WarningRadius, WarningDrawTime);
+
+	if (!OwnerBoss) return;
+
+	UWorld* World = OwnerBoss->GetWorld();
+	if (!World) return;
+
+	// 지연 시간 후 공격 판정
+	World->GetTimerManager().SetTimer(
+		AttackDelayTimerHandle,
+		this,
+		&UTGGroundCylinderPattern::ExecuteAttack,
+		WarningDrawTime,
+		false
+	);
+}
+
+void UTGGroundCylinderPattern::StopPattern()
+{
+	if (!OwnerBoss) return;
+
+	UWorld* World = OwnerBoss->GetWorld();
+	if (!World) return;
+
+	// Pattern Timer 정리
+	World->GetTimerManager().ClearTimer(AttackDelayTimerHandle);
+}
+
 void UTGGroundCylinderPattern::GetAttackLocation()
 {
 	AttackLocation = FVector::ZeroVector;
@@ -43,11 +77,6 @@ void UTGGroundCylinderPattern::GetAttackLocation()
 	// Player 위치에서 CapSuleHalfHeight 만큼 내려서 바닥 위치를 저장
 	AttackLocation = Player->GetActorLocation();
 	AttackLocation.Z -= CapsuleHalfHeight;
-}
-
-void UTGGroundCylinderPattern::DrawWarning(float WarningDrawTime)
-{
-	SpawnCircleWarning(AttackLocation, WarningRadius, WarningDrawTime);
 }
 
 void UTGGroundCylinderPattern::CollectDamageTargets(TArray<AActor*>& OutTargets) const

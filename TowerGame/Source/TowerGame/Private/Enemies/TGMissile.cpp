@@ -6,8 +6,6 @@
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "NiagaraComponent.h"
-#include "NiagaraFunctionLibrary.h"
-#include "Kismet/GameplayStatics.h"
 
 ATGMissile::ATGMissile()
 {
@@ -115,10 +113,27 @@ void ATGMissile::SetHomingLocation(const FVector& TargetLocation, float TurnRate
 	SetActorTickEnabled(true);
 }
 
-void ATGMissile::Launch(const FTGMissileParams& Params)
+void ATGMissile::Launch(const FTGMissileParams& Params, float CollisionDisableTime)
 {
-	Damage = Params.Damage;
-	ExplosionRadius = Params.ExplosionRadius;
+	// 초기 충돌 무시 시간
+	if (CollisionDisableTime > 0.f){
+		CollisionComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+		if (UWorld* World = GetWorld()){
+			FTimerHandle CollisionEnableTimerHandle;
+			World->GetTimerManager().SetTimer(
+				CollisionEnableTimerHandle,
+				FTimerDelegate::CreateWeakLambda(this, [this]()
+				{
+					// 초기 충돌 무시 시간 부여
+					if (!CollisionComponent) return;
+					CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+				}),
+				CollisionDisableTime,
+				false
+			);
+		}
+	}
 
 	ProjectileMovement->InitialSpeed = Params.InitialSpeed;
 	ProjectileMovement->MaxSpeed = Params.MaxSpeed;
@@ -127,11 +142,6 @@ void ATGMissile::Launch(const FTGMissileParams& Params)
 	ProjectileMovement->Activate();
 
 	SetLifeSpan(Params.LifeSpan);
-}
-
-void ATGMissile::SetDamageInstigator(AActor* InInstigator)
-{
-	DamageInstigator = InInstigator;
 }
 
 void ATGMissile::OnProjectileStopped(const FHitResult& ImpactResult)
@@ -144,66 +154,11 @@ void ATGMissile::OnProjectileStopped(const FHitResult& ImpactResult)
 
 void ATGMissile::Explode(const FHitResult& Hit)
 {
-	PlayHitEffects(Hit.ImpactPoint, Hit.ImpactNormal);
-
-	if (ExplosionRadius > 0.f)
-	{
-		ApplyExplosionDamage(Hit.ImpactPoint);
-	}
-	else if (IsValid(Hit.GetActor()))
-	{
-		UGameplayStatics::ApplyDamage(
-			Hit.GetActor(),
-			Damage,
-			nullptr,
-			DamageInstigator,
-			UDamageType::StaticClass()
-		);
-	}
-
 	OnMissileHit.Broadcast(this, Hit);
 
 	// 메시·충돌 즉시 제거, 이펙트 재생 후 Actor 소멸
 	MeshComponent->SetHiddenInGame(true);
 	SetActorEnableCollision(false);
 	ProjectileMovement->StopMovementImmediately();
-	SetLifeSpan(2.f);
-}
-
-void ATGMissile::ApplyExplosionDamage(const FVector& Location)
-{
-	UGameplayStatics::ApplyRadialDamage(
-		GetWorld(),
-		Damage,
-		Location,
-		ExplosionRadius,
-		UDamageType::StaticClass(),
-		TArray<AActor*>{ this },
-		DamageInstigator,
-		nullptr,
-		false
-	);
-}
-
-void ATGMissile::PlayHitEffects(const FVector& Location, const FVector& Normal)
-{
-	if (ExplosionEffect)
-	{
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-			GetWorld(),
-			ExplosionEffect,
-			Location,
-			Normal.Rotation()
-		);
-	}
-
-	if (ExplosionSound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(
-			GetWorld(),
-			ExplosionSound,
-			Location,
-			ExplosionSoundVolume
-		);
-	}
+	Destroy();
 }

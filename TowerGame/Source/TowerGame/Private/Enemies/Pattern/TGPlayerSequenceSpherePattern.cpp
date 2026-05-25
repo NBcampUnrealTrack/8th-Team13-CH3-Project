@@ -53,8 +53,6 @@ void UTGPlayerSequenceSpherePattern::StartPattern(float WarningDrawTime)
 
 void UTGPlayerSequenceSpherePattern::StopPattern()
 {
-	Super::StopPattern();
-
 	if (!OwnerBoss) return;
 
 	UWorld* World = OwnerBoss->GetWorld();
@@ -63,13 +61,19 @@ void UTGPlayerSequenceSpherePattern::StopPattern()
 	// Timer 정리
 	World->GetTimerManager().ClearTimer(WarningSpawnTimerHandle);
 	World->GetTimerManager().ClearTimer(WarningSpawnStopTimerHandle);
-	for (FTimerHandle& TimerHandle : SequenceAttackTimerHandles){
-		World->GetTimerManager().ClearTimer(TimerHandle);
+
+	for (const TPair<TObjectPtr<ATGMissile>, TObjectPtr<AActor>>& Pair : MissileWarningActors){
+		if (Pair.Key){
+			Pair.Key->OnMissileHit.RemoveDynamic(this, &UTGPlayerSequenceSpherePattern::HandleMissileHit);
+			Pair.Key->OnMissileExpired.RemoveDynamic(this, &UTGPlayerSequenceSpherePattern::HandleMissileExpired);
+		}
+
+		if (Pair.Value){
+			Pair.Value->Destroy();
+		}
 	}
 
-	// 사용 변수 초기화
-	SequenceAttackTimerHandles.Empty();
-	WarningLocations.Empty();
+	MissileWarningActors.Empty();
 }
 
 void UTGPlayerSequenceSpherePattern::CollectDamageTargets(TArray<AActor*>& OutTargets) const
@@ -104,50 +108,10 @@ void UTGPlayerSequenceSpherePattern::SpawnWarningAtPlayerLocation()
 
 	// Player 위치 얻어옴
 	const FVector NewAttackLocation = Player->GetActorLocation();
-	WarningLocations.Add(NewAttackLocation);
 
 	// 구형 경고 범위
-	SpawnSphereWarning(NewAttackLocation, WarningRadius, AttackDelayAfterWarning);
-
-	// Timer & 델리게이트로 공격 실행
-	FTimerHandle AttackTimerHandle;
-	FTimerDelegate AttackTimerDelegate;
-	AttackTimerDelegate.BindUObject(
-		this,
-		&UTGPlayerSequenceSpherePattern::ExecuteAttackAtLocation,
-		NewAttackLocation
-	);
-
-	World->GetTimerManager().SetTimer(
-		AttackTimerHandle,
-		AttackTimerDelegate,
-		AttackDelayAfterWarning,
-		false
-	);
-
-	SequenceAttackTimerHandles.Add(AttackTimerHandle);
-
-	//	투사체 테스트
-	if (!OwnerBoss->GetMissileClass()) return;
-	FTransform LauchTransform = OwnerBoss->GetActorTransform();
-	LauchTransform.AddToTranslation(FVector::UpVector * 600.f);
-
-	// 구 전체에서 무작위 방향 벡터 → 발사 회전값으로 변환
-	const FRotator RandomRotation = FRotator(FMath::RandRange(0.f, 180.f), FMath::RandRange(0.f, 360.f), 0.f);
-	LauchTransform.SetRotation(RandomRotation.Quaternion());
-
-	ATGMissile* Missile = GetWorld()->SpawnActor<ATGMissile>(OwnerBoss->GetMissileClass(), LauchTransform);
-	if (!Missile) return;
-
-	//	미사일 설정값
-	FTGMissileParams MissileParams;
-	MissileParams.Damage = AttackDamage;
-	MissileParams.ExplosionRadius = WarningRadius;
-
-	//	플레이어 위치로 추적설정
-	Missile->SetDamageInstigator(OwnerBoss);
-	Missile->SetHomingLocation(NewAttackLocation, 2.f, 50.f);
-	Missile->Launch(MissileParams);
+	AActor* WarningActor = SpawnSphereWarning(NewAttackLocation, WarningRadius);
+	LaunchMissileAtLocation(NewAttackLocation, WarningActor);
 }
 
 void UTGPlayerSequenceSpherePattern::StopWarningSpawn()
@@ -158,6 +122,63 @@ void UTGPlayerSequenceSpherePattern::StopWarningSpawn()
 	if (!World) return;
 
 	World->GetTimerManager().ClearTimer(WarningSpawnTimerHandle);
+}
+
+void UTGPlayerSequenceSpherePattern::HandleMissileHit(ATGMissile* Missile, const FHitResult& HitResult)
+{
+	if (!Missile) return;
+
+	Missile->OnMissileExpired.RemoveDynamic(this, &UTGPlayerSequenceSpherePattern::HandleMissileExpired);
+
+	if (TObjectPtr<AActor>* WarningActor = MissileWarningActors.Find(Missile)){
+		if (*WarningActor)
+			(*WarningActor)->Destroy();
+	}
+
+	MissileWarningActors.Remove(Missile);
+
+	AttackLocation = HitResult.ImpactPoint;
+	ExecuteAttack();
+}
+
+void UTGPlayerSequenceSpherePattern::HandleMissileExpired(ATGMissile* Missile)
+{
+	if (!Missile) return;
+
+	Missile->OnMissileHit.RemoveDynamic(this, &UTGPlayerSequenceSpherePattern::HandleMissileHit);
+
+	if (TObjectPtr<AActor>* WarningActor = MissileWarningActors.Find(Missile)){
+		if (*WarningActor)
+			(*WarningActor)->Destroy();
+	}
+
+	MissileWarningActors.Remove(Missile);
+}
+
+void UTGPlayerSequenceSpherePattern::LaunchMissileAtLocation(FVector InAttackLocaion, AActor* WarningActor)
+{
+	if (!OwnerBoss || !OwnerBoss->GetMissileClass()) return;
+
+	UWorld* World = OwnerBoss->GetWorld();
+	if (!World) return;
+
+	FTransform LaunchTransform = OwnerBoss->GetActorTransform();
+	LaunchTransform.AddToTranslation(FVector::UpVector * 600.f);
+
+	const FVector Direction = (InAttackLocaion - LaunchTransform.GetLocation()).GetSafeNormal();
+	LaunchTransform.SetRotation(Direction.Rotation().Quaternion());
+
+	ATGMissile* Missile = World->SpawnActor<ATGMissile>(OwnerBoss->GetMissileClass(), LaunchTransform);
+	if (!Missile) return;
+
+	MissileWarningActors.Add(Missile, WarningActor);
+
+	Missile->OnMissileHit.AddDynamic(this, &UTGPlayerSequenceSpherePattern::HandleMissileHit);
+	Missile->OnMissileExpired.AddDynamic(this, &UTGPlayerSequenceSpherePattern::HandleMissileExpired);
+
+	FTGMissileParams MissileParams;
+	Missile->SetHomingLocation(InAttackLocaion, 2.f, 50.f);
+	Missile->Launch(MissileParams);
 }
 
 void UTGPlayerSequenceSpherePattern::ExecuteAttackAtLocation(FVector InAttackLocation)

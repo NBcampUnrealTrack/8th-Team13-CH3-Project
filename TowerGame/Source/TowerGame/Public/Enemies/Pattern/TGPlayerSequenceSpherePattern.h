@@ -6,6 +6,7 @@
 #include "Enemies/TGPatternBase.h"
 #include "TGPlayerSequenceSpherePattern.generated.h"
 
+class ATGMissile;
 /**
  *
  */
@@ -27,6 +28,15 @@ private:
 	// 경고 범위 및 공격
 	void SpawnWarningAtPlayerLocation();
 	void StopWarningSpawn();
+
+	UFUNCTION()
+	void HandleMissileHit(ATGMissile* Missile, const FHitResult& HitResult);
+
+	UFUNCTION()
+	void HandleMissileExpired(ATGMissile* Missile);
+
+	void LaunchMissileAtLocation(FVector InAttackLocaion, AActor* WarningActor);
+
 	void ExecuteAttackAtLocation(FVector InAttackLocation);
 
 private:
@@ -41,9 +51,9 @@ private:
 	// 경고가 사라진 뒤 공격되기까지의 지연 시간
 	float AttackDelayAfterWarning;
 
-	TArray<FVector> WarningLocations;
+	UPROPERTY()
+	TMap<TObjectPtr<ATGMissile>, TObjectPtr<AActor>> MissileWarningActors;
 
 	FTimerHandle WarningSpawnTimerHandle;
 	FTimerHandle WarningSpawnStopTimerHandle;
-	TArray<FTimerHandle> SequenceAttackTimerHandles;
 };

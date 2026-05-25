@@ -17,9 +17,9 @@ class TOWERGAME_API UTGGroundCylinderPattern : public UTGPatternBase
 public:
 	UTGGroundCylinderPattern();
 
+	virtual void StartPattern(float WarningDrawTime) override;
+	virtual void StopPattern() override;
 	virtual void GetAttackLocation() override;
-
-	virtual void DrawWarning(float WarningDrawTime) override;
 
 protected:
 	virtual void CollectDamageTargets(TArray<AActor*>& OutTargets) const override;
@@ -27,4 +27,7 @@ protected:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Pattern")
 	float CylinderHeight;
+
+private:
+	FTimerHandle AttackDelayTimerHandle;
 };

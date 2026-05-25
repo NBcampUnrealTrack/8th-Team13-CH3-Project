@@ -36,8 +36,6 @@ void UTGRandomGroundCylinderPattern::StartPattern(float WarningDrawTime)
 
 void UTGRandomGroundCylinderPattern::StopPattern()
 {
-	Super::StopPattern();
-
 	if (!OwnerBoss) return;
 
 	UWorld* World = OwnerBoss->GetWorld();

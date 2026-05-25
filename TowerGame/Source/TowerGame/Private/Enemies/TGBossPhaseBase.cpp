@@ -11,7 +11,7 @@ UTGBossPhaseBase::UTGBossPhaseBase() :
 	OwnerBoss(nullptr),
 	CurrentPattern(nullptr),
 	WarningDrawTime(1.5f),
-	PatternInterval(3.f)
+	PatternInterval(4.f)
 {
 }
 

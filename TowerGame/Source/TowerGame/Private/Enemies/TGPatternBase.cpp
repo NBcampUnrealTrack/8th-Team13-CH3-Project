@@ -52,47 +52,9 @@ void UTGPatternBase::Initialize(
 	AttackEffectScale = InAttackEffectScale;
 }
 
-// 단일 범위 공격(다른 방식은 가상함수로 구현)
-void UTGPatternBase::StartPattern(float WarningDrawTime)
-{
-	// 공격 범위 경고 표시
-	GetAttackLocation();
-	DrawWarning(WarningDrawTime);
-
-	if (!OwnerBoss) return;
-
-	UWorld* World = OwnerBoss->GetWorld();
-	if (!World) return;
-
-	// 지연 시간 후 공격 판정
-	World->GetTimerManager().ClearTimer(AttackDelayTimerHandle);
-	World->GetTimerManager().SetTimer(
-		AttackDelayTimerHandle,
-		this,
-		&UTGPatternBase::ExecuteAttack,
-		WarningDrawTime,
-		false
-	);
-}
-
-// 단일 범위 공격(다른 방식은 가상함수로 구현)
-void UTGPatternBase::StopPattern()
-{
-	if (!OwnerBoss) return;
-
-	UWorld* World = OwnerBoss->GetWorld();
-	if (!World) return;
-
-	World->GetTimerManager().ClearTimer(AttackDelayTimerHandle);
-}
-
 void UTGPatternBase::GetAttackLocation()
 {
 	AttackLocation = FVector::ZeroVector;
-}
-
-void UTGPatternBase::DrawWarning(float WarningDrawTime)
-{
 }
 
 void UTGPatternBase::ExecuteAttack()
@@ -126,12 +88,12 @@ void UTGPatternBase::SpawnCircleWarning(const FVector& Location, float Radius, f
 	);
 }
 
-void UTGPatternBase::SpawnSphereWarning(const FVector& Location, float Radius, float LifeTime) const
+AActor* UTGPatternBase::SpawnSphereWarning(const FVector& Location, float Radius, float LifeTime) const
 {
-	if (!OwnerBoss || !SphereWarningActorClass) return;
+	if (!OwnerBoss || !SphereWarningActorClass) return nullptr;
 
 	UWorld* World = OwnerBoss->GetWorld();
-	if (!World) return;
+	if (!World) return nullptr;
 
 	AActor* WarningActor = World->SpawnActor<AActor>(
 		SphereWarningActorClass,
@@ -139,12 +101,15 @@ void UTGPatternBase::SpawnSphereWarning(const FVector& Location, float Radius, f
 		FRotator::ZeroRotator
 	);
 
-	if (!WarningActor) return;
+	if (!WarningActor) return nullptr;
 
 	// Sphere 기본 Mesh가 반지름 50 기준일 때 WarningRadius에 맞춘다.
 	WarningActor->SetActorScale3D(FVector(Radius / 50.f));
-	WarningActor->SetLifeSpan(LifeTime);
 
+	// LifeTime이 0이 아닐 경우에만 LifrTime 적용
+	if (LifeTime > 0.f) WarningActor->SetLifeSpan(LifeTime);
+
+	return WarningActor;
 }
 
 void UTGPatternBase::CollectDamageTargets(TArray<AActor*>& OutTargets) const

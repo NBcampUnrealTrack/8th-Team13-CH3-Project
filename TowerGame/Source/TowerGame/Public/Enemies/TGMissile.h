@@ -9,7 +9,6 @@
 class USphereComponent;
 class UStaticMeshComponent;
 class UNiagaraComponent;
-class UNiagaraSystem;
 class UProjectileMovementComponent;
 
 //	미사일이 충돌함
@@ -24,9 +23,6 @@ struct FTGMissileParams
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Missile")
-	float Damage = 50.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Missile")
 	float InitialSpeed = 800.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Missile")
@@ -35,10 +31,6 @@ struct FTGMissileParams
 	// 0이면 직선 발사, 값이 클수록 강하게 추적
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Missile")
 	float HomingAcceleration = 3000.f;
-
-	// 0이면 단일 충돌, 0 초과면 범위 폭발
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Missile")
-	float ExplosionRadius = 0.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Missile")
 	float LifeSpan = 8.f;
@@ -69,11 +61,7 @@ public:
 
 	// 파라미터 적용 후 발사 시작
 	UFUNCTION(BlueprintCallable, Category = "TowerGame|Missile")
-	void Launch(const FTGMissileParams& Params);
-
-	// 발사 주체 설정
-	UFUNCTION(BlueprintCallable, Category = "TowerGame|Missile")
-	void SetDamageInstigator(AActor* InInstigator);
+	void Launch(const FTGMissileParams& Params, float CollisionDisableTime = 0.4f);
 
 public:
 	UPROPERTY(BlueprintAssignable, Category = "TowerGame|Missile|Events")
@@ -87,8 +75,6 @@ protected:
 	void OnProjectileStopped(const FHitResult& ImpactResult);
 
 	void Explode(const FHitResult& Hit);
-	void ApplyExplosionDamage(const FVector& Location);
-	void PlayHitEffects(const FVector& Location, const FVector& Normal);
 
 protected:
 	//	충돌범위
@@ -105,26 +91,6 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "TowerGame|Missile|Movement")
 	TObjectPtr<UProjectileMovementComponent> ProjectileMovement;
-
-	// BP 서브클래스에서 에셋 지정
-	//	이펙트
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TowerGame|Missile|Effects")
-	TObjectPtr<UNiagaraSystem> ExplosionEffect;
-	//	사운드
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TowerGame|Missile|Sound")
-	TObjectPtr<USoundBase> ExplosionSound;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TowerGame|Missile|Sound", meta = (ClampMin = "0.0"))
-	float ExplosionSoundVolume = 1.f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "TowerGame|Missile|Stat")
-	float Damage;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "TowerGame|Missile|Stat")
-	float ExplosionRadius;
-
-	UPROPERTY()
-	TObjectPtr<AActor> DamageInstigator;
 
 private:
 	bool bHasExploded = false;
