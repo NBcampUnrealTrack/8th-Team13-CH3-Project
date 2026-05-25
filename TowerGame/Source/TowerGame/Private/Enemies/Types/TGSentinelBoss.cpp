@@ -10,7 +10,7 @@
 ATGSentinelBoss::ATGSentinelBoss()
 {
 	BossName = FText::FromString(TEXT("감시자"));
-	MaxHP = 100;
+	MaxHP = 300;
 	SpawnClearRadius = 600.f;
 
 	PhaseHPRatio.Add(0.6f);

@@ -23,6 +23,8 @@ ATGMissile::ATGMissile()
 	CollisionComponent->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
 	CollisionComponent->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
 	CollisionComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+
+	CollisionComponent->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	SetRootComponent(CollisionComponent);
 
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
@@ -44,6 +46,25 @@ ATGMissile::ATGMissile()
 	ProjectileMovement->bIsHomingProjectile = false;
 }
 
+float ATGMissile::TakeDamage(
+	float DamageAmount,
+	const FDamageEvent& DamageEvent,
+	AController* EventInstigator,
+	AActor* DamageCauser)
+{
+	const float AppliedDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	if (AppliedDamage <= 0.f || bHasExploded) return AppliedDamage;
+
+	bHasExploded = true;
+	OnMissileExpired.Broadcast(this);
+
+	SetActorEnableCollision(false);
+	ProjectileMovement->StopMovementImmediately();
+	Destroy();
+
+	return AppliedDamage;
+}
+
 void ATGMissile::BeginPlay()
 {
 	Super::BeginPlay();
@@ -56,8 +77,6 @@ void ATGMissile::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	if (!bUseLocationHoming || bHasExploded) return;
-
-	UE_LOG(LogTemp, Warning, TEXT("ATGMissile::Tick"));
 
 	// 도착 판정 — sqrt 없이 제곱 거리로 비교
 	if (FVector::DistSquared(GetActorLocation(), HomingWorldLocation) <= FMath::Square(HomingArrivalRadius))
@@ -117,7 +136,9 @@ void ATGMissile::Launch(const FTGMissileParams& Params, float CollisionDisableTi
 {
 	// 초기 충돌 무시 시간
 	if (CollisionDisableTime > 0.f){
-		CollisionComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		CollisionComponent->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Ignore);
+		CollisionComponent->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Ignore);
+		CollisionComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 
 		if (UWorld* World = GetWorld()){
 			FTimerHandle CollisionEnableTimerHandle;
@@ -127,7 +148,9 @@ void ATGMissile::Launch(const FTGMissileParams& Params, float CollisionDisableTi
 				{
 					// 초기 충돌 무시 시간 부여
 					if (!CollisionComponent) return;
-					CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+					CollisionComponent->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+					CollisionComponent->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
+					CollisionComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
 				}),
 				CollisionDisableTime,
 				false

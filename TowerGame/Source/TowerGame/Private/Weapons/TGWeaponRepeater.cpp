@@ -5,6 +5,7 @@
 #include "Player/TGPlayer.h"
 #include "Enemies/TGBossBase.h"
 #include "Enemies/TGEnemyBase.h"
+#include "Enemies/TGMissile.h"
 #include "Engine/DamageEvents.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -93,9 +94,10 @@ void UTGWeaponRepeater::Shoot(ATGPlayer* Instigator, class UMeshComponent* Weapo
 			GetAsset()->HitSoundScale, 1.0f, 0.0f, status.Asset.HitSoundAttenuation
 		);
 		AActor* HitActor = TraceHit.GetActor();
-		if (ATGEnemyBase* Enemy = Cast<ATGEnemyBase>(HitActor))
+
+		if (Cast<ATGEnemyBase>(HitActor) || Cast<ATGMissile>(HitActor))
 		{
-			UGameplayStatics::ApplyDamage(Enemy, status.Power, Instigator->GetInstigatorController(), Instigator, nullptr);
+			UGameplayStatics::ApplyDamage(HitActor, status.Power, Instigator->GetInstigatorController(), Instigator, nullptr);
 		}
 		else if (ATGBossBase* Boss = Cast<ATGBossBase>(HitActor))
 		{

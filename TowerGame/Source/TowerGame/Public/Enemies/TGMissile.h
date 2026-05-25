@@ -44,6 +44,13 @@ class TOWERGAME_API ATGMissile : public AActor
 public:
 	ATGMissile();
 
+	virtual float TakeDamage(
+		float DamageAmount,
+		const FDamageEvent& DamageEvent,
+		AController* EventInstigator,
+		AActor* DamageCauser
+	) override;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
