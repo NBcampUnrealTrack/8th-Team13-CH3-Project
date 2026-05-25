@@ -62,10 +62,10 @@ void ATGGameMode::ChangeFlowState(ETGGameFlowState NewState)
 		return;
 	}
 
-	const ETGGameFlowState OldState = CurrentState;
+	OldState = CurrentState;
 
 	// 이전 상태에서 빠져나갈 때 처리
-	if (OldState == ETGGameFlowState::Paused)
+	if (OldState == ETGGameFlowState::Paused || OldState == ETGGameFlowState::GameOver)
 	{
 		UGameplayStatics::SetGamePaused(GetWorld(), false);
 	}
@@ -73,7 +73,7 @@ void ATGGameMode::ChangeFlowState(ETGGameFlowState NewState)
 	CurrentState = NewState;
 
 	// 새 상태로 들어갈 때 처리
-	if (CurrentState == ETGGameFlowState::Paused)
+	if (CurrentState == ETGGameFlowState::Paused || CurrentState == ETGGameFlowState::GameOver)
 	{
 		UGameplayStatics::SetGamePaused(GetWorld(), true);
 	}
@@ -126,19 +126,24 @@ void ATGGameMode::ResumeGameFlow()
 {
 	if (CurrentState == ETGGameFlowState::Paused)
 	{
-		ChangeFlowState(ETGGameFlowState::Playing);
+		if (OldState == ETGGameFlowState::BuildMode)
+			ChangeFlowState(ETGGameFlowState::BuildMode);
+		else
+			ChangeFlowState(ETGGameFlowState::Playing);
 	}
 }
 
-void ATGGameMode::HandleWaveClear()
-{
-	ChangeFlowState(ETGGameFlowState::WaveClear);
-}
+//void ATGGameMode::HandleWaveClear()
+//{
+//	ChangeFlowState(ETGGameFlowState::WaveClear);
+//}
 
 void ATGGameMode::HandleGameOver()
 {
+	const float PlayRate = 0.2f;
 	GetWorldTimerManager().ClearTimer(WaveStartTimerHandle);
-	UGameplayStatics::SetGamePaused(GetWorld(), true);
+	
+	//GetWorldSettings()->SetTimeDilation(PlayRate);
 	ChangeFlowState(ETGGameFlowState::GameOver);
 }
 

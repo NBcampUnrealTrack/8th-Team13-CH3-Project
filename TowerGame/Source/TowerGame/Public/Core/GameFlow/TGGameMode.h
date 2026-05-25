@@ -14,6 +14,7 @@ class USoundBase;
 class ATGMountedTower;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTGFlowStateChanged, ETGGameFlowState, NewState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEnergyChanged, int32, NewEnergy);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHideWidgets, bool, bHide);
 
 UCLASS()
 class TOWERGAME_API ATGGameMode : public AGameMode
@@ -51,12 +52,18 @@ protected:
 	//UPROPERTY()
 	//ATGCoreBase* CachedCore = nullptr;
 
+
+	UPROPERTY(BlueprintReadOnly, Category = "Game Flow")
+	ETGGameFlowState OldState;
 public:
 	UPROPERTY(BlueprintReadOnly, Category = "Game Flow")
 	ETGGameFlowState CurrentState;
 
 	UPROPERTY(BlueprintAssignable, Category = "Game Flow")
 	FOnTGFlowStateChanged OnFlowStateChanged;
+
+	UPROPERTY(BlueprintAssignable, Category = "Game Flow")
+	FOnHideWidgets OnHideWidgets;
 
 	//	현재 자원량
 	UPROPERTY(BlueprintReadOnly, Category = "TowerGame|Economy")
@@ -97,8 +104,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Game Flow")
 	void ResumeGameFlow();
 
-	UFUNCTION(BlueprintCallable, Category = "Game Flow")
-	void HandleWaveClear();
+	//UFUNCTION(BlueprintCallable, Category = "Game Flow")
+	//void HandleWaveClear();
 
 	UFUNCTION(BlueprintCallable, Category = "Game Flow")
 	void HandleGameOver();

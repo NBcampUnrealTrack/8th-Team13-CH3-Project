@@ -30,6 +30,7 @@ void ATGHUD::BeginPlay()
 	if (CachedGameMode)
 	{
 		CachedGameMode->OnFlowStateChanged.AddDynamic(this, &ATGHUD::HandleFlowStateChanged);
+		CachedGameMode->OnHideWidgets.AddDynamic(this, &ATGHUD::HideAllWidgets);
 
 		UpdateUIByState(CachedGameMode->CurrentState);
 	}
@@ -46,7 +47,7 @@ void ATGHUD::HandleFlowStateChanged(ETGGameFlowState NewState)
 	UpdateUIByState(NewState);
 }
 
-void ATGHUD::HideAllWidgets()
+void ATGHUD::HideAllWidgets(bool bHide)
 {
 	if (PlayerWidget && PlayerWidget->IsInViewport())
 	{
@@ -76,6 +77,7 @@ void ATGHUD::UpdateUIByState(ETGGameFlowState NewState)
 		return;
 	}
 
+
 	if (NewState == ETGGameFlowState::Playing && OldState == ETGGameFlowState::BuildMode)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("BuildWidget Close"));
@@ -88,16 +90,14 @@ void ATGHUD::UpdateUIByState(ETGGameFlowState NewState)
 		return;
 	}
 
-	if (NewState == ETGGameFlowState::BuildMode && OldState == ETGGameFlowState::Playing)
+	HideAllWidgets(true);
+
+	if (NewState == ETGGameFlowState::BuildMode)
 	{
 		AddtoViewportBuildWidget(PC);
-		OldState = NewState;
-		return;
 	}
 
-	HideAllWidgets();
-
-	if (NewState == ETGGameFlowState::Playing)
+	if (NewState == ETGGameFlowState::Playing || NewState == ETGGameFlowState::BuildMode)
 	{
 		AddtoViewportPlayerWidget(PC);
 	}

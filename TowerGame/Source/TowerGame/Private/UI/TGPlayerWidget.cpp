@@ -95,6 +95,7 @@ void UTGPlayerWidget::NativeDestruct()
 	if (player){
 		player->OnFocusedEnemyChanged.RemoveDynamic(this, &UTGPlayerWidget::HandleFocusedEnemyChanged);
 		player->OnPlayerHpChanged.RemoveDynamic(this, &UTGPlayerWidget::UpdatePlayerHPBar);
+		player->OnWeaponChanged.RemoveDynamic(this, &UTGPlayerWidget::UpdateWeaponImage);
 	}
 
 	if (WaveManager){
