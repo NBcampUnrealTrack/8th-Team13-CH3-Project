@@ -142,6 +142,10 @@ protected:
 	FTimerHandle SwitchWeaponDelayHandle;
 	bool bCanSwitch;
 
+	// 사망 시의 애니메이션 현재 재생위치 (0~1)
+	float DeathAnimPos;
+	bool bDeath;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
 	int32 MaxHP;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Status")

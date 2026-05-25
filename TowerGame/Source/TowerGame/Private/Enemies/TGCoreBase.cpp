@@ -5,6 +5,7 @@
 
 #include "Core/GameFlow/TGGameMode.h"
 #include "Enemies/TGNavigationManager.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ATGCoreBase::ATGCoreBase() : MaxHP(100)
@@ -29,6 +30,17 @@ float ATGCoreBase::TakeDamage(float DamageAmount, const FDamageEvent& DamageEven
 
 	if (CurrentHP <= 0)
 	{
+		if (DestroyEffect)
+		{
+			UGameplayStatics::SpawnEmitterAtLocation(
+				this,
+				DestroyEffect,
+				GetActorLocation(),
+				FRotator::ZeroRotator,
+				FVector::OneVector * DestroyEffectScale
+			);
+		}
+
 		if (ATGGameMode* GM = Cast<ATGGameMode>(GetWorld()->GetAuthGameMode()))
 		{
 			//	TODO : 게임 오버 처리
