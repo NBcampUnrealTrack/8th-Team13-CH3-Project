@@ -143,8 +143,17 @@ void ATGGameMode::HandleGameOver()
 	const float PlayRate = 0.2f;
 	GetWorldTimerManager().ClearTimer(WaveStartTimerHandle);
 	
-	//GetWorldSettings()->SetTimeDilation(PlayRate);
-	ChangeFlowState(ETGGameFlowState::GameOver);
+	GetWorldSettings()->SetTimeDilation(PlayRate);
+	OnHideWidgets.Broadcast();
+
+	GetWorldTimerManager().SetTimer(
+		GameOverTimerHandle,
+		FTimerDelegate::CreateLambda([this]()
+			{
+				GetWorldTimerManager().ClearTimer(GameOverTimerHandle);
+				ChangeFlowState(ETGGameFlowState::GameOver);
+			}), 0.5f, false
+	);
 }
 
 void ATGGameMode::HandleGameClear()

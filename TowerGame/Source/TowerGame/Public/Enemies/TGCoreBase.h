@@ -47,6 +47,12 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<USceneComponent> SceneRoot;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
+	TObjectPtr<UParticleSystem> DestroyEffect;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
+	float DestroyEffectScale;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TowerGame|Status")
 	float MaxHP;
 	float CurrentHP;

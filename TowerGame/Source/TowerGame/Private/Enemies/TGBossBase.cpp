@@ -250,6 +250,17 @@ void ATGBossBase::ApplyBossDamage(float DamageAmount)
 			);
 		}
 
+		if (DeathEffect)
+		{
+			UGameplayStatics::SpawnEmitterAtLocation(
+				this,
+				DeathEffect,
+				GetActorLocation(),
+				FRotator::ZeroRotator,
+				FVector::OneVector * DeathEffectScale
+			);
+		}
+
 		Destroy();
 	}
 }

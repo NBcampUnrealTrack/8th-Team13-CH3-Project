@@ -31,7 +31,7 @@ protected:
 	void HandleTurretTypeSelected(ETGTurretType SelectedType);
 
 	UFUNCTION()
-	void HideAllWidgets(bool bHide);
+	void HideAllWidgets();
 
 	void UpdateUIByState(ETGGameFlowState NewState);
 	void AddtoViewportPlayerWidget(APlayerController* PC);

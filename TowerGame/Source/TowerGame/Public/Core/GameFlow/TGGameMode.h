@@ -14,7 +14,7 @@ class USoundBase;
 class ATGMountedTower;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTGFlowStateChanged, ETGGameFlowState, NewState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEnergyChanged, int32, NewEnergy);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHideWidgets, bool, bHide);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHideWidgets);
 
 UCLASS()
 class TOWERGAME_API ATGGameMode : public AGameMode
@@ -28,6 +28,7 @@ protected:
 	virtual void BeginPlay() override;
 
 	FTimerHandle WaveStartTimerHandle;
+	FTimerHandle GameOverTimerHandle;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Flow")
 	float SetWaveStartTime;

@@ -142,6 +142,13 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Sound")
 	TObjectPtr<USoundBase> DeathSound;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Effect")
+	TObjectPtr<UParticleSystem> DeathEffect;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Effect")
+	float DeathEffectScale;
+
 	//	보스가 사용할 투사체
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Phase")
 	TSubclassOf<ATGMissile> MissileClass;

@@ -72,6 +72,8 @@ void ATGPlayer::BeginPlay()
 	CurrentEvadeCooldown = 0.0f;
 	OnEvadeChanged.Broadcast(CurrentEvadeCount, CurrentEvadeCooldown / EvadeCooldown);
 	DefaultWalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
+	DeathAnimPos = 0.f;
+	bDeath = false;
 
 	if (GetWorld()->GetFirstPlayerController())
 		EnableInput(GetWorld()->GetFirstPlayerController());
@@ -341,6 +343,19 @@ void ATGPlayer::Tick(float DeltaTime)
 	// 무기 트랜스폼 업데이트
 	UpdateWeaponTransform();
 
+	// 사망 애니메이션
+	if (bDeath)
+	{
+		const float DeathAnimLength = 0.5f;
+		DeathAnimPos += DeltaTime / DeathAnimLength;
+		if (DeathAnimPos > 1.f)
+			DeathAnimPos = 1.f;
+		FRotator NewRotation = GetActorRotation();
+		NewRotation.Roll = FMath::Lerp(0.f, 60.f, DeathAnimPos);
+		Camera->bUsePawnControlRotation = false;
+		SetActorRotation(NewRotation);
+	}
+
 	// 현재 이동조작중인가?
 	if (bMoving)
 		bMoving = false;
@@ -439,9 +454,13 @@ int32 ATGPlayer::ChangePlayerHP(int32 value)
 	if (HP > MaxHP)
 		HP = MaxHP;
 	OnPlayerHpChanged.Broadcast(HP, MaxHP);
-	if (HP <= 0 && GetWorld()->GetFirstPlayerController())
+	if (HP <= 0 && !bDeath && GetWorld()->GetFirstPlayerController())
 	{
 		DisableInput(GetWorld()->GetFirstPlayerController());
+		Weapon_Skeletal->SetVisibility(false);
+		Weapon_Static->SetVisibility(false);
+		DeathAnimPos = 0.f;
+		bDeath = true;
 		if (ATGGameMode* GM = Cast<ATGGameMode>(GetWorld()->GetAuthGameMode()))
 		{
 			//	TODO : 게임 오버 처리

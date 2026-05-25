@@ -47,7 +47,7 @@ void ATGHUD::HandleFlowStateChanged(ETGGameFlowState NewState)
 	UpdateUIByState(NewState);
 }
 
-void ATGHUD::HideAllWidgets(bool bHide)
+void ATGHUD::HideAllWidgets()
 {
 	if (PlayerWidget && PlayerWidget->IsInViewport())
 	{
@@ -90,7 +90,7 @@ void ATGHUD::UpdateUIByState(ETGGameFlowState NewState)
 		return;
 	}
 
-	HideAllWidgets(true);
+	HideAllWidgets();
 
 	if (NewState == ETGGameFlowState::BuildMode)
 	{
