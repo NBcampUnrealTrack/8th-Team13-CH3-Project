@@ -98,7 +98,12 @@ void ATGGridBase::AddEntryPoint(FIntPoint Point)
 {
 	EntryPoints.Add(Point);
 	//	스포너를 생성합니다
-	if (!ensureMsgf(EnemySpawnerClass, TEXT("ATGGridBase : EnemySpawnClass가 설정되지 않았습니다!"))) return;
+	// [FIX-PACKAGING] ensureMsgf는 Shipping 빌드에서 무시됨 → 직접 nullptr 체크로 교체
+	if (!EnemySpawnerClass)
+	{
+		UE_LOG(LogTemp, Error, TEXT("ATGGridBase: EnemySpawnClass가 설정되지 않았습니다!"));
+		return;
+	}
 	ATGEnemySpawner* EnemySpawner = GetWorld()->SpawnActor<ATGEnemySpawner>(EnemySpawnerClass);
 	if (!IsValid(EnemySpawner))	return;
 
@@ -121,7 +126,12 @@ void ATGGridBase::RemoveEntryPoint(FIntPoint Point)
 void ATGGridBase::AddExitPoint(FIntPoint Point)
 {
 	ExitPoints.Add(Point);
-	if (!ensureMsgf(CoreClass, TEXT("ATGGridBase : CoreClass가 설정되지 않았습니다!"))) return;
+	// [FIX-PACKAGING] ensureMsgf는 Shipping 빌드에서 무시됨 → 직접 nullptr 체크로 교체
+	if (!CoreClass)
+	{
+		UE_LOG(LogTemp, Error, TEXT("ATGGridBase: CoreClass가 설정되지 않았습니다!"));
+		return;
+	}
 	ATGCoreBase* Core = GetWorld()->SpawnActor<ATGCoreBase>(CoreClass);
 	if (!IsValid(Core))	return;
 
@@ -208,7 +218,12 @@ void ATGGridBase::BeginPlay()
 			const FTransform GridTransform(FRotator::ZeroRotator, GridPos);
 
 			ATGSingleGrid* NewGrid = GetWorld()->SpawnActorDeferred<ATGSingleGrid>(SingleGridClass, GridTransform);
-			check(NewGrid != nullptr);
+			// [FIX-PACKAGING] check()는 Shipping 빌드에서 크래시를 유발 → nullptr 체크 + continue로 교체
+			if (!NewGrid)
+			{
+				UE_LOG(LogTemp, Error, TEXT("ATGGridBase: SingleGrid 스폰 실패 [i=%d, j=%d]"), i, j);
+				continue;
+			}
 			NewGrid->SetParent(this);
 			NewGrid->FinishSpawning(GridTransform);
 			NewGrid->SetBoxSize(GridSize);

@@ -229,6 +229,10 @@ void ATGPlayer::SelectTower(const FInputActionValue& InputValue)
 
 void ATGPlayer::Shot(const FInputActionValue& InputValue)
 {
+	// [FIX-PACKAGING] GetCurrentWeapon() nullptr 체크 - 무기 없을 때 이중 역참조 크래시 방지
+	UTGWeaponBase* CurWeapon = GetCurrentWeapon();
+	if (!CurWeapon || !CurWeapon->GetAsset()) return;
+
 	FHitResult TraceHit;
 	FVector MuzzlePos;
 	FVector ShootDir;
@@ -239,14 +243,14 @@ void ATGPlayer::Shot(const FInputActionValue& InputValue)
 		CurrentWeaponComp = Weapon_Static;
 	else
 		CurrentWeaponComp = GetMesh();
-	MuzzlePos = CurrentWeaponComp->GetComponentTransform().TransformPosition(GetCurrentWeapon()->GetAsset()->MuzzlePos);
+	MuzzlePos = CurrentWeaponComp->GetComponentTransform().TransformPosition(CurWeapon->GetAsset()->MuzzlePos);
 
-	if (CameraLineTrace(TraceHit, ECC_Visibility, CurrentWeaponComp->GetRelativeLocation().Length() + GetCurrentWeapon()->GetAsset()->MuzzlePos.Length(), ShootDistance))
+	if (CameraLineTrace(TraceHit, ECC_Visibility, CurrentWeaponComp->GetRelativeLocation().Length() + CurWeapon->GetAsset()->MuzzlePos.Length(), ShootDistance))
 		ShootDir = (TraceHit.ImpactPoint - MuzzlePos).GetSafeNormal();	// Hit한 지점을 향해 발사
 	else
 		ShootDir = (Camera->GetComponentLocation() + Camera->GetForwardVector() * ShootDistance - MuzzlePos).GetSafeNormal();	// 카메라 정중앙을 향해 발사
 
-	GetCurrentWeapon()->Shoot(this, CurrentWeaponComp, MuzzlePos, ShootDir, ShootDistance, SwitchingWeaponTimelineComp->GetPlaybackPosition() > 0.f);
+	CurWeapon->Shoot(this, CurrentWeaponComp, MuzzlePos, ShootDir, ShootDistance, SwitchingWeaponTimelineComp->GetPlaybackPosition() > 0.f);
 }
 
 void ATGPlayer::Interact(const FInputActionValue& InputValue)
@@ -322,7 +326,10 @@ void ATGPlayer::Tick(float DeltaTime)
 	// 무기가 향하는 방향
 	FHitResult WeaponTrace;
 
-	CameraLineTrace(WeaponTrace, ECC_Visibility, Weapon_Static->GetRelativeLocation().Length() + GetCurrentWeapon()->GetAsset()->MuzzlePos.Length(), ShootDistance);
+	// [FIX-PACKAGING] GetCurrentWeapon() nullptr 체크 - Tick에서 무기 없을 때 크래시 방지
+	UTGWeaponBase* CurWeapon = GetCurrentWeapon();
+	const float MuzzleLen = (CurWeapon && CurWeapon->GetAsset()) ? CurWeapon->GetAsset()->MuzzlePos.Length() : 0.f;
+	CameraLineTrace(WeaponTrace, ECC_Visibility, Weapon_Static->GetRelativeLocation().Length() + MuzzleLen, ShootDistance);
 
 	//FVector MuzzlePos = Weapon_Static->GetComponentTransform().TransformPosition(GetCurrentWeapon()->GetAsset()->MuzzlePos);
 	//Weapon_Static->SetWorldRotation(UKismetMathLibrary::FindLookAtRotation(Camera->GetComponentLocation() + InitialLocation + GetCurrentWeapon()->GetAsset()->LocationOffset, WeaponTrace.Location));
@@ -399,8 +406,13 @@ void ATGPlayer::UpdateWeaponTransform()
 	for (FRotator rot : WeaponRotationOffset)
 		TotalRotOffset += rot;
 	
-	CurrentWeaponComp->SetRelativeLocation(InitialLocation + GetCurrentWeapon()->GetAsset()->LocationOffset + TotalLocOffset);
-	CurrentWeaponComp->SetRelativeRotation(FRotator::ZeroRotator + TotalRotOffset);
+	// [FIX-PACKAGING] GetCurrentWeapon() nullptr 체크 - 무기 없을 때 크래시 방지 (배열은 항상 정리)
+	UTGWeaponBase* CurWeaponForTransform = GetCurrentWeapon();
+	if (CurWeaponForTransform && CurWeaponForTransform->GetAsset())
+	{
+		CurrentWeaponComp->SetRelativeLocation(InitialLocation + CurWeaponForTransform->GetAsset()->LocationOffset + TotalLocOffset);
+		CurrentWeaponComp->SetRelativeRotation(FRotator::ZeroRotator + TotalRotOffset);
+	}
 
 	WeaponLocationOffset.Empty();
 	WeaponRotationOffset.Empty();
@@ -500,7 +512,9 @@ void ATGPlayer::ApplySlowDebuff(float Duration)
 
 UTGWeaponBase* ATGPlayer::GetCurrentWeapon()
 {
-	return OwnedWeapons.Find(CurrentWeaponKey)->Get();
+	// [FIX-PACKAGING] TMap::Find()가 nullptr을 반환할 수 있어 역참조 전 유효성 체크
+	TObjectPtr<UTGWeaponBase>* WeaponPtr = OwnedWeapons.Find(CurrentWeaponKey);
+	return WeaponPtr ? WeaponPtr->Get() : nullptr;
 }
 
 void ATGPlayer::OnFinishSwitchingWeaponTimeline()
@@ -544,7 +558,8 @@ void ATGPlayer::OwnWeapon(ETGWeaponTriggerType TriggerType, FName RowName, bool 
 		FTGStatusWeaponSingleShot* info;
 		DT = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr,
 			TEXT("/Game/Weapons/DT_WeaponTable_SingleShot.DT_WeaponTable_SingleShot")));
-		if (DT->IsValidLowLevel())
+		// [FIX-PACKAGING] IsValidLowLevel()은 nullptr을 필터링하지 않아 크래시 발생 → IsValid()로 교체
+		if (IsValid(DT))
 		{
 			TArray<FName> DTNameArray = DT->GetRowNames();
 			info = DT->FindRow<FTGStatusWeaponSingleShot>(RowName, TEXT(""));
@@ -563,7 +578,8 @@ void ATGPlayer::OwnWeapon(ETGWeaponTriggerType TriggerType, FName RowName, bool 
 		FTGStatusWeaponShotgun* info;
 		DT = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr,
 			TEXT("/Game/Weapons/DT_WeaponTable_Shotgun.DT_WeaponTable_Shotgun")));
-		if (DT->IsValidLowLevel())
+		// [FIX-PACKAGING] IsValidLowLevel()은 nullptr을 필터링하지 않아 크래시 발생 → IsValid()로 교체
+		if (IsValid(DT))
 		{
 			TArray<FName> DTNameArray = DT->GetRowNames();
 			info = DT->FindRow<FTGStatusWeaponShotgun>(RowName, TEXT(""));
@@ -582,7 +598,8 @@ void ATGPlayer::OwnWeapon(ETGWeaponTriggerType TriggerType, FName RowName, bool 
 		FTGStatusWeaponRepeater* info;
 		DT = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr,
 			TEXT("/Game/Weapons/DT_WeaponTable_Repeater.DT_WeaponTable_Repeater")));
-		if (DT->IsValidLowLevel())
+		// [FIX-PACKAGING] IsValidLowLevel()은 nullptr을 필터링하지 않아 크래시 발생 → IsValid()로 교체
+		if (IsValid(DT))
 		{
 			TArray<FName> DTNameArray = DT->GetRowNames();
 			info = DT->FindRow<FTGStatusWeaponRepeater>(RowName, TEXT(""));
@@ -605,7 +622,10 @@ void ATGPlayer::EquipWeapon(FString Key)
 {
 	CurrentWeaponKey = Key;
 	SwitchingWeaponKey = Key;
-	FTGWeaponAsset AssetInfo = *GetCurrentWeapon()->GetAsset();
+	// [FIX-PACKAGING] GetCurrentWeapon() 및 GetAsset() nullptr 체크 - 무기 없을 때 이중 역참조 크래시 방지
+	UTGWeaponBase* CurWeapon = GetCurrentWeapon();
+	if (!CurWeapon || !CurWeapon->GetAsset()) return;
+	FTGWeaponAsset AssetInfo = *CurWeapon->GetAsset();
 	if (AssetInfo.SkeletalMesh)
 	{
 		Weapon_Static->SetStaticMesh(nullptr);
