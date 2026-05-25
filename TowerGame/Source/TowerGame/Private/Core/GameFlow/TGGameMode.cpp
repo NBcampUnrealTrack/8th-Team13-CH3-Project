@@ -201,3 +201,11 @@ TSubclassOf<ATGMountedTower> ATGGameMode::GetTowerSubclass(ETGTurretType type)
 	}
 	return nullptr;
 }
+
+void ATGGameMode::EndGame()
+{
+	if (APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0))
+	{
+		UKismetSystemLibrary::QuitGame(this, PC, EQuitPreference::Quit, false);
+	}
+}

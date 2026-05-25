@@ -15,8 +15,16 @@ protected:
 	virtual void NativeOnInitialized() override;
 
 	UPROPERTY(meta = (BindWidget))
-	UButton* ResumeButton;
+	TObjectPtr<UButton> ResumeButton;
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UButton> MainMenuButton;
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UButton> QuitGameButton;
 
 	UFUNCTION()
 	void HandleResumeClicked();
+	UFUNCTION()
+	void HandleMainMenuButtonClicked();
+	UFUNCTION()
+	void HandleQuitGameClicked();
 };

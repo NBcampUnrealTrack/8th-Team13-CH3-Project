@@ -121,4 +121,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Game Flow")
 	void BackMainMenu();
+
+	UFUNCTION(BlueprintCallable, Category = "Game Flow")
+	void EndGame();
 };
