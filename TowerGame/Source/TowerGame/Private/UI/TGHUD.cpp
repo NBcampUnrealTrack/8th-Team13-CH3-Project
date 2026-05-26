@@ -51,7 +51,7 @@ void ATGHUD::HideAllWidgets()
 {
 	if (PlayerWidget && PlayerWidget->IsInViewport())
 	{
-		PlayerWidget->RemoveFromParent();
+		PlayerWidget->SetVisibility(ESlateVisibility::Hidden);
 	}
 	if (PauseWidget && PauseWidget->IsInViewport())
 	{
@@ -115,6 +115,8 @@ void ATGHUD::UpdateUIByState(ETGGameFlowState NewState)
 
 void ATGHUD::AddtoViewportPlayerWidget(APlayerController* PC)
 {
+	const bool bCreatedNow = !PlayerWidget;
+
 	if (!PlayerWidget && PlayerWidgetClass)
 	{
 		PlayerWidget = CreateWidget<UTGPlayerWidget>(PC, PlayerWidgetClass);
@@ -122,25 +124,33 @@ void ATGHUD::AddtoViewportPlayerWidget(APlayerController* PC)
 
 	if (PlayerWidget)
 	{
-		PlayerWidget->AddToViewport();
-
-		AActor* FoundActor = UGameplayStatics::GetActorOfClass(
-			GetWorld(),
-			ATGGridBase::StaticClass()
-		);
-
-		ATGGridBase* GridBase = Cast<ATGGridBase>(FoundActor);
-
-		if (GridBase)
+		if (!PlayerWidget->IsInViewport())
 		{
-			PlayerWidget->SetGridBase(GridBase);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("HUD: GridBase not found"));
+			PlayerWidget->AddToViewport();
 		}
 
-		BindWaveManager();
+		PlayerWidget->SetVisibility(ESlateVisibility::Visible);
+
+		if (bCreatedNow)
+		{
+			AActor* FoundActor = UGameplayStatics::GetActorOfClass(
+				GetWorld(),
+				ATGGridBase::StaticClass()
+			);
+
+			ATGGridBase* GridBase = Cast<ATGGridBase>(FoundActor);
+
+			if (GridBase)
+			{
+				PlayerWidget->SetGridBase(GridBase);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("HUD: GridBase not found"));
+			}
+
+			BindWaveManager();
+		}
 	}
 
 	PC->bShowMouseCursor = false;
