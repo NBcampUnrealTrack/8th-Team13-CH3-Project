@@ -29,6 +29,7 @@ class TOWERGAME_API UTGWeaponRepeater : public UTGWeaponBase, public FTickableGa
 {
 	GENERATED_BODY()
 private:
+	UPROPERTY()
 	FTGStatusWeaponRepeater status;
 	float CurSpreadTime = 0.f;
 	bool IsFire = false;	// 이번 프레임에 발사시도를 했는가?

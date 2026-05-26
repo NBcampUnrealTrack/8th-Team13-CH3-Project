@@ -55,6 +55,7 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Minimap")
 	FVector2D MinimapSize = FVector2D(280.0f, 280.0f);
+	UPROPERTY()
 	TMap<FIntPoint, UBorder*> TileWidgetMap;
 
 	UPROPERTY()

@@ -24,6 +24,7 @@ class TOWERGAME_API UTGWeaponSingleShot : public UTGWeaponBase, public FTickable
 {
 	GENERATED_BODY()
 private:
+	UPROPERTY()
 	FTGStatusWeaponSingleShot status;
 	bool IsFire = false;		// 이번 프레임에 발사시도를 했는가?
 	bool IsPrevFire = false;		// 이전 프레임에 발사시도를 했는가?

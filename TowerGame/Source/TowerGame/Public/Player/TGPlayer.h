@@ -19,6 +19,18 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFocusedEnemyChanged, ATGEnemyBase
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTurretTypeSelected, ETGTurretType, SelectedType);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponChanged, UTGWeaponBase*, WeaponAsset);
 
+USTRUCT()
+struct FWeaponPair
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY()
+	FString Key;
+
+	UPROPERTY()
+	UTGWeaponBase* Value;
+};
+
 UCLASS()
 class TOWERGAME_API ATGPlayer : public ACharacter
 {
@@ -190,7 +202,8 @@ protected:
 	FTimerHandle SlowDebuffTimerHandle;
 
 	UPROPERTY()
-	TMap<FString, TObjectPtr<UTGWeaponBase>> OwnedWeapons;	// 소유중인 무기
+	TArray<FWeaponPair> OwnedWeapons;	// 소유중인 무기
+
 	FString CurrentWeaponKey;	// 현재 장착중인 무기의 Key
 	FString SwitchingWeaponKey;	// 교체중인 무기의 Key
 
