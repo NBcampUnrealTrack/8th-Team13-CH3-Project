@@ -89,15 +89,18 @@ void ATGWaveManager::RemoveEnemySpawner(ATGEnemySpawner* InEnemySpawner)
 
 	// EnemySpawner 제거
 	const int32 RemovedIndex = EnemySpawners.IndexOfByKey(InEnemySpawner);
+	if (RemovedIndex == INDEX_NONE) return;
+
 	EnemySpawners.RemoveAt(RemovedIndex);
 
 	// 남아있는 EnemySpawner가 없을 경우
 	if (EnemySpawners.Num() == 0){
 		NextWaveIndex = 0;
+		NextSpawnerIndex = 0;
 		return;
 	}
 
-	if (RemovedIndex != INDEX_NONE && NextSpawnerIndex >= EnemySpawners.Num()) NextSpawnerIndex = 0;
+	if (NextSpawnerIndex >= EnemySpawners.Num()) NextSpawnerIndex = 0;
 }
 
 bool ATGWaveManager::StartNextWave()
@@ -141,6 +144,11 @@ bool ATGWaveManager::StartNextWave()
 
 void ATGWaveManager::SpawnNextEnemy()
 {
+	EnemySpawners.RemoveAll([](const TObjectPtr<ATGEnemySpawner>& Spawner)
+	{
+		return !IsValid(Spawner);
+	});
+
 	// 현재 Wave에서 더 이상 스폰할 Enemy가 없으면 종료
 	if (!PendingSpawnQueue.IsValidIndex(PendingSpawnIndex) || EnemySpawners.Num() == 0){
 		FinishCurrentWaveSpawn();
