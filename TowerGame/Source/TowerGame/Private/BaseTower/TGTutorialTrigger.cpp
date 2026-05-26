@@ -5,6 +5,8 @@
 #include "Player/TGPlayer.h"
 #include "Components/BoxComponent.h"
 #include "Blueprint/UserWidget.h"
+#include "Core/GameFlow/TGGameMode.h"
+#include "Kismet/GameplayStatics.h"
 
 ATGTutorialTrigger::ATGTutorialTrigger()
 {
@@ -32,6 +34,16 @@ void ATGTutorialTrigger::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AAc
 	// 한번만 트리거
 	if (bTriggerOnce && bAlreadyTriggered) return;
 	bAlreadyTriggered = true;
+
+	// 웨이브 시작
+	if (bStartWave)
+	{
+		if (ATGGameMode* GM = Cast<ATGGameMode>(UGameplayStatics::GetGameMode(this)))
+		{
+			GM->StartWave();
+		}
+	}
+
 	if (!TutorialWidgetClass) return;
 	// 위젯 생성 및 표시
 	TutorialWidget = CreateWidget<UUserWidget>(GetWorld(), TutorialWidgetClass);

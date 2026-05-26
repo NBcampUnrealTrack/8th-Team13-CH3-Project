@@ -12,11 +12,8 @@ class TOWERGAME_API ATGTutorialTrigger : public AActor
 {
 	GENERATED_BODY()
 public:
-
 	ATGTutorialTrigger();
-
 protected:
-
 	virtual void BeginPlay() override;
 	UFUNCTION()
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
@@ -39,6 +36,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tutorial")
 	bool bTriggerOnce = true;
 
+	// 웨이브 시작 여부
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tutorial")
+	bool bStartWave = false;
 private:
 	UPROPERTY()
 	UUserWidget* TutorialWidget;
