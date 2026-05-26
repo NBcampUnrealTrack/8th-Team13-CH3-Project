@@ -93,13 +93,13 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Status")
-	const int32 GetMaxEvadeCount() { return EvadeCount; }	// 최대 Evade가능 횟수
+	const int32 GetMaxEvadeCount() { return EvadeCount; }
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Status")
-	const int32 GetCurrentEvadeCount() { return CurrentEvadeCount; }	// 현재 Evade 가능 횟수
+	const int32 GetCurrentEvadeCount() { return CurrentEvadeCount; }
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Status")
-	const float GetMaxEvadeCooldown() { return EvadeCooldown; }	// 최대 Evade 쿨타임
+	const float GetMaxEvadeCooldown() { return EvadeCooldown; }
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Status")
-	const float GetCurrentEvadeCooldown() { return CurrentEvadeCooldown; }	// 현재 남은 Evade 쿨타임
+	const float GetCurrentEvadeCooldown() { return CurrentEvadeCooldown; }
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Status")
 	const float GetPlayerHP() { return HP; }
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Status")
@@ -107,10 +107,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "TowerGame|Tower")
 	ETGTurretType GetSelectedTurretType() const { return SelectedTurretType; }
-	//UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Skill")
-	//const bool GetLookingPoint(FVector& result, float MaxDistance = 5000.0f);	// 카메라가 바라보는 위치 가져오기
-	//UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Skill")
-	//const bool GetLookingPointDebug(FVector& result, float MaxDistance = 5000.0f);	// 카메라가 바라보는 위치 가져오기(시각화)
 
 	// 현재 시선에 잡힌 Interactive 액터 반환 (없으면 nullptr)
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "TowerGame|Interaction")
@@ -139,9 +135,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UStaticMeshComponent> Weapon_Static;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Value")
-	TArray<FVector> WeaponLocationOffset;	// 로케이션 오프셋. 실제 트랜스폼은 기본값에 이 오프셋들을 합쳐서 업데이트함.
+	TArray<FVector> WeaponLocationOffset;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Value")
-	TArray<FRotator> WeaponRotationOffset;	// 회전의 목표값
+	TArray<FRotator> WeaponRotationOffset;
 	UPROPERTY(EditDefaultsOnly, Category = "Components")
 	TObjectPtr<class UTimelineComponent> RecoilTimelineComp;
 	UPROPERTY(EditDefaultsOnly, Category = "Components|Value")
@@ -156,7 +152,7 @@ protected:
 	FTimerHandle SwitchWeaponDelayHandle;
 	bool bCanSwitch;
 
-	// 사망 시의 애니메이션 현재 재생위치 (0~1)
+
 	float DeathAnimPos;
 	bool bDeath;
 
@@ -166,33 +162,30 @@ protected:
 	int32 HP;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TowerGame|Interaction")
-	float InteractDistance;	//	상호작용 최대 거리
+	float InteractDistance;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
-	int32 EvadeCount;		// 회피기동 가능 횟수
+	int32 EvadeCount;
 	UPROPERTY()
-	int32 CurrentEvadeCount;	// 현재 남은 회피기동 횟수
+	int32 CurrentEvadeCount;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
-	float EvadeCooldown;	// 회피기동 회복시간
+	float EvadeCooldown;
 	UPROPERTY()
-	float CurrentEvadeCooldown;	// 현재 남은 회피기동 회복시간
+	float CurrentEvadeCooldown;
 	float ShootDistance;
 	bool bMoving;
-	FVector2D MoveDir;	// 현재 이동중인 방향, 정규화벡터
+	FVector2D MoveDir;
 	FVector CurrentRecoilLocScale;
 	FRotator CurrentRecoilRotScale;
 	float CurrentRecoilInputScale;
-	bool bBuildMode;	// 빌드모드
-	ETGTurretType SelectedTurretType = ETGTurretType::None;	// 숫자키로 선택한 타워 타입
+	bool bBuildMode;
+	ETGTurretType SelectedTurretType = ETGTurretType::None;
 
-	// 빌드모드 진입 시 표시할 위젯 클래스 — 에디터에서 WBP_BuildWidget 설정
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tower|UI")
 	TSubclassOf<UTGBuildWidget> BuildWidgetClass;
 
-	// 런타임 위젯 인스턴스
 	UPROPERTY()
 	UTGBuildWidget* BuildWidget;
 
-	// Debuff - Slow 관련 변수
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Status|Debuff")
 	float SlowRate;
 
@@ -202,10 +195,10 @@ protected:
 	FTimerHandle SlowDebuffTimerHandle;
 
 	UPROPERTY()
-	TArray<FWeaponPair> OwnedWeapons;	// 소유중인 무기
+	TArray<FWeaponPair> OwnedWeapons;
 
-	FString CurrentWeaponKey;	// 현재 장착중인 무기의 Key
-	FString SwitchingWeaponKey;	// 교체중인 무기의 Key
+	FString CurrentWeaponKey;
+	FString SwitchingWeaponKey;
 
 	UFUNCTION()
 	void OnFinishSwitchingWeaponTimeline();
@@ -218,23 +211,25 @@ protected:
 	UFUNCTION()
 	void OnAddRecoilWeaponOffset_Rotation(FVector Rot);
 
-	void OwnWeapon(ETGWeaponTriggerType TriggerType, FName RowName, bool equip);	// 무기를 소유한다. equip을 하면 장착까지 한다.
-	void EquipWeapon(FString Key);	// 무기를 장착한다.
+	void OwnWeapon(ETGWeaponTriggerType TriggerType, FName RowName, bool equip);
+	void EquipWeapon(FString Key);
 	FString GetWeaponKey(ETGWeaponTriggerType TriggerType, FName WeaponName);
 
-	// Debuff - Slow 해제
+
 	void ClearSlowDebuff();
 private:
 	void InteractiveTrace(bool debug = false);
 	bool CameraLineTrace(FHitResult& TraceHit, ECollisionChannel Channel, float StartDistance = 0.0f, float MaxDistance = 5000.0f, bool debug = false);
 
-
-	//	포커싱된 액터
 	UPROPERTY()
 	TObjectPtr<ATGInteractiveActor> CurrentFocusedActor;
 	const FVector InitialLocation = FVector(25.0f, 25.0f, -25.0f);
 
-	// 감지한 Enemy
+
 	UPROPERTY()
 	TObjectPtr<ATGEnemyBase> LastFocusedEnemy;
+
+	// 마지막으로 상호작용한 액터 (대화 중 E키 처리용)
+	UPROPERTY()
+	TObjectPtr<ATGInteractiveActor> LastInteractedActor;
 };

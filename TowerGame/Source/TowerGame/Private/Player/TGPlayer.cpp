@@ -21,6 +21,7 @@
 #include "Components/TimelineComponent.h"
 #include "Curves/CurveVector.h"
 #include "BaseTower/TGBaseTower.h"
+#include "TGNPCBase.h"
 
 // Sets default values
 ATGPlayer::ATGPlayer() : MaxHP(100), SlowRate(0.5f), DefaultWalkSpeed(0)
@@ -54,6 +55,7 @@ ATGPlayer::ATGPlayer() : MaxHP(100), SlowRate(0.5f), DefaultWalkSpeed(0)
 	InteractDistance = 300.f;
 	CurrentFocusedActor = nullptr;
 	LastFocusedEnemy = nullptr;
+	LastInteractedActor = nullptr;
 	ShootDistance = 50000.f;
 }
 
@@ -217,7 +219,7 @@ void ATGPlayer::SelectTower(const FInputActionValue& InputValue)
 	int32 SlotIndex = FMath::RoundToInt(InputValue.Get<float>());
 	switch (SlotIndex)
 	{
-	//case 1: SelectedTurretType = ETGTurretType::BaseTower;   break;	// 1번 : BaseTower
+		//case 1: SelectedTurretType = ETGTurretType::BaseTower;   break;	// 1번 : BaseTower
 	case 2: SelectedTurretType = ETGTurretType::WeaponTower; break;	// 2번 : WeaponTower
 	case 3: SelectedTurretType = ETGTurretType::DebuffTower; break;	// 3번 : DebuffTower
 	case 4: SelectedTurretType = ETGTurretType::BuffTower;   break;	// 4번 : BuffTower
@@ -255,15 +257,35 @@ void ATGPlayer::Shot(const FInputActionValue& InputValue)
 
 void ATGPlayer::Interact(const FInputActionValue& InputValue)
 {
-	if (bBuildMode && CurrentFocusedActor)
+	if (!CurrentFocusedActor)
+	{
+		// 대화 중일 때만 LastInteractedActor 호출
+		if (LastInteractedActor)
+		{
+			ATGNPCBase* NPC = Cast<ATGNPCBase>(LastInteractedActor);
+			if (NPC && NPC->DialogWidget)
+			{
+				NPC->OnInteract(this);
+			}
+			else
+			{
+				LastInteractedActor = nullptr;
+			}
+		}
+		return;
+	}
+
+	if (bBuildMode)
 	{
 		// 선택된 타워 타입을 BaseTower에 전달 후 상호작용
 		if (ABaseTower* BaseTower = Cast<ABaseTower>(CurrentFocusedActor))
 		{
 			BaseTower->SetSelectedTurretType(SelectedTurretType);
 		}
-		CurrentFocusedActor->OnInteract(this);
 	}
+
+	LastInteractedActor = CurrentFocusedActor;
+	CurrentFocusedActor->OnInteract(this);
 }
 
 void ATGPlayer::SwitchingWeapon(const FInputActionValue& InputValue)
@@ -279,7 +301,7 @@ void ATGPlayer::SwitchingWeapon(const FInputActionValue& InputValue)
 		FTimerDelegate::CreateLambda([this]() {
 			GetWorld()->GetTimerManager().ClearTimer(SlowDebuffTimerHandle);
 			bCanSwitch = true;
-		}),
+			}),
 		SwitchWeaponDelay,
 		false
 	);
@@ -309,20 +331,9 @@ void ATGPlayer::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	RestoreEvadeCooldown(DeltaTime);	// 회피기동 쿨타임 회복
 
-	if (bBuildMode)
-	{
-		InteractiveTrace();
-	}
-	else
-	{
-		if (CurrentFocusedActor)
-		{
-			CurrentFocusedActor->OnUnfocused(this);
+	// 빌드모드 여부와 관계없이 항상 트레이스 실행 (NPC 상호작용 포함)
+	InteractiveTrace();
 
-			CurrentFocusedActor = nullptr;
-		}
-
-	}
 	// 무기가 향하는 방향
 	FHitResult WeaponTrace;
 
@@ -405,7 +416,7 @@ void ATGPlayer::UpdateWeaponTransform()
 		TotalLocOffset += loc;
 	for (FRotator rot : WeaponRotationOffset)
 		TotalRotOffset += rot;
-	
+
 	// [FIX-PACKAGING] GetCurrentWeapon() nullptr 체크 - 무기 없을 때 크래시 방지 (배열은 항상 정리)
 	UTGWeaponBase* CurWeaponForTransform = GetCurrentWeapon();
 	if (CurWeaponForTransform && CurWeaponForTransform->GetAsset())

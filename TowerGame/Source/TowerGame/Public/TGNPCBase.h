@@ -4,6 +4,7 @@
 #include "CoreMinimal.h"
 #include "TGInteractiveActor.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/WidgetComponent.h"
 #include "TGNPCBase.generated.h"
 
 UCLASS()
@@ -20,6 +21,11 @@ protected:
 	// 플레이어가 상호작용 키 눌렀을 때 자동 호출
 	virtual void OnInteract_Implementation(ATGPlayer* Player) override;
 
+	// 플레이어 시선이 닿을 때 아웃라인 표시
+	virtual void OnFocused_Implementation(ATGPlayer* Player) override;
+
+	// 플레이어 시선이 벗어날 때 아웃라인 제거
+	virtual void OnUnfocused_Implementation(ATGPlayer* Player) override;
 public:
 	// NPC 이름
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog")
@@ -39,7 +45,9 @@ public:
 	// 현재 열려있는 대화창
 	UPROPERTY()
 	UUserWidget* DialogWidget;
-
+	// BP에서 추가한 Widget Component 참조
+	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
+	UWidgetComponent* DialogWidgetComponent;
 	// 대화 시작
 	UFUNCTION(BlueprintCallable, Category = "Dialog")
 	void StartDialog();
