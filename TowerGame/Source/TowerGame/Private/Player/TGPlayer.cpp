@@ -429,6 +429,14 @@ float ATGPlayer::TakeDamage(float DamageAmount, struct FDamageEvent const& Damag
 	return AppliedDamage;
 }
 
+void ATGPlayer::ClearFocusedEnemy()
+{
+	if (!LastFocusedEnemy) return;
+
+	LastFocusedEnemy = nullptr;
+	OnFocusedEnemyChanged.Broadcast(nullptr);
+}
+
 // Called to bind functionality to input
 void ATGPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {

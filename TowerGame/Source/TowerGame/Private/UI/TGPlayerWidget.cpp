@@ -59,6 +59,10 @@ void UTGPlayerWidget::NativeConstruct()
 	if (WaveManager){
 		WaveManager->OnWaveStarted.AddUniqueDynamic(this, &UTGPlayerWidget::HandleWaveStarted);
 		WaveManager->OnBossSpawned.AddDynamic(this, &UTGPlayerWidget::BindBoss);
+
+		if (ATGBossBase* CurrentBoss = Cast<ATGBossBase>(WaveManager->GetBoss())){
+			BindBoss(CurrentBoss);
+		}
 	}
 
 	NavigationManager = ATGNavigationManager::Get(this);
@@ -125,6 +129,14 @@ void UTGPlayerWidget::NativeDestruct()
 	}
 
 	UnbindFocusedEnemy();
+	FocusedEnemy = nullptr;
+	if (Txt_EnemyType){
+		Txt_EnemyType->SetVisibility(ESlateVisibility::Hidden);
+	}
+	if (PB_EnemyHP){
+		PB_EnemyHP->SetVisibility(ESlateVisibility::Hidden);
+	}
+
 	Super::NativeDestruct();
 }
 

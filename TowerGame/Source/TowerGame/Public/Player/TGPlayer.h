@@ -104,6 +104,8 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "TowerGame|Interaction")
 	ATGInteractiveActor* GetFocusedInteractiveActor() const { return CurrentFocusedActor; }
 
+	void ClearFocusedEnemy();
+
 	// 기존 이름과 동작이 일치하지 않아 이름 변경 (기존 이름: AddPlayerHP)
 	UFUNCTION(BlueprintCallable, Category = "Status")
 	int32 ChangePlayerHP(int32 value);

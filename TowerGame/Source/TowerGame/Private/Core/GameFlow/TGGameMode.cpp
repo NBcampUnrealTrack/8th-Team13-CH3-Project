@@ -3,6 +3,7 @@
 #include "Enemies/TGWaveManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/AssetManager.h"
+#include "Player/TGPlayer.h"
 
 ATGGameMode::ATGGameMode()
 	: SetWaveStartTime(10.0f), CurrentEnergy(500)
@@ -118,6 +119,11 @@ void ATGGameMode::PauseGameFlow()
 {
 	if (CurrentState == ETGGameFlowState::Playing || CurrentState == ETGGameFlowState::BuildMode)
 	{
+		if (ATGPlayer* Player = Cast<ATGPlayer>(UGameplayStatics::GetPlayerPawn(this, 0)))
+		{
+			Player->ClearFocusedEnemy();
+		}
+
 		ChangeFlowState(ETGGameFlowState::Paused);
 	}
 }
