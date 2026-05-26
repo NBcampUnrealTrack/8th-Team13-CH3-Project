@@ -122,7 +122,7 @@ void ATGPlayer::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	if (GetWorld() && GetWorld()->GetTimerManager().IsTimerActive(SlowDebuffTimerHandle))
 		GetWorld()->GetTimerManager().ClearTimer(SlowDebuffTimerHandle);
 
-	for (TPair<FString, UTGWeaponBase*> w : OwnedWeapons)
+	for (FWeaponPair w : OwnedWeapons)
 	{
 		w.Value->MarkAsGarbage();
 		w.Value = nullptr;
@@ -283,24 +283,24 @@ void ATGPlayer::SwitchingWeapon(const FInputActionValue& InputValue)
 		SwitchWeaponDelay,
 		false
 	);
-	TArray<TPair<FString, TObjectPtr<UTGWeaponBase>>> Arr = OwnedWeapons.Array();
-	int32 Idx = Arr.IndexOfByPredicate([this](TPair<FString, TObjectPtr<UTGWeaponBase>> element) {return SwitchingWeaponKey == element.Key; });
+
+	int32 Idx = OwnedWeapons.IndexOfByPredicate([this](FWeaponPair element) {return SwitchingWeaponKey == element.Key; });
 	if (moveDir > 0)
 		Idx++;
 	else
 		Idx--;
 
-	if (!Arr.IsValidIndex(Idx))
+	if (!OwnedWeapons.IsValidIndex(Idx))
 	{
 		if (moveDir > 0)
 			Idx = 0;
 		else
-			Idx = Arr.Num() - 1;
+			Idx = OwnedWeapons.Num() - 1;
 	}
 
 	SwitchingWeaponTimelineComp->Play();
-	SwitchingWeaponKey = Arr[Idx].Key;
-	OnWeaponChanged.Broadcast(Arr[Idx].Value);
+	SwitchingWeaponKey = OwnedWeapons[Idx].Key;
+	OnWeaponChanged.Broadcast(OwnedWeapons[Idx].Value);
 }
 
 // Called every frame
@@ -521,8 +521,8 @@ void ATGPlayer::ApplySlowDebuff(float Duration)
 UTGWeaponBase* ATGPlayer::GetCurrentWeapon()
 {
 	// [FIX-PACKAGING] TMap::Find()가 nullptr을 반환할 수 있어 역참조 전 유효성 체크
-	TObjectPtr<UTGWeaponBase>* WeaponPtr = OwnedWeapons.Find(CurrentWeaponKey);
-	return WeaponPtr ? WeaponPtr->Get() : nullptr;
+	TObjectPtr<UTGWeaponBase> WeaponPtr = OwnedWeapons.FindByPredicate([this](FWeaponPair element) {return CurrentWeaponKey == element.Key; })->Value;
+	return WeaponPtr ? WeaponPtr : nullptr;
 }
 
 void ATGPlayer::OnFinishSwitchingWeaponTimeline()
@@ -575,7 +575,7 @@ void ATGPlayer::OwnWeapon(ETGWeaponTriggerType TriggerType, FName RowName, bool 
 			{
 				SingleShot = NewObject<UTGWeaponSingleShot>(this);
 				SingleShot->SetStatus(*info);
-				OwnedWeapons.Add(GetWeaponKey(TriggerType, RowName), SingleShot);
+				OwnedWeapons.Add(FWeaponPair(GetWeaponKey(TriggerType, RowName), SingleShot));
 			}
 		}
 		break;
@@ -595,7 +595,7 @@ void ATGPlayer::OwnWeapon(ETGWeaponTriggerType TriggerType, FName RowName, bool 
 			{
 				Shotgun = NewObject<UTGWeaponShotgun>(this);
 				Shotgun->SetStatus(*info);
-				OwnedWeapons.Add(GetWeaponKey(TriggerType, RowName), Shotgun);
+				OwnedWeapons.Add(FWeaponPair(GetWeaponKey(TriggerType, RowName), Shotgun));
 			}
 		}
 		break;
@@ -615,7 +615,7 @@ void ATGPlayer::OwnWeapon(ETGWeaponTriggerType TriggerType, FName RowName, bool 
 			{
 				Repeater = NewObject<UTGWeaponRepeater>(this);
 				Repeater->SetStatus(*info);
-				OwnedWeapons.Add(GetWeaponKey(TriggerType, RowName), Repeater);
+				OwnedWeapons.Add(FWeaponPair(GetWeaponKey(TriggerType, RowName), Repeater));
 			}
 		}
 		break;
