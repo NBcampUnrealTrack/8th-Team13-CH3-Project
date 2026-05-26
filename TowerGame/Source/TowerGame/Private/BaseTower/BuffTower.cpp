@@ -26,6 +26,12 @@ void ATGBuffTower::BeginPlay()
 	SetRangeSphereScale(BuffRange);
 }
 
+void ATGBuffTower::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	StopHeal();
+	Super::EndPlay(EndPlayReason);
+}
+
 void ATGBuffTower::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);

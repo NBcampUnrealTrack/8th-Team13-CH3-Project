@@ -23,6 +23,12 @@ void ATGDebuffTower::BeginPlay()
 
 }
 
+void ATGDebuffTower::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	StopDebuff();
+	Super::EndPlay(EndPlayReason);
+}
+
 void ATGDebuffTower::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);

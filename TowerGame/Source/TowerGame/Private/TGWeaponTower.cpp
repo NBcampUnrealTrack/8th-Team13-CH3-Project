@@ -164,7 +164,10 @@ void ATGWeaponTower::DetectingEnemy()
 
 	float MinDistance = 500000.f;
 	Target = nullptr;
-	Target = ATGWaveManager::Get(this)->GetBoss();
+	if (ATGWaveManager* WaveManager = ATGWaveManager::Get(this))
+	{
+		Target = WaveManager->GetBoss();
+	}
 	if (Target)	return;
 
 	for (AActor* Actor : FoundActors)
