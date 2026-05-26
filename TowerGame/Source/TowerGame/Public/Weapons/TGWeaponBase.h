@@ -95,6 +95,7 @@ protected:
 protected:	// 라인트레이싱 정보
 	FHitResult TraceHit;
 	FCollisionQueryParams QueryParams;
+	UPROPERTY()
 	TArray<AActor*> IgnoredActors;
 
 	void SpawnBeamEffect(FVector Start, FVector End);

@@ -28,6 +28,7 @@ class TOWERGAME_API UTGWeaponShotgun : public UTGWeaponBase
 {
 	GENERATED_BODY()
 private:
+	UPROPERTY()
 	FTGStatusWeaponShotgun status;
 public:
 	virtual void Shoot(class ATGPlayer* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance, bool TriggerLock) override;
