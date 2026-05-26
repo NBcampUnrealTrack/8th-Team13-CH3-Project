@@ -50,6 +50,20 @@ void ATGGameMode::BeginPlay()
 	//}
 }
 
+void ATGGameMode::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	GetWorldTimerManager().ClearTimer(WaveStartTimerHandle);
+	GetWorldTimerManager().ClearTimer(GameOverTimerHandle);
+
+	if (PreloadHandle.IsValid())
+	{
+		PreloadHandle->CancelHandle();
+		PreloadHandle.Reset();
+	}
+
+	Super::EndPlay(EndPlayReason);
+}
+
 //void ATGGameMode::OnCoreDestroyedFromDelegate()
 //{
 //	UE_LOG(LogTemp, Warning, TEXT("GameMode: Core Destroyed Event Received"));
@@ -148,18 +162,24 @@ void ATGGameMode::HandleGameOver()
 {
 	const float PlayRate = 0.2f;
 	GetWorldTimerManager().ClearTimer(WaveStartTimerHandle);
+	GetWorldTimerManager().ClearTimer(GameOverTimerHandle);
 	
 	GetWorldSettings()->SetTimeDilation(PlayRate);
 	OnHideWidgets.Broadcast();
 
 	GetWorldTimerManager().SetTimer(
 		GameOverTimerHandle,
-		FTimerDelegate::CreateLambda([this]()
-			{
-				GetWorldTimerManager().ClearTimer(GameOverTimerHandle);
-				ChangeFlowState(ETGGameFlowState::GameOver);
-			}), 0.5f, false
+		this,
+		&ATGGameMode::FinishGameOver,
+		0.5f,
+		false
 	);
+}
+
+void ATGGameMode::FinishGameOver()
+{
+	GetWorldTimerManager().ClearTimer(GameOverTimerHandle);
+	ChangeFlowState(ETGGameFlowState::GameOver);
 }
 
 void ATGGameMode::HandleGameClear()
