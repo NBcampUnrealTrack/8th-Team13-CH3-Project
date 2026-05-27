@@ -5,6 +5,7 @@
 #include "TGInteractiveActor.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/WidgetComponent.h"
+#include "Components/SphereComponent.h"
 #include "TGNPCBase.generated.h"
 
 UCLASS()
@@ -26,6 +27,18 @@ protected:
 
 	// 플레이어 시선이 벗어날 때 아웃라인 제거
 	virtual void OnUnfocused_Implementation(ATGPlayer* Player) override;
+
+	// 플레이어가 범위 안에 들어올 때
+	UFUNCTION()
+	void OnPlayerEnterRange(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+		bool bFromSweep, const FHitResult& SweepResult);
+
+	// 플레이어가 범위에서 나갈 때
+	UFUNCTION()
+	void OnPlayerExitRange(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
 public:
 	// NPC 이름
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog")
@@ -48,6 +61,9 @@ public:
 	// BP에서 추가한 Widget Component 참조
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
 	UWidgetComponent* DialogWidgetComponent;
+	// 상호작용 범위 콜리전
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dialog")
+	USphereComponent* InteractRangeSphere;
 	// 대화 시작
 	UFUNCTION(BlueprintCallable, Category = "Dialog")
 	void StartDialog();
@@ -70,4 +86,7 @@ private:
 
 	UFUNCTION()
 	void OnSkipButtonClicked();
+
+	// 플레이어가 범위 안에 있는지
+	bool bPlayerInRange = false;
 };
