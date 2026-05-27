@@ -21,6 +21,7 @@
 #include "Components/TimelineComponent.h"
 #include "Curves/CurveVector.h"
 #include "BaseTower/TGBaseTower.h"
+#include "TGNPCBase.h"
 
 // Sets default values
 ATGPlayer::ATGPlayer() : MaxHP(100), SlowRate(0.5f), DefaultWalkSpeed(0)
@@ -54,6 +55,7 @@ ATGPlayer::ATGPlayer() : MaxHP(100), SlowRate(0.5f), DefaultWalkSpeed(0)
 	InteractDistance = 300.f;
 	CurrentFocusedActor = nullptr;
 	LastFocusedEnemy = nullptr;
+	CurrentFocusedNPC = nullptr;
 	ShootDistance = 50000.f;
 }
 
@@ -255,6 +257,13 @@ void ATGPlayer::Shot(const FInputActionValue& InputValue)
 
 void ATGPlayer::Interact(const FInputActionValue& InputValue)
 {
+	// NPC 상호작용 (빌드모드와 무관)
+	if (CurrentFocusedNPC)
+	{
+		CurrentFocusedNPC->OnInteract(this);
+		return;
+	}
+
 	if (bBuildMode && CurrentFocusedActor)
 	{
 		// 선택된 타워 타입을 BaseTower에 전달 후 상호작용
@@ -323,6 +332,8 @@ void ATGPlayer::Tick(float DeltaTime)
 		}
 
 	}
+	// NPC 전용 트레이스 (항상 실행)
+	NPCTrace();
 	// 무기가 향하는 방향
 	FHitResult WeaponTrace;
 
@@ -741,4 +752,21 @@ bool ATGPlayer::CameraLineTrace(FHitResult& TraceHit, ECollisionChannel Channel,
 		);
 	}
 
+}
+
+void ATGPlayer::NPCTrace()
+{
+	FHitResult HitResult;
+	const bool bHit = CameraLineTrace(HitResult, ECC_GameTraceChannel1, 0.0f, InteractDistance);
+
+	ATGNPCBase* HitNPC = nullptr;
+	if (bHit)
+	{
+		HitNPC = Cast<ATGNPCBase>(HitResult.GetActor());
+	}
+
+	if (HitNPC != CurrentFocusedNPC)
+	{
+		CurrentFocusedNPC = HitNPC;
+	}
 }

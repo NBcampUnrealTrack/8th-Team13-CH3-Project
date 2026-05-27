@@ -1,7 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -228,6 +226,8 @@ protected:
 	void ClearSlowDebuff();
 private:
 	void InteractiveTrace(bool debug = false);
+	// NPC 전용 트레이스 (InteractiveTrace 복사본, NPC만 감지)
+	void NPCTrace();
 	bool CameraLineTrace(FHitResult& TraceHit, ECollisionChannel Channel, float StartDistance = 0.0f, float MaxDistance = 5000.0f, bool debug = false);
 
 
@@ -239,4 +239,8 @@ private:
 	// 감지한 Enemy
 	UPROPERTY()
 	TObjectPtr<ATGEnemyBase> LastFocusedEnemy;
+
+	// NPC 전용 - 감지한 NPC
+	UPROPERTY()
+	TObjectPtr<ATGInteractiveActor> CurrentFocusedNPC;
 };
