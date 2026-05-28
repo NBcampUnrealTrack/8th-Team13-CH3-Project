@@ -78,7 +78,7 @@ void UTGMainMenuWidget::HandleStartClicked()
 		//);
 
 		// 로딩할 레벨 패키지 경로
-		LoadLevelPath = TEXT("/Game/Maps/L_Stage01");
+		LoadLevelPath = TEXT("/Game/Maps/Tutorial");
 
 		// 비동기적으로 패키지 로딩
 		FLoadPackageAsyncDelegate OnPackageLoadedDelegate;

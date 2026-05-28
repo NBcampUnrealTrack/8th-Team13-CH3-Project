@@ -93,7 +93,7 @@ public:
 	void ChangeFlowState(ETGGameFlowState NewState);
 
 	UFUNCTION(BlueprintCallable, Category = "Game Flow")
-	void StartGameFlow();
+	virtual void StartGameFlow();
 
 	UFUNCTION(BlueprintCallable, Category = "Game Flow")
 	void EnterBuildMode();
