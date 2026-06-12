@@ -6,12 +6,12 @@
 #include "GameFramework/Character.h"
 #include "Weapons/TGWeaponBase.h"
 #include "BaseTower/TGTurretType.h"
-#include "BaseTower/TGBuildWidget.h"
 #include "TGPlayer.generated.h"
 
 class ATGEnemyBase;
 struct FInputActionValue;
 class ATGInteractiveActor;
+class UDataTable;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPlayerHpChanged, float, CurrentHP, float, MaxHP);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnEvadeChanged, int32, EvadeCount, float, CooldownRate);
@@ -93,24 +93,20 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Status")
-	const int32 GetMaxEvadeCount() { return EvadeCount; }	// 최대 Evade가능 횟수
+	int32 GetMaxEvadeCount() const { return EvadeCount; }	// 최대 Evade가능 횟수
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Status")
-	const int32 GetCurrentEvadeCount() { return CurrentEvadeCount; }	// 현재 Evade 가능 횟수
+	int32 GetCurrentEvadeCount() const { return CurrentEvadeCount; }	// 현재 Evade 가능 횟수
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Status")
-	const float GetMaxEvadeCooldown() { return EvadeCooldown; }	// 최대 Evade 쿨타임
+	float GetMaxEvadeCooldown() const { return EvadeCooldown; }	// 최대 Evade 쿨타임
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Status")
-	const float GetCurrentEvadeCooldown() { return CurrentEvadeCooldown; }	// 현재 남은 Evade 쿨타임
+	float GetCurrentEvadeCooldown() const { return CurrentEvadeCooldown; }	// 현재 남은 Evade 쿨타임
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Status")
-	const float GetPlayerHP() { return HP; }
+	float GetPlayerHP() const { return HP; }
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Status")
-	const float GetPlayerMaxHP() { return MaxHP; }
+	float GetPlayerMaxHP() const { return MaxHP; }
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "TowerGame|Tower")
 	ETGTurretType GetSelectedTurretType() const { return SelectedTurretType; }
-	//UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Skill")
-	//const bool GetLookingPoint(FVector& result, float MaxDistance = 5000.0f);	// 카메라가 바라보는 위치 가져오기
-	//UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Skill")
-	//const bool GetLookingPointDebug(FVector& result, float MaxDistance = 5000.0f);	// 카메라가 바라보는 위치 가져오기(시각화)
 
 	// 현재 시선에 잡힌 Interactive 액터 반환 (없으면 nullptr)
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "TowerGame|Interaction")
@@ -184,14 +180,6 @@ protected:
 	bool bBuildMode;	// 빌드모드
 	ETGTurretType SelectedTurretType = ETGTurretType::None;	// 숫자키로 선택한 타워 타입
 
-	// 빌드모드 진입 시 표시할 위젯 클래스 — 에디터에서 WBP_BuildWidget 설정
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tower|UI")
-	TSubclassOf<UTGBuildWidget> BuildWidgetClass;
-
-	// 런타임 위젯 인스턴스
-	UPROPERTY()
-	UTGBuildWidget* BuildWidget;
-
 	// Debuff - Slow 관련 변수
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Status|Debuff")
 	float SlowRate;
@@ -203,6 +191,14 @@ protected:
 
 	UPROPERTY()
 	TArray<FWeaponPair> OwnedWeapons;	// 소유중인 무기
+
+	// 무기 데이터테이블 — 생성자에서 기본 에셋이 지정되며, BP에서 교체할 수 있다
+	UPROPERTY(EditDefaultsOnly, Category = "Weapons")
+	TObjectPtr<UDataTable> SingleShotWeaponTable;
+	UPROPERTY(EditDefaultsOnly, Category = "Weapons")
+	TObjectPtr<UDataTable> ShotgunWeaponTable;
+	UPROPERTY(EditDefaultsOnly, Category = "Weapons")
+	TObjectPtr<UDataTable> RepeaterWeaponTable;
 
 	FString CurrentWeaponKey;	// 현재 장착중인 무기의 Key
 	FString SwitchingWeaponKey;	// 교체중인 무기의 Key
@@ -225,10 +221,9 @@ protected:
 	// Debuff - Slow 해제
 	void ClearSlowDebuff();
 private:
-	void InteractiveTrace(bool debug = false);
-	// NPC 전용 트레이스 (InteractiveTrace 복사본, NPC만 감지)
-	void NPCTrace();
-	bool CameraLineTrace(FHitResult& TraceHit, ECollisionChannel Channel, float StartDistance = 0.0f, float MaxDistance = 5000.0f, bool debug = false);
+	// Interactive/NPC 포커스 갱신 — 같은 채널을 쓰므로 트레이스는 한 번만 수행
+	void UpdateFocusTraces();
+	bool CameraLineTrace(FHitResult& TraceHit, ECollisionChannel Channel, float StartDistance = 0.0f, float MaxDistance = 5000.0f);
 
 
 	//	포커싱된 액터

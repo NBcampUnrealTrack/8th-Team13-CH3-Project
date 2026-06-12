@@ -9,7 +9,7 @@
 #include "Core/Grid/TGGridBase.h"
 #include "Core/GameFlow/TGGameMode.h"
 #include "TGInteractiveActor.h"
-//#include "Kismet/KismetSystemLibrary.h"
+#include "Engine/DataTable.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/ChildActorComponent.h"
@@ -49,6 +49,19 @@ ATGPlayer::ATGPlayer() : MaxHP(100), SlowRate(0.5f), DefaultWalkSpeed(0)
 	static ConstructorHelpers::FObjectFinder<UCurveVector> CurveNoneAsset(TEXT("/Game/Weapons/Curves/CV_None.CV_None"));
 	if (CurveNoneAsset.Succeeded())
 		CurveVector_None = CurveNoneAsset.Object;
+
+	// 무기 데이터테이블 기본값 — BP에서 교체 가능
+	static ConstructorHelpers::FObjectFinder<UDataTable> SingleShotTableAsset(TEXT("/Game/Weapons/DT_WeaponTable_SingleShot.DT_WeaponTable_SingleShot"));
+	if (SingleShotTableAsset.Succeeded())
+		SingleShotWeaponTable = SingleShotTableAsset.Object;
+
+	static ConstructorHelpers::FObjectFinder<UDataTable> ShotgunTableAsset(TEXT("/Game/Weapons/DT_WeaponTable_Shotgun.DT_WeaponTable_Shotgun"));
+	if (ShotgunTableAsset.Succeeded())
+		ShotgunWeaponTable = ShotgunTableAsset.Object;
+
+	static ConstructorHelpers::FObjectFinder<UDataTable> RepeaterTableAsset(TEXT("/Game/Weapons/DT_WeaponTable_Repeater.DT_WeaponTable_Repeater"));
+	if (RepeaterTableAsset.Succeeded())
+		RepeaterWeaponTable = RepeaterTableAsset.Object;
 
 	EvadeCount = 2;
 	EvadeCooldown = 3.0f;
@@ -124,11 +137,8 @@ void ATGPlayer::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	if (GetWorld() && GetWorld()->GetTimerManager().IsTimerActive(SlowDebuffTimerHandle))
 		GetWorld()->GetTimerManager().ClearTimer(SlowDebuffTimerHandle);
 
-	for (FWeaponPair w : OwnedWeapons)
-	{
-		w.Value->MarkAsGarbage();
-		w.Value = nullptr;
-	}
+	// UPROPERTY 참조만 끊으면 GC가 무기 오브젝트를 정리한다
+	OwnedWeapons.Empty();
 
 	Super::EndPlay(EndPlayReason);
 }
@@ -286,7 +296,6 @@ void ATGPlayer::SwitchingWeapon(const FInputActionValue& InputValue)
 	GetWorld()->GetTimerManager().SetTimer(
 		SwitchWeaponDelayHandle,
 		FTimerDelegate::CreateLambda([this]() {
-			GetWorld()->GetTimerManager().ClearTimer(SlowDebuffTimerHandle);
 			bCanSwitch = true;
 			}),
 		SwitchWeaponDelay,
@@ -318,22 +327,8 @@ void ATGPlayer::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	RestoreEvadeCooldown(DeltaTime);	// 회피기동 쿨타임 회복
 
-	if (bBuildMode)
-	{
-		InteractiveTrace();
-	}
-	else
-	{
-		if (CurrentFocusedActor)
-		{
-			CurrentFocusedActor->OnUnfocused(this);
-
-			CurrentFocusedActor = nullptr;
-		}
-
-	}
-	// NPC 전용 트레이스 (항상 실행)
-	NPCTrace();
+	// Interactive(빌드모드) / NPC(상시) 포커스 갱신 — 트레이스 1회로 통합
+	UpdateFocusTraces();
 	// 무기가 향하는 방향
 	FHitResult WeaponTrace;
 
@@ -342,21 +337,12 @@ void ATGPlayer::Tick(float DeltaTime)
 	const float MuzzleLen = (CurWeapon && CurWeapon->GetAsset()) ? CurWeapon->GetAsset()->MuzzlePos.Length() : 0.f;
 	CameraLineTrace(WeaponTrace, ECC_Visibility, Weapon_Static->GetRelativeLocation().Length() + MuzzleLen, ShootDistance);
 
-	//FVector MuzzlePos = Weapon_Static->GetComponentTransform().TransformPosition(GetCurrentWeapon()->GetAsset()->MuzzlePos);
-	//Weapon_Static->SetWorldRotation(UKismetMathLibrary::FindLookAtRotation(Camera->GetComponentLocation() + InitialLocation + GetCurrentWeapon()->GetAsset()->LocationOffset, WeaponTrace.Location));
-	//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Aim Rot: %s"), *Weapon_Static->GetComponentRotation().ToString()));
-
 	// Trace 결과 중 HitEnemy을 확인하여 기존 값과 다를 경우 Broadcast
 	ATGEnemyBase* HitEnemy = Cast<ATGEnemyBase>(WeaponTrace.GetActor());
 	if (HitEnemy != LastFocusedEnemy) {
 		LastFocusedEnemy = HitEnemy;
 		OnFocusedEnemyChanged.Broadcast(LastFocusedEnemy);
 	}
-
-	//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Current Evade Cooldown: %f / %f"), CurrentEvadeCooldown, EvadeCooldown));
-	//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Current Evade Count(LSHIFT): %d / %d"), CurrentEvadeCount, EvadeCount));
-	//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Cyan, FString::Printf(TEXT("Aim Target: %s"), WeaponTrace.bBlockingHit ? *WeaponTrace.GetActor()->GetName() : TEXT("None")));
-	//GEngine->AddOnScreenDebugMessage(-1, 0.0f, bBuildMode ? FColor::Emerald : FColor::Orange, FString::Printf(TEXT("Current Mode: %s"), bBuildMode ? TEXT("Build") : TEXT("Combat")));
 
 	// 무기 트랜스폼 업데이트
 	UpdateWeaponTransform();
@@ -531,9 +517,9 @@ void ATGPlayer::ApplySlowDebuff(float Duration)
 
 UTGWeaponBase* ATGPlayer::GetCurrentWeapon()
 {
-	// [FIX-PACKAGING] TMap::Find()가 nullptr을 반환할 수 있어 역참조 전 유효성 체크
-	TObjectPtr<UTGWeaponBase> WeaponPtr = OwnedWeapons.FindByPredicate([this](FWeaponPair element) {return CurrentWeaponKey == element.Key; })->Value;
-	return WeaponPtr ? WeaponPtr : nullptr;
+	// FindByPredicate는 일치 항목이 없으면 nullptr을 반환하므로 역참조 전에 검사
+	const FWeaponPair* Found = OwnedWeapons.FindByPredicate([this](const FWeaponPair& element) {return CurrentWeaponKey == element.Key; });
+	return Found ? Found->Value : nullptr;
 }
 
 void ATGPlayer::OnFinishSwitchingWeaponTimeline()
@@ -566,72 +552,43 @@ void ATGPlayer::OnAddRecoilWeaponOffset_Rotation(FVector Rot)
 	AddControllerYawInput(Rot.Y * CurrentRecoilRotScale.Yaw * CurrentRecoilInputScale * GetWorld()->GetDeltaSeconds());
 }
 
+namespace
+{
+	// 무기 데이터테이블에서 Row를 찾아 무기 오브젝트를 생성하는 공통 헬퍼
+	template<typename TWeaponClass, typename TRowType>
+	TWeaponClass* CreateWeaponFromTable(UObject* Outer, UDataTable* Table, FName RowName)
+	{
+		if (!IsValid(Table)) return nullptr;
+
+		TRowType* Info = Table->FindRow<TRowType>(RowName, TEXT(""));
+		if (!Info) return nullptr;
+
+		TWeaponClass* Weapon = NewObject<TWeaponClass>(Outer);
+		Weapon->SetStatus(*Info);
+		return Weapon;
+	}
+}
+
 void ATGPlayer::OwnWeapon(ETGWeaponTriggerType TriggerType, FName RowName, bool equip)
 {
-	UDataTable* DT;
+	UTGWeaponBase* NewWeapon = nullptr;
 	switch (TriggerType)
 	{
 	case ETGWeaponTriggerType::SINGLE_SHOT:
-	{
-		UTGWeaponSingleShot* SingleShot;
-		FTGStatusWeaponSingleShot* info;
-		DT = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr,
-			TEXT("/Game/Weapons/DT_WeaponTable_SingleShot.DT_WeaponTable_SingleShot")));
-		// [FIX-PACKAGING] IsValidLowLevel()은 nullptr을 필터링하지 않아 크래시 발생 → IsValid()로 교체
-		if (IsValid(DT))
-		{
-			TArray<FName> DTNameArray = DT->GetRowNames();
-			info = DT->FindRow<FTGStatusWeaponSingleShot>(RowName, TEXT(""));
-			if (info)
-			{
-				SingleShot = NewObject<UTGWeaponSingleShot>(this);
-				SingleShot->SetStatus(*info);
-				OwnedWeapons.Add(FWeaponPair(GetWeaponKey(TriggerType, RowName), SingleShot));
-			}
-		}
+		NewWeapon = CreateWeaponFromTable<UTGWeaponSingleShot, FTGStatusWeaponSingleShot>(this, SingleShotWeaponTable, RowName);
 		break;
-	}
 	case ETGWeaponTriggerType::SHOTGUN:
-	{
-		UTGWeaponShotgun* Shotgun;
-		FTGStatusWeaponShotgun* info;
-		DT = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr,
-			TEXT("/Game/Weapons/DT_WeaponTable_Shotgun.DT_WeaponTable_Shotgun")));
-		// [FIX-PACKAGING] IsValidLowLevel()은 nullptr을 필터링하지 않아 크래시 발생 → IsValid()로 교체
-		if (IsValid(DT))
-		{
-			TArray<FName> DTNameArray = DT->GetRowNames();
-			info = DT->FindRow<FTGStatusWeaponShotgun>(RowName, TEXT(""));
-			if (info)
-			{
-				Shotgun = NewObject<UTGWeaponShotgun>(this);
-				Shotgun->SetStatus(*info);
-				OwnedWeapons.Add(FWeaponPair(GetWeaponKey(TriggerType, RowName), Shotgun));
-			}
-		}
+		NewWeapon = CreateWeaponFromTable<UTGWeaponShotgun, FTGStatusWeaponShotgun>(this, ShotgunWeaponTable, RowName);
 		break;
-	}
 	case ETGWeaponTriggerType::REPEATER:
-	{
-		UTGWeaponRepeater* Repeater;
-		FTGStatusWeaponRepeater* info;
-		DT = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr,
-			TEXT("/Game/Weapons/DT_WeaponTable_Repeater.DT_WeaponTable_Repeater")));
-		// [FIX-PACKAGING] IsValidLowLevel()은 nullptr을 필터링하지 않아 크래시 발생 → IsValid()로 교체
-		if (IsValid(DT))
-		{
-			TArray<FName> DTNameArray = DT->GetRowNames();
-			info = DT->FindRow<FTGStatusWeaponRepeater>(RowName, TEXT(""));
-			if (info)
-			{
-				Repeater = NewObject<UTGWeaponRepeater>(this);
-				Repeater->SetStatus(*info);
-				OwnedWeapons.Add(FWeaponPair(GetWeaponKey(TriggerType, RowName), Repeater));
-			}
-		}
+		NewWeapon = CreateWeaponFromTable<UTGWeaponRepeater, FTGStatusWeaponRepeater>(this, RepeaterWeaponTable, RowName);
+		break;
+	default:
 		break;
 	}
-	}
+
+	if (NewWeapon)
+		OwnedWeapons.Add(FWeaponPair(GetWeaponKey(TriggerType, RowName), NewWeapon));
 
 	if (equip)
 		EquipWeapon(GetWeaponKey(TriggerType, RowName));
@@ -656,19 +613,14 @@ void ATGPlayer::EquipWeapon(FString Key)
 		Weapon_Static->SetStaticMesh(AssetInfo.StaticMesh);
 	}
 
-	FOnTimelineVector RecoilTL_CurLoc;
-	FOnTimelineVector RecoilTL_CurRot;
-
-	RecoilTL_CurLoc.BindUFunction(this, TEXT("OnAddWeaponOffset_Location"));
-	RecoilTL_CurRot.BindUFunction(this, TEXT("OnAddWeaponOffset_Rotation"));
-
+	// 반동 틱 콜백은 BeginPlay에서 바인딩이 끝났으므로 여기서는 커브만 교체한다
 	RecoilTimelineComp->SetVectorCurve(AssetInfo.RecoilCurveLoc.IsNull() ? CurveVector_None : AssetInfo.RecoilCurveLoc, FName("LocationCurve"));
-	RecoilTimelineComp->SetVectorCurve(AssetInfo.RecoilCurveLoc.IsNull() ? CurveVector_None : AssetInfo.RecoilCurveRot, FName("RotationCurve"));
+	RecoilTimelineComp->SetVectorCurve(AssetInfo.RecoilCurveRot.IsNull() ? CurveVector_None : AssetInfo.RecoilCurveRot, FName("RotationCurve"));
 }
 
 FString ATGPlayer::GetWeaponKey(ETGWeaponTriggerType TriggerType, FName WeaponName)
 {
-	return FString::Printf(TEXT("%d_%s"), TriggerType, *WeaponName.ToString());
+	return FString::Printf(TEXT("%d_%s"), static_cast<int32>(TriggerType), *WeaponName.ToString());
 }
 
 void ATGPlayer::PlayRecoil(float ShotInterval, float RecoilInputScale)
@@ -689,23 +641,24 @@ void ATGPlayer::ClearSlowDebuff()
 	MovementComponent->MaxWalkSpeed = DefaultWalkSpeed;
 }
 
-void ATGPlayer::InteractiveTrace(bool debug)
+void ATGPlayer::UpdateFocusTraces()
 {
+	// Interactive/NPC가 같은 채널·거리를 쓰므로 트레이스는 한 번만 수행한다
 	FHitResult HitResult;
 	const bool bHit = CameraLineTrace(HitResult, ECC_GameTraceChannel1, 0.0f, InteractDistance);
+	AActor* HitActor = bHit ? HitResult.GetActor() : nullptr;
 
-	ATGInteractiveActor* HitActor = nullptr;
-	if (bHit)
-	{
-		HitActor = Cast<ATGInteractiveActor>(HitResult.GetActor());
-	}
+	// NPC 포커스 갱신 (빌드모드와 무관하게 상시)
+	CurrentFocusedNPC = Cast<ATGNPCBase>(HitActor);
 
-	if (HitActor != CurrentFocusedActor)
+	// Interactive 액터 포커스 갱신 (빌드모드에서만 유효)
+	ATGInteractiveActor* HitInteractive = bBuildMode ? Cast<ATGInteractiveActor>(HitActor) : nullptr;
+	if (HitInteractive != CurrentFocusedActor)
 	{
 		if (CurrentFocusedActor)
 			CurrentFocusedActor->OnUnfocused(this);
 
-		CurrentFocusedActor = HitActor;
+		CurrentFocusedActor = HitInteractive;
 
 		if (CurrentFocusedActor)
 		{
@@ -714,59 +667,21 @@ void ATGPlayer::InteractiveTrace(bool debug)
 	}
 }
 
-bool ATGPlayer::CameraLineTrace(FHitResult& TraceHit, ECollisionChannel Channel, float StartDistance, float MaxDistance, bool debug)
+bool ATGPlayer::CameraLineTrace(FHitResult& TraceHit, ECollisionChannel Channel, float StartDistance, float MaxDistance)
 {
 	FCollisionQueryParams QueryParams;
 	QueryParams.bTraceComplex = true;
-	TArray<AActor*> IgnoredActors = { this };
-	QueryParams.AddIgnoredActors(IgnoredActors);
+	QueryParams.AddIgnoredActor(this);
 
 	const FVector Start = Camera->GetComponentLocation() + Camera->GetForwardVector() * StartDistance;
 	const FVector End = Start + Camera->GetForwardVector() * MaxDistance;
 
-	if (debug)
-	{
-		//return UKismetSystemLibrary::LineTraceSingle(
-		//	GetWorld(), //어느 월드의 소속인가? (this)를 넣어줘도 됨
-		//	Start,
-		//	End,
-		//	UEngineTypes::ConvertToTraceType(Channel),	// 사용할 트레이스채널
-		//	QueryParams.bTraceComplex,	// 복합콜리전 사용
-		//	IgnoredActors,	// 해당 액터는 이 트레이스를 무시
-		//	EDrawDebugTrace::ForOneFrame,	//디버그(그리기 타입 적용),
-		//	TraceHit,
-		//	true,	// 자기자신을 Ignore
-		//	FLinearColor::Red,	//디버그 색깔
-		//	FLinearColor::Green	//트레이스 히트 시 색깔
-		//);
-		return false;
-	}
-	else
-	{
-		return GetWorld()->LineTraceSingleByChannel(
-			TraceHit,
-			Start,
-			End,
-			Channel,
-			QueryParams
-		);
-	}
-
+	return GetWorld()->LineTraceSingleByChannel(
+		TraceHit,
+		Start,
+		End,
+		Channel,
+		QueryParams
+	);
 }
 
-void ATGPlayer::NPCTrace()
-{
-	FHitResult HitResult;
-	const bool bHit = CameraLineTrace(HitResult, ECC_GameTraceChannel1, 0.0f, InteractDistance);
-
-	ATGNPCBase* HitNPC = nullptr;
-	if (bHit)
-	{
-		HitNPC = Cast<ATGNPCBase>(HitResult.GetActor());
-	}
-
-	if (HitNPC != CurrentFocusedNPC)
-	{
-		CurrentFocusedNPC = HitNPC;
-	}
-}

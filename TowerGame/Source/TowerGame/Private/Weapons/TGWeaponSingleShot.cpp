@@ -2,11 +2,6 @@
 
 
 #include "Weapons/TGWeaponSingleShot.h"
-#include "Player/TGPlayer.h"
-#include "Enemies/TGBossBase.h"
-#include "Enemies/TGEnemyBase.h"
-#include "Engine/DamageEvents.h"
-#include "Kismet/GameplayStatics.h"
 
 void UTGWeaponSingleShot::Tick(float DeltaTime)
 {
@@ -19,84 +14,15 @@ bool UTGWeaponSingleShot::IsTickable() const
 	return IsFire || IsPrevFire;
 }
 
-bool UTGWeaponSingleShot::IsTickableInEditor() const
-{
-	return false;
-}
-
-bool UTGWeaponSingleShot::IsTickableWhenPaused() const
-{
-	return false;
-}
-
-TStatId UTGWeaponSingleShot::GetStatId() const
-{
-	return TStatId();
-}
-
-UWorld* UTGWeaponSingleShot::GetWorld() const
-{
-	return GetOuter()->GetWorld();
-}
-
 void UTGWeaponSingleShot::Shoot(ATGPlayer* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance, bool TriggerLock)
 {
 	IsFire = true;
 	if (!CanFire || IsPrevFire || TriggerLock)
 		return;
 
-	CanFire = false;
-	GetWorld()->GetTimerManager().SetTimer(TimerFireDelay, this, &UTGWeaponBase::HandleFireDelay, status.ShotCoolTime, false);
+	StartFireCooldown(status.ShotCoolTime);
 	Super::Shoot(Instigator, WeaponComponent, MuzzlePos, Direction, Distance, TriggerLock);
 
-	// 발포 이펙트
-	SpawnAttachedNiagaraEffects(status.Asset.FireParticle, WeaponComponent, MuzzlePos, status.Asset.FireParticleScale);
-	UGameplayStatics::SpawnSoundAttached(
-		status.Asset.FireSound,
-		WeaponComponent,
-		NAME_None,
-		MuzzlePos,
-		EAttachLocation::KeepWorldPosition,
-		false,
-		GetAsset()->FireSoundScale
-	);
-	Instigator->PlayRecoil(status.ShotCoolTime, status.Asset.RecoilInputScale);
-
-	LineTrace(MuzzlePos, Direction, Distance);
-	//	레이저 이펙트
-	FVector BeamEnd = TraceHit.bBlockingHit ? TraceHit.Location : MuzzlePos + Direction * Distance;
-	SpawnBeamEffect(MuzzlePos, BeamEnd);
-
-	if (TraceHit.bBlockingHit)
-	{
-		// 착탄 이펙트
-		SpawnAttachedEffects(status.Asset.HitParticle, TraceHit.GetActor()->GetRootComponent(), TraceHit.Location, status.Asset.HitParticleScale, true);
-		UGameplayStatics::SpawnSoundAttached(
-			status.Asset.HitSound,
-			TraceHit.GetActor()->GetRootComponent(),
-			NAME_None,
-			TraceHit.Location,
-			EAttachLocation::KeepWorldPosition,
-			false,
-			GetAsset()->HitSoundScale, 1.0f, 0.0f, status.Asset.HitSoundAttenuation
-		);
-
-		AActor* HitActor = TraceHit.GetActor();
-		if (ATGEnemyBase* Enemy = Cast<ATGEnemyBase>(HitActor))
-		{
-			UGameplayStatics::ApplyDamage(Enemy, status.Power, Instigator->GetInstigatorController(), Instigator, nullptr);
-		}
-		else if (ATGBossBase* Boss = Cast<ATGBossBase>(HitActor))
-		{
-			UGameplayStatics::ApplyPointDamage(
-				Boss,
-				status.Power,
-				Direction,
-				TraceHit,
-				Instigator->GetInstigatorController(),
-				Instigator,
-				nullptr
-			);
-		}
-	}
+	PlayMuzzleFeedback(Instigator, WeaponComponent, MuzzlePos, status.ShotCoolTime);
+	FireSingleTrace(Instigator, MuzzlePos, Direction, Distance, status.Power);
 }

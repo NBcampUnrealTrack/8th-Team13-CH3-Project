@@ -36,6 +36,9 @@ public:
 	void RegisterEnemy(ATGEnemyBase* Enemy);
 	void UnRegisterEnemy(ATGEnemyBase* Enemy);
 
+	// 생존 중인 적 목록 (타워 탐지 등에서 전체 액터 스캔 대신 사용)
+	const TArray<TObjectPtr<ATGEnemyBase>>& GetAliveEnemies() const { return AliveEnemies; }
+
 	FVector GetCoreLocation() const;
 	ATGCoreBase* GetCurrentCoreActor() const;
 

@@ -5,27 +5,13 @@
 
 #include "Enemies/TGBossBase.h"
 #include "Kismet/KismetSystemLibrary.h"
-#include "Particles/ParticleSystem.h"
-#include "UObject/ConstructorHelpers.h"
 
 UTGRandomGroundCylinderPattern::UTGRandomGroundCylinderPattern() :
 	CylinderHeight(100.f),
 	RandomAreaRadius(1200.f),
 	AttackCount(15)
 {
-	// Sound
-	static ConstructorHelpers::FObjectFinder<USoundBase> AttackSoundAsset(
-		TEXT("/Game/Enemies/Sound/Enemy_Shot_00.Enemy_Shot_00"));
-	if (AttackSoundAsset.Succeeded()){
-		AttackSound = AttackSoundAsset.Object;
-	}
-
-	// Effect
-	static ConstructorHelpers::FObjectFinder<UParticleSystem> AttackEffectAsset(
-		TEXT("/Game/Particle/P_Explosion.P_Explosion"));
-	if (AttackEffectAsset.Succeeded()){
-		AttackEffect = AttackEffectAsset.Object;
-	}
+	// 공격 사운드/이펙트 기본값은 UTGPatternBase 생성자에서 지정
 }
 
 void UTGRandomGroundCylinderPattern::StartPattern(float WarningDrawTime)

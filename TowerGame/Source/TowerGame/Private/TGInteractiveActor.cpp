@@ -3,7 +3,6 @@
 #include "TGInteractiveActor.h"
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
-#include "DrawDebugHelpers.h"
 
 ATGInteractiveActor::ATGInteractiveActor()
 	: InteractionBoxExtent(50.f, 50.f, 50.f)
@@ -42,55 +41,6 @@ void ATGInteractiveActor::BeginPlay()
 			Mesh->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);
 		}
 	}
-
-	/*
-	GetWorldTimerManager().SetTimer(
-		DebugDrawTimerHandle,
-		this,
-		&ATGInteractiveActor::DrawDebugCollisionBox,
-		2.0f,
-		false
-	);
-	//*/
-}
-
-// void ATGInteractiveActor::SyncCollisionToMeshBounds() const
-// {
-// 	TArray<UStaticMeshComponent*> MeshComps;
-// 	GetComponents<UStaticMeshComponent>(MeshComps);
-//
-// 	if (MeshComps.IsEmpty()) return;
-//
-// 	FBox LocalBox(ForceInit);
-// 	float WorldMaxZ = GetActorLocation().Z;
-//
-// 	for (UStaticMeshComponent* Mesh : MeshComps)
-// 	{
-// 		if (!IsValid(Mesh) || !Mesh->GetStaticMesh()) continue;
-//
-// 		if (Mesh->GetAttachParent() == InteractionCollision)
-// 		{
-// 			LocalBox += Mesh->GetStaticMesh()->GetBoundingBox().TransformBy(Mesh->GetRelativeTransform());
-// 		}
-// 		const FBox MeshWorldBox = Mesh->GetStaticMesh()->GetBoundingBox().TransformBy(Mesh->GetComponentTransform());
-// 		WorldMaxZ = FMath::Max(WorldMaxZ, MeshWorldBox.Max.Z);
-// 	}
-//
-// 	if (LocalBox.IsValid)
-// 	{
-// 		FVector Extent = LocalBox.GetExtent();
-// 		Extent.Z = WorldMaxZ - GetActorLocation().Z;
-// 		InteractionCollision->SetBoxExtent(Extent);
-// 	}
-// }
-
-void ATGInteractiveActor::DrawDebugCollisionBox()
-{
-	//	디버깅용 바운드 박스 그리기 함수입니다.
-	//	사용 안함
-
-	const FVector Extent = InteractionCollision->GetScaledBoxExtent();
-	DrawDebugBox(GetWorld(), GetActorLocation(), Extent, FColor::Yellow, true);
 }
 
 void ATGInteractiveActor::OnFocused_Implementation(ATGPlayer* Player) {}

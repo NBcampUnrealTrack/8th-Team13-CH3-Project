@@ -8,9 +8,6 @@
 #include "TGGameMode.generated.h"
 
 class USoundBase;
-
-//class ATGCoreBase;
-
 class ATGMountedTower;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTGFlowStateChanged, ETGGameFlowState, NewState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEnergyChanged, int32, NewEnergy);
@@ -48,13 +45,6 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TowerGame")
 	TMap<ETGTurretType, TSubclassOf<ATGMountedTower>> TowerMap;
-
-	//UFUNCTION()
-	//void OnCoreDestroyedFromDelegate();
-
-	//UPROPERTY()
-	//ATGCoreBase* CachedCore = nullptr;
-
 
 	UPROPERTY(BlueprintReadOnly, Category = "Game Flow")
 	ETGGameFlowState OldState;
@@ -106,9 +96,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Game Flow")
 	void ResumeGameFlow();
-
-	//UFUNCTION(BlueprintCallable, Category = "Game Flow")
-	//void HandleWaveClear();
 
 	UFUNCTION(BlueprintCallable, Category = "Game Flow")
 	void HandleGameOver();

@@ -56,6 +56,12 @@ void ATGEnemyBase::BeginPlay()
 
 	CurrentHP = MaxHP;
 	OnEnemyHpChanged.Broadcast(CurrentHP, MaxHP);
+
+	// 스폰 경로와 무관하게(수동 배치 포함) 생존 적 목록에 자기 자신을 등록한다
+	if (ATGNavigationManager* Manager = ATGNavigationManager::Get(this))
+	{
+		Manager->RegisterEnemy(this);
+	}
 	//	하위 스태틱 메쉬 컴포넌트 모두 가져오기
 	TArray<UStaticMeshComponent*> Components;
 	GetComponents<UStaticMeshComponent>(Components);
@@ -71,6 +77,21 @@ void ATGEnemyBase::BeginPlay()
 		Component->SetSimulatePhysics(false);
 		BodyParts.Add(Component);
 	}
+}
+
+void ATGEnemyBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	// 사망하지 않고 제거되는 경우(레벨 전환 등)에도 목록에서 빠지도록 보장 (Remove는 멱등)
+	if (NavigationManager)
+	{
+		NavigationManager->UnRegisterEnemy(this);
+	}
+	else if (ATGNavigationManager* Manager = ATGNavigationManager::Get(this))
+	{
+		Manager->UnRegisterEnemy(this);
+	}
+
+	Super::EndPlay(EndPlayReason);
 }
 
 void ATGEnemyBase::InitializeEnemy(ATGNavigationManager* InNavigationManager)
@@ -195,12 +216,16 @@ float ATGEnemyBase::TakeDamage(float DamageAmount,
 	AController* EventInstigator,
 	AActor* DamageCauser)
 {
+	// 사망 후 잔해(BodyParts) 피격 시 사망 처리·에너지 지급이 반복되지 않도록 차단
+	if (bDead) return 0.f;
+
 	float AppliedDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
 	CurrentHP -= AppliedDamage;
 	OnEnemyHpChanged.Broadcast(CurrentHP, MaxHP);
 
 	if (CurrentHP <= 0){
+		bDead = true;
 		if (ATGGameMode* GM = Cast<ATGGameMode>(UGameplayStatics::GetGameMode(GetWorld())))
 		{
 			GM->AddEnergy(EnergyDropAmount);
@@ -215,11 +240,11 @@ FVector ATGEnemyBase::GetNavigationHeightOffset() const { return NavigationHeigh
 
 float ATGEnemyBase::GetStructureAttackRange() const { return StructureAttackRange; }
 
-FString ATGEnemyBase::GetEnemyType() { return EnemyType; }
+FString ATGEnemyBase::GetEnemyType() const { return EnemyType; }
 
-float ATGEnemyBase::GetCurrentHP() { return CurrentHP; }
+float ATGEnemyBase::GetCurrentHP() const { return CurrentHP; }
 
-float ATGEnemyBase::GetMaxHP() { return MaxHP; }
+float ATGEnemyBase::GetMaxHP() const { return MaxHP; }
 
 void ATGEnemyBase::HandleAttackRangeReached(AActor* TargetActor)
 {
@@ -324,5 +349,5 @@ void ATGEnemyBase::DestroyBodyParts()
 		);
 	}
 
-	SetLifeSpan(5.0f);
+	SetLifeSpan(PartsLifeSpan);
 }

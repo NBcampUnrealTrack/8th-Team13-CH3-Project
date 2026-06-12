@@ -43,7 +43,7 @@ void ATGHUD::BeginPlay()
 
 void ATGHUD::HandleFlowStateChanged(ETGGameFlowState NewState)
 {
-	UE_LOG(LogTemp, Warning, TEXT("HUD State Changed: %s"), *UEnum::GetValueAsString(NewState));
+	UE_LOG(LogTemp, Log, TEXT("HUD State Changed: %s"), *UEnum::GetValueAsString(NewState));
 	UpdateUIByState(NewState);
 }
 
@@ -80,11 +80,9 @@ void ATGHUD::UpdateUIByState(ETGGameFlowState NewState)
 
 	if (NewState == ETGGameFlowState::Playing && OldState == ETGGameFlowState::BuildMode)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("BuildWidget Close"));
 		if (BuildWidget && BuildWidget->IsInViewport())
 		{
 			BuildWidget->RemoveFromParent();
-			UE_LOG(LogTemp, Warning, TEXT("BuildWidget Close2"));
 		}
 		OldState = NewState;
 		return;
@@ -244,7 +242,7 @@ void ATGHUD::BindWaveManager()
 		&ATGHUD::HandleEnemyRemovedForMiniMap
 	);
 
-	UE_LOG(LogTemp, Warning, TEXT("HUD: WaveManager Bound"));
+	UE_LOG(LogTemp, Log, TEXT("HUD: WaveManager Bound"));
 }
 
 void ATGHUD::HandleEnemySpawned(ATGEnemyBase* SpawnedEnemy)

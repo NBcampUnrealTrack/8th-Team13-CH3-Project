@@ -25,6 +25,7 @@ public:
 	// Unreal Life Cycle
 	ATGEnemyBase();
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
 	// 델리게이트 이벤트
@@ -51,6 +52,9 @@ protected:
 
 	UPROPERTY()
 	float CurrentHP;
+
+	// 사망 처리 중복 실행 방지 (사망 후 잔해 피격 시 에너지 중복 지급 차단)
+	bool bDead = false;
 
 	// Drop
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Drop")
@@ -140,13 +144,16 @@ public:
 	float GetStructureAttackRange() const;
 
 	UFUNCTION(BlueprintPure, Category = "Enemy")
-	FString GetEnemyType();
+	FString GetEnemyType() const;
 
 	UFUNCTION(BlueprintPure, Category = "Enemy|Stat")
-	float GetCurrentHP();
+	float GetCurrentHP() const;
 
 	UFUNCTION(BlueprintPure, Category = "Enemy|Stat")
-	float GetMaxHP();
+	float GetMaxHP() const;
+
+	UFUNCTION(BlueprintPure, Category = "Enemy|Stat")
+	bool IsDead() const { return bDead; }
 
 protected:
 	UFUNCTION()

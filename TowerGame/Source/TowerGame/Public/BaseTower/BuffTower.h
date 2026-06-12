@@ -18,7 +18,6 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-	virtual void Tick(float DeltaTime) override;
 
 	// 회복 범위
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tower Settings")

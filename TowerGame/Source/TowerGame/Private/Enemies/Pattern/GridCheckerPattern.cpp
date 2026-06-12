@@ -7,27 +7,12 @@
 #include "Enemies/TGBossBase.h"
 #include "Enemies/TGWaveManager.h"
 #include "Kismet/KismetSystemLibrary.h"
-#include "Particles/ParticleSystem.h"
-#include "Sound/SoundBase.h"
-#include "UObject/ConstructorHelpers.h"
 
 UGridCheckerPattern::UGridCheckerPattern() :
 	CylinderHeight(100.f),
 	GridWarningInterval(0.01f)
 {
-	// Sound
-	static ConstructorHelpers::FObjectFinder<USoundBase> AttackSoundAsset(
-		TEXT("/Game/Enemies/Sound/Enemy_Shot_00.Enemy_Shot_00"));
-	if (AttackSoundAsset.Succeeded()){
-		AttackSound = AttackSoundAsset.Object;
-	}
-
-	// Effect
-	static ConstructorHelpers::FObjectFinder<UParticleSystem> AttackEffectAsset(
-		TEXT("/Game/Particle/P_Explosion.P_Explosion"));
-	if (AttackEffectAsset.Succeeded()){
-		AttackEffect = AttackEffectAsset.Object;
-	}
+	// 공격 사운드/이펙트 기본값은 UTGPatternBase 생성자에서 지정
 }
 
 void UGridCheckerPattern::StartPattern(float WarningDrawTime)

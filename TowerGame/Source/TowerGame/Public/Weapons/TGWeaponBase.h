@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Tickable.h"
 #include "UObject/NoExportTypes.h"
 #include "TGWeaponBase.generated.h"
 
@@ -83,7 +84,7 @@ protected:
 };
 
 UCLASS()
-class TOWERGAME_API UTGWeaponBase : public UObject
+class TOWERGAME_API UTGWeaponBase : public UObject, public FTickableGameObject
 {
 	GENERATED_BODY()
 protected:
@@ -100,7 +101,19 @@ protected:	// 라인트레이싱 정보
 
 	void SpawnBeamEffect(FVector Start, FVector End);
 
+	// 공통 발사 시퀀스 헬퍼
+	void StartFireCooldown(float Interval);	// CanFire를 끄고 Interval 뒤 복구 타이머 시작
+	void PlayMuzzleFeedback(class ATGPlayer* Instigator, class UMeshComponent* WeaponComponent, const FVector& MuzzlePos, float RecoilInterval);	// 발포 이펙트 + 발포음 + 반동
+	void FireSingleTrace(class ATGPlayer* Instigator, const FVector& MuzzlePos, const FVector& Direction, float Distance, float Power);	// 트레이스 1회: 빔/착탄 이펙트와 데미지 적용
+
 public:
+	// FTickableGameObject — 기본은 틱 비활성. 틱이 필요한 무기(연사 등)만 Tick/IsTickable을 오버라이드한다.
+	virtual void Tick(float DeltaTime) override {}
+	virtual bool IsTickable() const override { return false; }
+	virtual bool IsTickableInEditor() const override { return false; }
+	virtual bool IsTickableWhenPaused() const override { return false; }
+	virtual TStatId GetStatId() const override { return TStatId(); }
+	virtual UWorld* GetWorld() const override;
 
 	virtual const FTGWeaponAsset* GetAsset() { return nullptr; }
 	virtual void Shoot(class ATGPlayer* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance, bool TriggerLock);

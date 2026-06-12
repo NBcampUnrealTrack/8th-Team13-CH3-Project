@@ -3,6 +3,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
 #include "Enemies/TGEnemyBase.h"
+#include "Enemies/TGNavigationManager.h"
 #include "Enemies/TGWaveManager.h"
 #include "Components/SceneComponent.h"
 #include "NiagaraFunctionLibrary.h"
@@ -158,30 +159,30 @@ void ATGWeaponTower::Upgrade()
 
 void ATGWeaponTower::DetectingEnemy()
 {
-	//	가장 가까운 적을 찾습니다.
-	TArray<AActor*> FoundActors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ATGEnemyBase::StaticClass(), FoundActors);
-
-	float MinDistance = 500000.f;
 	Target = nullptr;
+
+	//	보스가 있으면 보스를 우선 타겟
 	if (ATGWaveManager* WaveManager = ATGWaveManager::Get(this))
 	{
 		Target = WaveManager->GetBoss();
 	}
 	if (Target)	return;
 
-	for (AActor* Actor : FoundActors)
+	//	NavigationManager의 생존 적 목록에서 사거리 내 가장 가까운 적을 찾습니다.
+	//	(매 틱 GetAllActorsOfClass 전체 스캔 제거)
+	ATGNavigationManager* NavigationManager = ATGNavigationManager::Get(this);
+	if (!NavigationManager)	return;
+
+	const FVector MyLocation = GetActorLocation();
+	float MinDistanceSquared = FMath::Square(AttackRange);
+	for (ATGEnemyBase* Enemy : NavigationManager->GetAliveEnemies())
 	{
-		ATGEnemyBase* Enemy = Cast<ATGEnemyBase>(Actor);
-		if (Enemy->GetCurrentHP() <= 0)	continue;
-		FVector MyLocation = GetActorLocation();
-		FVector TargetLocation = Actor->GetActorLocation();
-		float Distance = FVector::Distance(MyLocation, TargetLocation);
-		if (Distance > AttackRange)	continue;
-		if (Distance < MinDistance)
+		if (!IsValid(Enemy) || Enemy->IsDead())	continue;
+		const float DistanceSquared = FVector::DistSquared(MyLocation, Enemy->GetActorLocation());
+		if (DistanceSquared < MinDistanceSquared)
 		{
-			MinDistance = Distance;
-			Target = Actor;
+			MinDistanceSquared = DistanceSquared;
+			Target = Enemy;
 		}
 	}
 }

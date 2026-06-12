@@ -64,6 +64,10 @@ public:
 	virtual void OnInteract_Implementation(ATGPlayer* Player) override;
 
 protected:
+	// 타워 설치 비용 (에너지)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Tower Settings")
+	int32 BuildCost = 50;
+
 	// 투명도 조정용 다이나믹 머티리얼 (미리보기 상태에서 사용)
 	UPROPERTY()
 	class UMaterialInstanceDynamic* PreviewMaterial;

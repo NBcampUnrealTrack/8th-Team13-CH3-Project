@@ -88,10 +88,6 @@ void UTGPlayerWidget::NativeDestruct()
 		World->GetTimerManager().ClearTimer(FocusedEnemyHideTimerHandle);
 	}
 
-	for (UProgressBar* b : Evade_Bars)
-	{
-		b = nullptr;
-	}
 	Evade_Bars.Empty();
 	Evade_BarGroup->ClearChildren();
 
@@ -99,6 +95,7 @@ void UTGPlayerWidget::NativeDestruct()
 	if (player){
 		player->OnFocusedEnemyChanged.RemoveDynamic(this, &UTGPlayerWidget::HandleFocusedEnemyChanged);
 		player->OnPlayerHpChanged.RemoveDynamic(this, &UTGPlayerWidget::UpdatePlayerHPBar);
+		player->OnEvadeChanged.RemoveDynamic(this, &UTGPlayerWidget::UpdateEvadeBar);
 		player->OnWeaponChanged.RemoveDynamic(this, &UTGPlayerWidget::UpdateWeaponImage);
 	}
 

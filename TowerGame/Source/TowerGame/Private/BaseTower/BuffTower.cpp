@@ -7,7 +7,8 @@
 
 ATGBuffTower::ATGBuffTower()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	// 힐은 타이머로만 동작하고 Target 추적도 없으므로 틱이 필요 없다
+	PrimaryActorTick.bCanEverTick = false;
 
 	//	기본적으로 인터랙션을 끕니다
 	SetInteractionEnabled(false);
@@ -30,11 +31,6 @@ void ATGBuffTower::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	StopHeal();
 	Super::EndPlay(EndPlayReason);
-}
-
-void ATGBuffTower::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
 }
 
 void ATGBuffTower::StartHeal()

@@ -63,6 +63,14 @@ private:
 private:
 	void BuildDebugMinimap();
 
+	// 마커 TextBlock 공통 생성 헬퍼: 텍스트/색/폰트 설정 후 MarkerLayer에 중앙 정렬로 추가
+	UTextBlock* CreateMarkerWidget(
+		const FString& MarkerText,
+		const FLinearColor& MarkerColor,
+		int32 FontSize,
+		const FVector2D& SlotSize
+	);
+
 	void AddGridPointMarker(
 		int32 InGridX,
 		int32 InGridY,

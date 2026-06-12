@@ -42,10 +42,6 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "TowerGame|Interaction")
 	bool IsInteractionEnabled() const { return bInteractionEnabled; }
 
-	// 자식 StaticMeshComponent들의 합산 바운드에 맞게 InteractionCollision 크기를 동기화합니다.
-	// InteractionCollision 위치는 블루프린트에서 직접 조정하세요.
-	// void SyncCollisionToMeshBounds() const;
-
 protected:
 	// Interactive 트레이스 채널에만 반응하는 콜리전
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "TowerGame|Interaction")
@@ -56,7 +52,4 @@ protected:
 
 private:
 	bool bInteractionEnabled = true;
-
-	FTimerHandle DebugDrawTimerHandle;
-	void DrawDebugCollisionBox();
 };

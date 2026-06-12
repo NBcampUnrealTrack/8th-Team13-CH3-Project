@@ -127,6 +127,47 @@ void UTGMiniMapWidget::BuildDebugMinimap()
 	);
 }
 
+UTextBlock* UTGMiniMapWidget::CreateMarkerWidget(
+	const FString& MarkerText,
+	const FLinearColor& MarkerColor,
+	int32 FontSize,
+	const FVector2D& SlotSize
+)
+{
+	if (!MarkerLayer || !WidgetTree)
+	{
+		return nullptr;
+	}
+
+	UTextBlock* Marker = WidgetTree->ConstructWidget<UTextBlock>(
+		UTextBlock::StaticClass()
+	);
+
+	if (!Marker)
+	{
+		return nullptr;
+	}
+
+	Marker->SetText(FText::FromString(MarkerText));
+	Marker->SetColorAndOpacity(FSlateColor(MarkerColor));
+	Marker->SetJustification(ETextJustify::Center);
+	Marker->SetVisibility(ESlateVisibility::HitTestInvisible);
+
+	FSlateFontInfo MarkerFont = Marker->GetFont();
+	MarkerFont.Size = FontSize;
+	Marker->SetFont(MarkerFont);
+
+	if (UCanvasPanelSlot* CanvasSlot = MarkerLayer->AddChildToCanvas(Marker))
+	{
+		CanvasSlot->SetSize(SlotSize);
+
+		// 위치 기준점을 마커 중앙으로 설정
+		CanvasSlot->SetAlignment(FVector2D(0.5f, 0.5f));
+	}
+
+	return Marker;
+}
+
 void UTGMiniMapWidget::AddGridPointMarker(
 	int32 InGridX,
 	int32 InGridY,
@@ -136,13 +177,13 @@ void UTGMiniMapWidget::AddGridPointMarker(
 	float TileHeight
 )
 {
-	if (!MarkerLayer)
-	{
-		return;
-	}
+	const float MarkerSize = FMath::Min(TileWidth, TileHeight) * 0.8f;
 
-	UTextBlock* MarkerText = WidgetTree->ConstructWidget<UTextBlock>(
-		UTextBlock::StaticClass()
+	UTextBlock* MarkerText = CreateMarkerWidget(
+		TEXT("●"),
+		MarkerColor,
+		FMath::Max(8, FMath::RoundToInt(MarkerSize)),
+		FVector2D(MarkerSize, MarkerSize)
 	);
 
 	if (!MarkerText)
@@ -150,33 +191,17 @@ void UTGMiniMapWidget::AddGridPointMarker(
 		return;
 	}
 
-	const float MarkerSize = FMath::Min(TileWidth, TileHeight) * 0.8f;
-
-	MarkerText->SetText(FText::FromString(TEXT("●")));
-	MarkerText->SetColorAndOpacity(FSlateColor(MarkerColor));
-	MarkerText->SetJustification(ETextJustify::Center);
-	MarkerText->SetVisibility(ESlateVisibility::HitTestInvisible);
-
-	FSlateFontInfo MarkerFont = MarkerText->GetFont();
-	MarkerFont.Size = FMath::Max(8, FMath::RoundToInt(MarkerSize));
-	MarkerText->SetFont(MarkerFont);
-
-	UCanvasPanelSlot* MarkerSlot = MarkerLayer->AddChildToCanvas(MarkerText);
-
-	if (MarkerSlot)
+	if (UCanvasPanelSlot* MarkerSlot = Cast<UCanvasPanelSlot>(MarkerText->Slot))
 	{
 		const float CenterX = (InGridX + 0.5f) * TileWidth;
 		const float CenterY = (InGridY + 0.5f) * TileHeight;
 
 		MarkerSlot->SetPosition(FVector2D(CenterX, CenterY));
-		MarkerSlot->SetSize(FVector2D(MarkerSize, MarkerSize));
-
-		MarkerSlot->SetAlignment(FVector2D(0.5f, 0.5f));
 	}
 
 	UE_LOG(
 		LogTemp,
-		Warning,
+		Log,
 		TEXT("MiniMap Marker Added: %s (%d, %d)"),
 		*MarkerName,
 		InGridX,
@@ -228,32 +253,16 @@ void UTGMiniMapWidget::RegisterMonsterActor(AActor* InMonsterActor)
 		return;
 	}
 
-	UTextBlock* MonsterMarker = WidgetTree->ConstructWidget<UTextBlock>(
-		UTextBlock::StaticClass()
+	UTextBlock* MonsterMarker = CreateMarkerWidget(
+		TEXT("●"),
+		FLinearColor(1.0f, 0.15f, 0.0f, 1.0f),
+		12,
+		FVector2D(14.0f, 14.0f)
 	);
 
 	if (!MonsterMarker)
 	{
 		return;
-	}
-
-	MonsterMarker->SetText(FText::FromString(TEXT("●")));
-	MonsterMarker->SetColorAndOpacity(
-		FSlateColor(FLinearColor(1.0f, 0.15f, 0.0f, 1.0f))
-	);
-	MonsterMarker->SetJustification(ETextJustify::Center);
-	MonsterMarker->SetVisibility(ESlateVisibility::HitTestInvisible);
-
-	FSlateFontInfo MonsterFont = MonsterMarker->GetFont();
-	MonsterFont.Size = 12;
-	MonsterMarker->SetFont(MonsterFont);
-
-	UCanvasPanelSlot* MonsterSlot = MarkerLayer->AddChildToCanvas(MonsterMarker);
-
-	if (MonsterSlot)
-	{
-		MonsterSlot->SetSize(FVector2D(14.0f, 14.0f));
-		MonsterSlot->SetAlignment(FVector2D(0.5f, 0.5f));
 	}
 
 	MonsterMarkerMap.Add(InMonsterActor, MonsterMarker);
@@ -342,8 +351,11 @@ void UTGMiniMapWidget::MarkTowerAtGrid(const FIntPoint& GridPoint, ETGTurretType
 	const float TileHeight = MinimapSize.Y / GridY;
 	const float MarkerSize = FMath::Min(TileWidth, TileHeight) * 1.f;
 
-	UTextBlock* TowerMarker = WidgetTree->ConstructWidget<UTextBlock>(
-		UTextBlock::StaticClass()
+	UTextBlock* TowerMarker = CreateMarkerWidget(
+		TEXT("◆"),
+		MarkerColor,
+		FMath::Max(8, FMath::RoundToInt(MarkerSize)),
+		FVector2D(MarkerSize, MarkerSize)
 	);
 
 	if (!TowerMarker)
@@ -351,32 +363,19 @@ void UTGMiniMapWidget::MarkTowerAtGrid(const FIntPoint& GridPoint, ETGTurretType
 		return;
 	}
 
-	TowerMarker->SetText(FText::FromString(TEXT("◆")));
-	TowerMarker->SetColorAndOpacity(FSlateColor(MarkerColor));
-	TowerMarker->SetJustification(ETextJustify::Center);
-	TowerMarker->SetVisibility(ESlateVisibility::HitTestInvisible);
-
-	FSlateFontInfo TowerFont = TowerMarker->GetFont();
-	TowerFont.Size = FMath::Max(8, FMath::RoundToInt(MarkerSize));
-	TowerMarker->SetFont(TowerFont);
-
-	UCanvasPanelSlot* TowerSlot = MarkerLayer->AddChildToCanvas(TowerMarker);
-
-	if (TowerSlot)
+	if (UCanvasPanelSlot* TowerSlot = Cast<UCanvasPanelSlot>(TowerMarker->Slot))
 	{
 		const float CenterX = (GridPoint.X + 0.5f) * TileWidth;
 		const float CenterY = (GridPoint.Y + 0.5f) * TileHeight;
 
 		TowerSlot->SetPosition(FVector2D(CenterX, CenterY));
-		TowerSlot->SetSize(FVector2D(MarkerSize, MarkerSize));
-		TowerSlot->SetAlignment(FVector2D(0.5f, 0.5f));
 	}
 
 	TowerMarkerMap.Add(GridPoint, TowerMarker);
 
 	UE_LOG(
 		LogTemp,
-		Warning,
+		Log,
 		TEXT("MiniMapWidget: Tower marked. X: %d, Y: %d, Type: %d"),
 		GridPoint.X,
 		GridPoint.Y,
@@ -408,35 +407,12 @@ void UTGMiniMapWidget::CreatePlayerMarker()
 		return;
 	}
 
-	PlayerMarker = WidgetTree->ConstructWidget<UTextBlock>(
-		UTextBlock::StaticClass()
+	PlayerMarker = CreateMarkerWidget(
+		TEXT("▲"),
+		FLinearColor(0.0f, 0.7f, 1.0f, 1.0f),
+		25,
+		FVector2D(20.0f, 20.0f)
 	);
-
-	if (!PlayerMarker)
-	{
-		return;
-	}
-
-	PlayerMarker->SetText(FText::FromString(TEXT("▲")));
-	PlayerMarker->SetColorAndOpacity(
-		FSlateColor(FLinearColor(0.0f, 0.7f, 1.0f, 1.0f))
-	);
-	PlayerMarker->SetJustification(ETextJustify::Center);
-	PlayerMarker->SetVisibility(ESlateVisibility::HitTestInvisible);
-
-	FSlateFontInfo PlayerFont = PlayerMarker->GetFont();
-	PlayerFont.Size = 25;
-	PlayerMarker->SetFont(PlayerFont);
-
-	UCanvasPanelSlot* PlayerSlot = MarkerLayer->AddChildToCanvas(PlayerMarker);
-
-	if (PlayerSlot)
-	{
-		PlayerSlot->SetSize(FVector2D(20.0f, 20.0f));
-
-		// 위치 기준점을 마커 중앙으로 설정
-		PlayerSlot->SetAlignment(FVector2D(0.5f, 0.5f));
-	}
 }
 
 void UTGMiniMapWidget::UpdatePlayerMarkerPosition()

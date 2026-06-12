@@ -42,12 +42,6 @@ void ATGGameMode::BeginPlay()
 	}
 
 	StartGameFlow();
-
-	//CachedCore = Cast<ATGCoreBase>(UGameplayStatics::GetActorOfClass(this, ATGCoreBase::StaticClass()));
-	//if (CachedCore)
-	//{
-	//	CachedCore->OnCoreDestroyed.AddDynamic(this, &ATGGameMode::OnCoreDestroyedFromDelegate);
-	//}
 }
 
 void ATGGameMode::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -63,12 +57,6 @@ void ATGGameMode::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 	Super::EndPlay(EndPlayReason);
 }
-
-//void ATGGameMode::OnCoreDestroyedFromDelegate()
-//{
-//	UE_LOG(LogTemp, Warning, TEXT("GameMode: Core Destroyed Event Received"));
-//	HandleGameOver();
-//}
 
 void ATGGameMode::ChangeFlowState(ETGGameFlowState NewState)
 {
@@ -93,7 +81,7 @@ void ATGGameMode::ChangeFlowState(ETGGameFlowState NewState)
 		UGameplayStatics::SetGamePaused(GetWorld(), true);
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("Flow State Changed: %s -> %s"),
+	UE_LOG(LogTemp, Log, TEXT("Flow State Changed: %s -> %s"),
 		*UEnum::GetValueAsString(OldState),
 		*UEnum::GetValueAsString(CurrentState));
 
@@ -152,11 +140,6 @@ void ATGGameMode::ResumeGameFlow()
 			ChangeFlowState(ETGGameFlowState::Playing);
 	}
 }
-
-//void ATGGameMode::HandleWaveClear()
-//{
-//	ChangeFlowState(ETGGameFlowState::WaveClear);
-//}
 
 void ATGGameMode::HandleGameOver()
 {

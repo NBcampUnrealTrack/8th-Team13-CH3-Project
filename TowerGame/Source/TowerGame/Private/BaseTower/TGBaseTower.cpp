@@ -153,7 +153,7 @@ void ABaseTower::OnInteract_Implementation(ATGPlayer* Player)
 	if (SelectedTurretType == ETGTurretType::None) return;
 
 	// 자원 차감
-	if (!GM->SpendEnergy(50)) return;
+	if (!GM->SpendEnergy(BuildCost)) return;
 
 	Super::OnInteract_Implementation(Player);
 

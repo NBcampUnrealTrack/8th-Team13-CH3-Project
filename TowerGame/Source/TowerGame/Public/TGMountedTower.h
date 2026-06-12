@@ -48,6 +48,10 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Tower Settings")
 	int32 UpgradeLevel = 0;
 
+	// 업그레이드 비용 (에너지)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Tower Settings")
+	int32 UpgradeCost = 20;
+
 	// 위젯 클래스 (에디터에서 설정)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tower|UI")
 	TSubclassOf<UTGTowerWidget> TowerWidgetClass;

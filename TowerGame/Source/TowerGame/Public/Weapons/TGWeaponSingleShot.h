@@ -20,7 +20,7 @@ protected:
 };
 
 UCLASS()
-class TOWERGAME_API UTGWeaponSingleShot : public UTGWeaponBase, public FTickableGameObject
+class TOWERGAME_API UTGWeaponSingleShot : public UTGWeaponBase
 {
 	GENERATED_BODY()
 private:
@@ -31,10 +31,6 @@ private:
 public:
 	virtual void Tick(float DeltaTime) override;
 	virtual bool IsTickable() const override;
-	virtual bool IsTickableInEditor() const override;
-	virtual bool IsTickableWhenPaused() const override;
-	virtual TStatId GetStatId() const override;
-	virtual UWorld* GetWorld() const override;
 
 	virtual void Shoot(class ATGPlayer* Instigator, class UMeshComponent* WeaponComponent, FVector MuzzlePos, FVector Direction, float Distance, bool TriggerLock) override;
 	virtual const FTGWeaponAsset* GetAsset() override { return &status.Asset; };

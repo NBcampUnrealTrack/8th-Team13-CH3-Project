@@ -3,14 +3,21 @@
 
 #include "Weapons/TGWeaponBase.h"
 #include "Player/TGPlayer.h"
+#include "Enemies/TGBossBase.h"
+#include "Enemies/TGEnemyBase.h"
+#include "Enemies/TGMissile.h"
 #include "Kismet/GameplayStatics.h"
-//#include "Kismet/KismetSystemLibrary.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Particles/ParticleSystem.h"
 #include "Components/DecalComponent.h"
 #include "Curves/CurveVector.h"
 #include "Components/TimelineComponent.h"
+
+UWorld* UTGWeaponBase::GetWorld() const
+{
+	return GetOuter() ? GetOuter()->GetWorld() : nullptr;
+}
 
 void UTGWeaponBase::SpawnBeamEffect(FVector Start, FVector End)
 {
@@ -86,6 +93,77 @@ void UTGWeaponBase::HandleFireDelay()
 	CanFire = true;
 }
 
+void UTGWeaponBase::StartFireCooldown(float Interval)
+{
+	CanFire = false;
+	if (UWorld* World = GetWorld())
+		World->GetTimerManager().SetTimer(TimerFireDelay, this, &UTGWeaponBase::HandleFireDelay, Interval, false);
+}
+
+void UTGWeaponBase::PlayMuzzleFeedback(ATGPlayer* Instigator, UMeshComponent* WeaponComponent, const FVector& MuzzlePos, float RecoilInterval)
+{
+	const FTGWeaponAsset* Asset = GetAsset();
+	if (!Asset) return;
+
+	// 발포 이펙트
+	SpawnAttachedNiagaraEffects(Asset->FireParticle, WeaponComponent, MuzzlePos, Asset->FireParticleScale);
+	UGameplayStatics::SpawnSoundAttached(
+		Asset->FireSound,
+		WeaponComponent,
+		NAME_None,
+		MuzzlePos,
+		EAttachLocation::KeepWorldPosition,
+		false,
+		Asset->FireSoundScale
+	);
+
+	if (Instigator)
+		Instigator->PlayRecoil(RecoilInterval, Asset->RecoilInputScale);
+}
+
+void UTGWeaponBase::FireSingleTrace(ATGPlayer* Instigator, const FVector& MuzzlePos, const FVector& Direction, float Distance, float Power)
+{
+	const FTGWeaponAsset* Asset = GetAsset();
+	if (!Asset) return;
+
+	LineTrace(MuzzlePos, Direction, Distance);
+
+	//	레이저 이펙트
+	const FVector BeamEnd = TraceHit.bBlockingHit ? TraceHit.Location : MuzzlePos + Direction * Distance;
+	SpawnBeamEffect(MuzzlePos, BeamEnd);
+
+	if (!TraceHit.bBlockingHit) return;
+
+	AActor* HitActor = TraceHit.GetActor();
+	if (!HitActor) return;
+
+	// 착탄 이펙트
+	SpawnAttachedEffects(Asset->HitParticle, HitActor->GetRootComponent(), TraceHit.Location, Asset->HitParticleScale, true);
+	UGameplayStatics::SpawnSoundAttached(
+		Asset->HitSound,
+		HitActor->GetRootComponent(),
+		NAME_None,
+		TraceHit.Location,
+		EAttachLocation::KeepWorldPosition,
+		false,
+		Asset->HitSoundScale, 1.0f, 0.0f, Asset->HitSoundAttenuation
+	);
+
+	// 데미지 적용 — PointDamage로 통일해 보스 부위판정(HitInfo)까지 한 경로로 처리
+	if (Cast<ATGEnemyBase>(HitActor) || Cast<ATGMissile>(HitActor) || Cast<ATGBossBase>(HitActor))
+	{
+		UGameplayStatics::ApplyPointDamage(
+			HitActor,
+			Power,
+			Direction,
+			TraceHit,
+			Instigator ? Instigator->GetInstigatorController() : nullptr,
+			Instigator,
+			nullptr
+		);
+	}
+}
+
 bool UTGWeaponBase::LineTrace(FVector MuzzlePos, FVector Direction, float Distance)
 {
 	return GetWorld()->LineTraceSingleByChannel(
@@ -95,19 +173,4 @@ bool UTGWeaponBase::LineTrace(FVector MuzzlePos, FVector Direction, float Distan
 		ECC_Visibility,
 		QueryParams
 	);
-
-	//return UKismetSystemLibrary::LineTraceSingle(
-	//	GetWorld(), //어느 월드의 소속인가? (this)를 넣어줘도 됨
-	//	MuzzlePos,
-	//	MuzzlePos + Direction * Distance,
-	//	UEngineTypes::ConvertToTraceType(ECC_Visibility),	// 사용할 트레이스채널
-	//	QueryParams.bTraceComplex,	// 복합콜리전 사용
-	//	IgnoredActors,	// 해당 액터는 이 트레이스를 무시
-	//	EDrawDebugTrace::ForDuration,	//디버그(그리기 타입 적용),
-	//	TraceHit,
-	//	true,	// 자기자신을 Ignore
-	//	FLinearColor::Blue,	//디버그 색깔
-	//	FLinearColor::Yellow,	//트레이스 히트 시 색깔
-	//	5.0f
-	//);
 }

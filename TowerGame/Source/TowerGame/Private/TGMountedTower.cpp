@@ -50,7 +50,11 @@ void ATGMountedTower::BeginPlay()
 	Super::BeginPlay();
 
 	SetInteractionEnabled(true);
-	ATGNavigationManager::Get(this)->NotifyBuildingPlaced();
+	// NavigationManager가 없는 레벨(튜토리얼 등)에서도 동작하도록 null 검사
+	if (ATGNavigationManager* NavigationManager = ATGNavigationManager::Get(this))
+	{
+		NavigationManager->NotifyBuildingPlaced();
+	}
 
 	if (TowerWidgetClass)
 	{
@@ -122,7 +126,7 @@ void ATGMountedTower::OnUnfocused_Implementation(ATGPlayer* Player)
 void ATGMountedTower::OnInteract_Implementation(ATGPlayer* Player)
 {
 	ATGGameMode* GM = Cast<ATGGameMode>(GetWorld()->GetAuthGameMode());
-	if (!GM || !GM->SpendEnergy(20)) return;
+	if (!GM || !GM->SpendEnergy(UpgradeCost)) return;
 
 	Upgrade();
 

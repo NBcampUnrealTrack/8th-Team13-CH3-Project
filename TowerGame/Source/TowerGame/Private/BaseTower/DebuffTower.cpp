@@ -2,10 +2,8 @@
 
 
 #include "BaseTower/DebuffTower.h"
-#include "Kismet/KismetSystemLibrary.h"
-#include "Kismet/GameplayStatics.h"
-#include "DrawDebugHelpers.h"
 #include "Enemies/TGEnemyBase.h"
+#include "Enemies/TGNavigationManager.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 ATGDebuffTower::ATGDebuffTower()
@@ -20,7 +18,7 @@ void ATGDebuffTower::BeginPlay()
 {
 	Super::BeginPlay();
 
-
+	SetRangeSphereScale(DebuffRange);
 }
 
 void ATGDebuffTower::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -33,54 +31,39 @@ void ATGDebuffTower::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	//	적 탐지
+	//	적 탐지 (무기 메시가 가장 가까운 적을 바라보도록 Target 갱신)
 	DetectingEnemy();
-
-	//	사거리 그려줄 디버그스피어
-	//DrawDebugSphere(GetWorld(), GetActorLocation(), DebuffRange, 16, FColor::Purple);
 
 	// 범위 내 적 슬로우 적용
 	ApplyRangeDebuff();
-
-	SetRangeSphereScale(DebuffRange);
 }
 
 void ATGDebuffTower::ApplyRangeDebuff()
 {
-	FVector Center = GetActorLocation();
+	ATGNavigationManager* NavigationManager = ATGNavigationManager::Get(this);
+	if (!NavigationManager) return;
 
-	// 감지 대상: Pawn 타입 (몬스터)
-	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn));
+	const FVector Center = GetActorLocation();
+	const float DebuffRangeSquared = FMath::Square(DebuffRange);
 
-	// 자기 자신은 제외
-	TArray<AActor*> IgnoreActors;
-	IgnoreActors.Add(this);
-
-	TArray<AActor*> OutActors;
-	UKismetSystemLibrary::SphereOverlapActors(
-		GetWorld(), Center, DebuffRange,
-		ObjectTypes, nullptr, IgnoreActors, OutActors
-	);
-
-	// 이번 틱에 범위 내에 있는 적 목록
+	// 이번 틱에 범위 내에 있는 적 목록 (생존 적 목록 사용 — 오버랩 쿼리 제거)
 	TArray<ATGEnemyBase*> EnemiesInRange;
-	for (AActor* Actor : OutActors)
+	for (ATGEnemyBase* Enemy : NavigationManager->GetAliveEnemies())
 	{
-		if (ATGEnemyBase* Enemy = Cast<ATGEnemyBase>(Actor))
+		if (!IsValid(Enemy) || Enemy->IsDead()) continue;
+		if (FVector::DistSquared(Center, Enemy->GetActorLocation()) > DebuffRangeSquared) continue;
+
+		EnemiesInRange.Add(Enemy);
+
+		if (UCharacterMovementComponent* Movement = Enemy->GetCharacterMovement())
 		{
-			EnemiesInRange.Add(Enemy);
+			// 기본속도 기준으로 SlowRate 적용
+			// 이미 슬로우 중이면 중복 적용 방지
+			if (!SlowedEnemies.Contains(Enemy)) {
 
-			if (UCharacterMovementComponent* Movement = Enemy->GetCharacterMovement())
-			{
-				// 기본속도 기준으로 SlowRate 적용
-				// 이미 슬로우 중이면 중복 적용 방지
-				if (!SlowedEnemies.Contains(Enemy)) {
-
-					// 기본속도 저장 후 슬로우 적용
-					SlowedEnemies.Add(Enemy, Movement->MaxWalkSpeed);
-					Movement->MaxWalkSpeed *= SlowRate;
-				}
+				// 기본속도 저장 후 슬로우 적용
+				SlowedEnemies.Add(Enemy, Movement->MaxWalkSpeed);
+				Movement->MaxWalkSpeed *= SlowRate;
 			}
 		}
 	}
@@ -91,8 +74,8 @@ void ATGDebuffTower::ApplyRangeDebuff()
 		ATGEnemyBase* Enemy = It->Key;
 		if (!EnemiesInRange.Contains(Enemy))
 		{
-			// 범위 밖으로 나간 적 — 원래 속도 복구
-			if (Enemy && Enemy->GetCharacterMovement())
+			// 범위 밖으로 나간 적 — 원래 속도 복구 (파괴 대기중인 적은 IsValid가 걸러냄)
+			if (IsValid(Enemy) && Enemy->GetCharacterMovement())
 			{
 				Enemy->GetCharacterMovement()->MaxWalkSpeed = It->Value;
 			}
@@ -106,7 +89,7 @@ void ATGDebuffTower::StopDebuff()
 	// 타워 파괴 시 슬로우된 모든 적 속도 복구
 	for (auto& Pair : SlowedEnemies)
 	{
-		if (Pair.Key && Pair.Key->GetCharacterMovement())
+		if (IsValid(Pair.Key) && Pair.Key->GetCharacterMovement())
 		{
 			Pair.Key->GetCharacterMovement()->MaxWalkSpeed = Pair.Value;
 		}
@@ -123,21 +106,23 @@ void ATGDebuffTower::Upgrade()
 
 void ATGDebuffTower::DetectingEnemy()
 {
-	TArray<AActor*> FoundActors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ATGEnemyBase::StaticClass(), FoundActors);
-
-	float MinDistance = 500000.f;
 	Target = nullptr;
-	for (AActor* Actor : FoundActors)
+
+	//	NavigationManager의 생존 적 목록에서 사거리 내 가장 가까운 적을 찾습니다.
+	//	(매 틱 GetAllActorsOfClass 전체 스캔 제거)
+	ATGNavigationManager* NavigationManager = ATGNavigationManager::Get(this);
+	if (!NavigationManager) return;
+
+	const FVector MyLocation = GetActorLocation();
+	float MinDistanceSquared = FMath::Square(DebuffRange);
+	for (ATGEnemyBase* Enemy : NavigationManager->GetAliveEnemies())
 	{
-		FVector MyLocation = GetActorLocation();
-		FVector TargetLocation = Actor->GetActorLocation();
-		float Distance = FVector::Distance(MyLocation, TargetLocation);
-		if (Distance > DebuffRange) continue;
-		if (Distance < MinDistance)
+		if (!IsValid(Enemy) || Enemy->IsDead()) continue;
+		const float DistanceSquared = FVector::DistSquared(MyLocation, Enemy->GetActorLocation());
+		if (DistanceSquared < MinDistanceSquared)
 		{
-			MinDistance = Distance;
-			Target = Actor;
+			MinDistanceSquared = DistanceSquared;
+			Target = Enemy;
 		}
 	}
 }

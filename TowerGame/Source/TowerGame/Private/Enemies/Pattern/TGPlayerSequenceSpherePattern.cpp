@@ -15,11 +15,9 @@ UTGPlayerSequenceSpherePattern::UTGPlayerSequenceSpherePattern() :
 	bWarningSpawnFinished(false),
 	bPatternFinished(false)
 {
-	static ConstructorHelpers::FObjectFinder<USoundBase> AttackSoundAsset(
-		TEXT("/Game/Enemies/Sound/Enemy_Shot_00.Enemy_Shot_00"));
-	if (AttackSoundAsset.Succeeded()){
-		AttackSound = AttackSoundAsset.Object;
-	}
+	// 사운드 기본값은 UTGPatternBase 생성자에서 지정.
+	// 이 패턴은 폭발 이펙트를 사용하지 않으므로 베이스 기본값을 끈다.
+	AttackEffect = nullptr;
 }
 
 void UTGPlayerSequenceSpherePattern::StartPattern(float WarningDrawTime)

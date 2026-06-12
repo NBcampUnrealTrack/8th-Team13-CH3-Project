@@ -9,7 +9,9 @@
 #include "Enemies/TGCoreBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "Materials/MaterialInterface.h"
+#include "Particles/ParticleSystem.h"
 #include "Player/TGPlayer.h"
+#include "Sound/SoundBase.h"
 #include "UObject/ConstructorHelpers.h"
 
 UTGPatternBase::UTGPatternBase() :
@@ -35,6 +37,19 @@ UTGPatternBase::UTGPatternBase() :
 		TEXT("/Game/Enemies/BP_WarningRange_Sphere"));
 	if (SphereWarningActorAsset.Succeeded()){
 		SphereWarningActorClass = SphereWarningActorAsset.Class;
+	}
+
+	// 패턴 공통 기본 사운드/이펙트 — 패턴별로 다르게 쓰려면 서브클래스 생성자나 BP에서 덮어쓴다
+	static ConstructorHelpers::FObjectFinder<USoundBase> AttackSoundAsset(
+		TEXT("/Game/Enemies/Sound/Enemy_Shot_00.Enemy_Shot_00"));
+	if (AttackSoundAsset.Succeeded()){
+		AttackSound = AttackSoundAsset.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UParticleSystem> AttackEffectAsset(
+		TEXT("/Game/Particle/P_Explosion.P_Explosion"));
+	if (AttackEffectAsset.Succeeded()){
+		AttackEffect = AttackEffectAsset.Object;
 	}
 }
 
