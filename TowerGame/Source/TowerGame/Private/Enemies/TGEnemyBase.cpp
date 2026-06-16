@@ -22,7 +22,7 @@ ATGEnemyBase::ATGEnemyBase() :
 	EnemyType("Enemy"),
 	MaxHP(1),
 	CurrentHP(MaxHP),
-	EnergyDropAmount(0),
+	ExpDropAmount(0),
 	NavigationHeightOffset(FVector::ZeroVector),
 	StructureAttackDamage(0),
 	StructureAttackInterval(0.5f),
@@ -228,7 +228,7 @@ float ATGEnemyBase::TakeDamage(float DamageAmount,
 		bDead = true;
 		if (ATGGameMode* GM = Cast<ATGGameMode>(UGameplayStatics::GetGameMode(GetWorld())))
 		{
-			GM->AddEnergy(EnergyDropAmount);
+			GM->AddExp(ExpDropAmount);
 		}
 		DestroyBodyParts();
 	}

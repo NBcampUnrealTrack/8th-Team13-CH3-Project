@@ -2,8 +2,8 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
-#include "Enemies/TGEnemyBase.h"
 #include "Enemies/TGNavigationManager.h"
+#include "Enemies/TGTargetable.h"
 #include "Enemies/TGWaveManager.h"
 #include "Components/SceneComponent.h"
 #include "NiagaraFunctionLibrary.h"
@@ -175,14 +175,17 @@ void ATGWeaponTower::DetectingEnemy()
 
 	const FVector MyLocation = GetActorLocation();
 	float MinDistanceSquared = FMath::Square(AttackRange);
-	for (ATGEnemyBase* Enemy : NavigationManager->GetAliveEnemies())
+	for (AActor* Candidate : NavigationManager->GetTargetables())
 	{
-		if (!IsValid(Enemy) || Enemy->IsDead())	continue;
-		const float DistanceSquared = FVector::DistSquared(MyLocation, Enemy->GetActorLocation());
+		if (!IsValid(Candidate))	continue;
+		const ITGTargetable* Targetable = Cast<ITGTargetable>(Candidate);
+		if (!Targetable || !Targetable->IsTargetable())	continue;
+
+		const float DistanceSquared = FVector::DistSquared(MyLocation, Candidate->GetActorLocation());
 		if (DistanceSquared < MinDistanceSquared)
 		{
 			MinDistanceSquared = DistanceSquared;
-			Target = Enemy;
+			Target = Candidate;
 		}
 	}
 }

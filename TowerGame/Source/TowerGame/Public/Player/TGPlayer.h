@@ -16,7 +16,8 @@ class UDataTable;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPlayerHpChanged, float, CurrentHP, float, MaxHP);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnEvadeChanged, int32, EvadeCount, float, CooldownRate);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFocusedEnemyChanged, ATGEnemyBase*, FocusedEnemy);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTurretTypeSelected, ETGTurretType, SelectedType);
+// 빌드 퀵슬롯 변경 알림 (SelectedIndex: 현재 슬롯, SlotCount: 전체 슬롯 수)
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnBuildSlotChanged, int32, SelectedIndex, int32, SlotCount);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponChanged, UTGWeaponBase*, WeaponAsset);
 
 USTRUCT()
@@ -54,9 +55,7 @@ protected:
 	UFUNCTION()
 	void Evade(const FInputActionValue& value);
 	UFUNCTION()
-	void Build(const FInputActionValue& InputValue);
-	UFUNCTION()
-	void SelectTower(const FInputActionValue& InputValue);	// 숫자키로 타워 타입 선택
+	void CycleBuildSlot(const FInputActionValue& InputValue);	// Tab으로 건설 퀵슬롯 순환
 	UFUNCTION()
 	void Shot(const FInputActionValue& InputValue);
 	// 상호작용 실행 (입력 바인딩에서 호출) TODO : IA 바인딩 필요
@@ -70,8 +69,8 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Enemy")
 	FOnFocusedEnemyChanged OnFocusedEnemyChanged;
 
-	UPROPERTY(BlueprintAssignable, Category = "TowerGame|Tower")
-	FOnTurretTypeSelected OnTurretTypeSelected;
+	UPROPERTY(BlueprintAssignable, Category = "TowerGame|Build")
+	FOnBuildSlotChanged OnBuildSlotChanged;
 
 	FOnPlayerHpChanged OnPlayerHpChanged;
 	FOnEvadeChanged OnEvadeChanged;
@@ -105,8 +104,22 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Status")
 	float GetPlayerMaxHP() const { return MaxHP; }
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "TowerGame|Tower")
-	ETGTurretType GetSelectedTurretType() const { return SelectedTurretType; }
+	// ───────── 건설 퀵슬롯 ─────────
+	// 현재 선택 슬롯 (0=미선택, 1=벽, 2.. = TowerSlotTypes[idx-2])
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "TowerGame|Build")
+	int32 GetCurrentBuildSlot() const { return CurrentBuildSlot; }
+	// 전체 슬롯 수 (미선택 + 벽 + 타워 종류)
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "TowerGame|Build")
+	int32 GetBuildSlotCount() const { return 2 + TowerSlotTypes.Num(); }
+	// 건설 슬롯(벽/타워)이 활성인지 (0=미선택이면 false)
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "TowerGame|Build")
+	bool IsBuildSlotActive() const { return CurrentBuildSlot >= 1; }
+	// 현재 슬롯이 벽 슬롯인지 (1번)
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "TowerGame|Build")
+	bool IsWallSlot() const { return CurrentBuildSlot == 1; }
+	// 현재 슬롯이 가리키는 타워 종류 (타워 슬롯이 아니면 None)
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "TowerGame|Build")
+	ETGTurretType GetSlotTurretType() const;
 
 	// 현재 시선에 잡힌 Interactive 액터 반환 (없으면 nullptr)
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "TowerGame|Interaction")
@@ -121,6 +134,23 @@ public:
 	// Enemy - Debuff 적용
 	UFUNCTION(BlueprintCallable, Category = "Status")
 	void ApplySlowDebuff(float Duration);
+
+	// ───────── 특성(Perk) 적용 API ─────────
+	// 최대 체력 증가 (증가분만큼 현재 체력도 함께 회복)
+	UFUNCTION(BlueprintCallable, Category = "Status")
+	void ApplyMaxHpDelta(int32 Delta);
+	// 이동 속도 증가 (Ratio 비율만큼, 0.1 = +10%)
+	UFUNCTION(BlueprintCallable, Category = "Status")
+	void ApplyMoveSpeedMultiplier(float Ratio);
+	// 회피 가능 횟수 증가
+	UFUNCTION(BlueprintCallable, Category = "Status")
+	void AddEvadeCount(int32 Delta);
+	// 무기 데미지 배수 증가 (Add만큼 가산, 0.15 = +15%)
+	UFUNCTION(BlueprintCallable, Category = "Status")
+	void AddWeaponDamageMultiplier(float Add);
+	// 현재 무기 데미지 배수 (무기 발사 시 데미지에 곱해짐)
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Status")
+	float GetWeaponDamageMultiplier() const { return WeaponDamageMultiplier; }
 
 	UFUNCTION(BlueprintCallable)
 	UTGWeaponBase* GetCurrentWeapon();	// 현재 장착중인 무기를 가져온다.
@@ -161,6 +191,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Status")
 	int32 HP;
 
+	// 무기 데미지 배수 (특성으로 증가, 기본 1.0)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Status")
+	float WeaponDamageMultiplier = 1.f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TowerGame|Interaction")
 	float InteractDistance;	//	상호작용 최대 거리
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
@@ -177,8 +211,12 @@ protected:
 	FVector CurrentRecoilLocScale;
 	FRotator CurrentRecoilRotScale;
 	float CurrentRecoilInputScale;
-	bool bBuildMode;	// 빌드모드
-	ETGTurretType SelectedTurretType = ETGTurretType::None;	// 숫자키로 선택한 타워 타입
+	// 퀵슬롯 3번부터 노출할 타워 종류 순서 (BP에서 조정). 기본값은 생성자에서 설정.
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "TowerGame|Build")
+	TArray<ETGTurretType> TowerSlotTypes;
+	// 현재 선택된 건설 퀵슬롯 인덱스 (0=미선택, 1=벽, 2.. = 타워)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "TowerGame|Build")
+	int32 CurrentBuildSlot = 0;
 
 	// Debuff - Slow 관련 변수
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Status|Debuff")

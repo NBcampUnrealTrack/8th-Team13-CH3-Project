@@ -70,7 +70,7 @@ void ABaseTower::Disable()
 	}
 }
 
-void ABaseTower::SetPreviewMode()
+void ABaseTower::SetPreviewMode(bool bValid)
 {
 	// 메쉬 보이게
 	BaseMesh->SetVisibility(true);
@@ -89,6 +89,9 @@ void ABaseTower::SetPreviewMode()
 	if (PreviewMaterial)
 	{
 		PreviewMaterial->SetScalarParameterValue(TEXT("Opacity"), 0.85f);
+		// 설치 가능=녹색 / 불가=빨강 (머티리얼에 PreviewColor 벡터 파라미터가 있으면 반영)
+		const FLinearColor Tint = bValid ? FLinearColor(0.2f, 1.0f, 0.2f) : FLinearColor(1.0f, 0.2f, 0.2f);
+		PreviewMaterial->SetVectorParameterValue(TEXT("PreviewColor"), Tint);
 	}
 }
 
@@ -152,8 +155,8 @@ void ABaseTower::OnInteract_Implementation(ATGPlayer* Player)
 	// 선택된 타입이 없으면 무시
 	if (SelectedTurretType == ETGTurretType::None) return;
 
-	// 자원 차감
-	if (!GM->SpendEnergy(BuildCost)) return;
+	// 건설 토큰 소모 (부족하면 건설 불가)
+	if (!GM->TryConsumeBuildToken()) return;
 
 	Super::OnInteract_Implementation(Player);
 

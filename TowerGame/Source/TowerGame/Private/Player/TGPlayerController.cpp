@@ -63,6 +63,12 @@ ATGPlayerController::ATGPlayerController()
 	if (IA_SelectTower_Asset.Succeeded())
 		Action_SelectTower = IA_SelectTower_Asset.Object;
 
+	// 건설 퀵슬롯 순환(Tab). 에셋이 없으면 null로 남고 바인딩은 건너뜀(에디터에서 생성 후 자동 연결).
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_CycleBuildSlot_Asset =
+		TEXT("/Game/Player/Input/Actions/IA_CycleBuildSlot.IA_CycleBuildSlot");
+	if (IA_CycleBuildSlot_Asset.Succeeded())
+		Action_CycleBuildSlot = IA_CycleBuildSlot_Asset.Object;
+
 	// 메뉴 조작
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext> IMCMenu_Asset =
 		TEXT("/Game/Player/Input/IMC_Menu.IMC_Menu");

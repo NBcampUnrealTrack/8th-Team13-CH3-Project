@@ -9,6 +9,7 @@ enum class ETGGameFlowState : uint8
 	MainMenu UMETA(DisplayName = "MainMenu"),
 	Playing UMETA(DisplayName = "Playing"),
 	BuildMode UMETA(DisplayName = "BuildMode"),
+	LevelUp UMETA(DisplayName = "LevelUp"),
 	Paused UMETA(DisplayName = "Paused"),
 	WaveClear UMETA(DisplayName = "WaveClear"),
 	GameOver UMETA(DisplayName = "GameOver"),

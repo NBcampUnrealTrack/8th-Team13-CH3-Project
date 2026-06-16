@@ -56,9 +56,9 @@ protected:
 	// 사망 처리 중복 실행 방지 (사망 후 잔해 피격 시 에너지 중복 지급 차단)
 	bool bDead = false;
 
-	// Drop
+	// Drop — 처치 시 플레이어에게 지급되는 경험치량
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy|Drop")
-	int32 EnergyDropAmount;
+	int32 ExpDropAmount;
 
 	// FlyingEnemy 위치 보정을 위한 FVector
 	UPROPERTY(VisibleAnywhere, Category = "Enemy|Spawn")

@@ -6,6 +6,7 @@
 #include "Enemies/TGBossBase.h"
 #include "Enemies/TGEnemyBase.h"
 #include "Enemies/TGMissile.h"
+#include "Enemies/TGSwarmEnemy.h"
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
@@ -150,11 +151,14 @@ void UTGWeaponBase::FireSingleTrace(ATGPlayer* Instigator, const FVector& Muzzle
 	);
 
 	// 데미지 적용 — PointDamage로 통일해 보스 부위판정(HitInfo)까지 한 경로로 처리
-	if (Cast<ATGEnemyBase>(HitActor) || Cast<ATGMissile>(HitActor) || Cast<ATGBossBase>(HitActor))
+	if (Cast<ATGEnemyBase>(HitActor) || Cast<ATGMissile>(HitActor) || Cast<ATGBossBase>(HitActor) || Cast<ATGSwarmEnemy>(HitActor))
 	{
+		// 특성으로 강화된 무기 데미지 배수 반영
+		const float FinalPower = Power * (Instigator ? Instigator->GetWeaponDamageMultiplier() : 1.f);
+
 		UGameplayStatics::ApplyPointDamage(
 			HitActor,
-			Power,
+			FinalPower,
 			Direction,
 			TraceHit,
 			Instigator ? Instigator->GetInstigatorController() : nullptr,

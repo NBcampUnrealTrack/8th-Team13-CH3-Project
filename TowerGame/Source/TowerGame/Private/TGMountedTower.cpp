@@ -126,7 +126,7 @@ void ATGMountedTower::OnUnfocused_Implementation(ATGPlayer* Player)
 void ATGMountedTower::OnInteract_Implementation(ATGPlayer* Player)
 {
 	ATGGameMode* GM = Cast<ATGGameMode>(GetWorld()->GetAuthGameMode());
-	if (!GM || !GM->SpendEnergy(UpgradeCost)) return;
+	if (!GM || !GM->TryConsumeBuildToken()) return;
 
 	Upgrade();
 

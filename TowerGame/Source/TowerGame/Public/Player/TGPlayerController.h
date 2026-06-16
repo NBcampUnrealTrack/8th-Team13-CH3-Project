@@ -41,6 +41,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	TObjectPtr<UInputAction> Action_SelectTower;
 
+	// 건설 퀵슬롯 순환 (Tab) — IA_CycleBuildSlot 에셋을 에디터에서 만들어 IMC_Player에 매핑할 것
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	TObjectPtr<UInputAction> Action_CycleBuildSlot;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	TObjectPtr<UInputMappingContext> IMC_Menu;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")

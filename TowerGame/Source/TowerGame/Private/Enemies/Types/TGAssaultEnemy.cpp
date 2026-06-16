@@ -13,7 +13,7 @@ ATGAssaultEnemy::ATGAssaultEnemy()
 	StructureAttackInterval = 0.4f;
 	StructureAttackRange = 200;
 
-	EnergyDropAmount = 40;
+	ExpDropAmount = 40;
 
 	GetCharacterMovement()->MaxWalkSpeed = 500;
 }

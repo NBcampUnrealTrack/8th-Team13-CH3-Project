@@ -2,9 +2,8 @@
 
 
 #include "BaseTower/DebuffTower.h"
-#include "Enemies/TGEnemyBase.h"
 #include "Enemies/TGNavigationManager.h"
-#include "GameFramework/CharacterMovementComponent.h"
+#include "Enemies/TGTargetable.h"
 
 ATGDebuffTower::ATGDebuffTower()
 {
@@ -46,55 +45,49 @@ void ATGDebuffTower::ApplyRangeDebuff()
 	const FVector Center = GetActorLocation();
 	const float DebuffRangeSquared = FMath::Square(DebuffRange);
 
-	// 이번 틱에 범위 내에 있는 적 목록 (생존 적 목록 사용 — 오버랩 쿼리 제거)
-	TArray<ATGEnemyBase*> EnemiesInRange;
-	for (ATGEnemyBase* Enemy : NavigationManager->GetAliveEnemies())
+	// 이번 틱에 범위 내에 있어 슬로우를 적용한 대상 목록
+	TArray<TObjectPtr<AActor>> StillSlowed;
+	for (AActor* Candidate : NavigationManager->GetTargetables())
 	{
-		if (!IsValid(Enemy) || Enemy->IsDead()) continue;
-		if (FVector::DistSquared(Center, Enemy->GetActorLocation()) > DebuffRangeSquared) continue;
+		if (!IsValid(Candidate)) continue;
+		ITGTargetable* Targetable = Cast<ITGTargetable>(Candidate);
+		if (!Targetable || !Targetable->IsTargetable()) continue;
+		if (FVector::DistSquared(Center, Candidate->GetActorLocation()) > DebuffRangeSquared) continue;
 
-		EnemiesInRange.Add(Enemy);
-
-		if (UCharacterMovementComponent* Movement = Enemy->GetCharacterMovement())
-		{
-			// 기본속도 기준으로 SlowRate 적용
-			// 이미 슬로우 중이면 중복 적용 방지
-			if (!SlowedEnemies.Contains(Enemy)) {
-
-				// 기본속도 저장 후 슬로우 적용
-				SlowedEnemies.Add(Enemy, Movement->MaxWalkSpeed);
-				Movement->MaxWalkSpeed *= SlowRate;
-			}
-		}
+		Targetable->SetMoveSlowMultiplier(SlowRate);
+		StillSlowed.Add(Candidate);
 	}
 
-	// 범위 벗어난 적 원래 속도로 복구
-	for (auto It = SlowedEnemies.CreateIterator(); It; ++It)
+	// 지난 틱엔 슬로우했지만 이번에 범위를 벗어난 대상은 속도 복구
+	for (const TObjectPtr<AActor>& Prev : SlowedTargets)
 	{
-		ATGEnemyBase* Enemy = It->Key;
-		if (!EnemiesInRange.Contains(Enemy))
+		if (StillSlowed.Contains(Prev)) continue;
+		if (IsValid(Prev))
 		{
-			// 범위 밖으로 나간 적 — 원래 속도 복구 (파괴 대기중인 적은 IsValid가 걸러냄)
-			if (IsValid(Enemy) && Enemy->GetCharacterMovement())
+			if (ITGTargetable* Targetable = Cast<ITGTargetable>(Prev.Get()))
 			{
-				Enemy->GetCharacterMovement()->MaxWalkSpeed = It->Value;
+				Targetable->SetMoveSlowMultiplier(1.f);
 			}
-			It.RemoveCurrent();
 		}
 	}
+
+	SlowedTargets = MoveTemp(StillSlowed);
 }
 
 void ATGDebuffTower::StopDebuff()
 {
-	// 타워 파괴 시 슬로우된 모든 적 속도 복구
-	for (auto& Pair : SlowedEnemies)
+	// 타워 파괴 시 슬로우된 모든 대상 속도 복구
+	for (const TObjectPtr<AActor>& Prev : SlowedTargets)
 	{
-		if (IsValid(Pair.Key) && Pair.Key->GetCharacterMovement())
+		if (IsValid(Prev))
 		{
-			Pair.Key->GetCharacterMovement()->MaxWalkSpeed = Pair.Value;
+			if (ITGTargetable* Targetable = Cast<ITGTargetable>(Prev.Get()))
+			{
+				Targetable->SetMoveSlowMultiplier(1.f);
+			}
 		}
 	}
-	SlowedEnemies.Empty();
+	SlowedTargets.Empty();
 }
 
 void ATGDebuffTower::Upgrade()
@@ -115,14 +108,17 @@ void ATGDebuffTower::DetectingEnemy()
 
 	const FVector MyLocation = GetActorLocation();
 	float MinDistanceSquared = FMath::Square(DebuffRange);
-	for (ATGEnemyBase* Enemy : NavigationManager->GetAliveEnemies())
+	for (AActor* Candidate : NavigationManager->GetTargetables())
 	{
-		if (!IsValid(Enemy) || Enemy->IsDead()) continue;
-		const float DistanceSquared = FVector::DistSquared(MyLocation, Enemy->GetActorLocation());
+		if (!IsValid(Candidate)) continue;
+		const ITGTargetable* Targetable = Cast<ITGTargetable>(Candidate);
+		if (!Targetable || !Targetable->IsTargetable()) continue;
+
+		const float DistanceSquared = FVector::DistSquared(MyLocation, Candidate->GetActorLocation());
 		if (DistanceSquared < MinDistanceSquared)
 		{
 			MinDistanceSquared = DistanceSquared;
-			Target = Enemy;
+			Target = Candidate;
 		}
 	}
 }

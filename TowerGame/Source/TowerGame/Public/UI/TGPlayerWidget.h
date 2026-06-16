@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "BaseTower/TGTurretType.h"
 #include "Blueprint/UserWidget.h"
 #include "TGPlayerWidget.generated.h"
 
@@ -11,24 +10,21 @@ class ATGBossBase;
 class ATGEnemyBase;
 class ATGWaveManager;
 class ATGGameMode;
-class UTGWeaponBase;
 class ATGNavigationManager;
 class UHorizontalBox;
 class UProgressBar;
-class UButton;
-class UImage;
 class UTextBlock;
-//미니맵 위젯 수정사항
-class UTGMiniMapWidget;
-class ATGGridBase;
-class AActor;
+
 /**
- *
+ * 플레이 중 단일 HUD 위젯.
+ * 플레이어/코어 체력 상시 표시 + 경험치/레벨/건설토큰 + (보스/포커스 적 체력) + 건설 퀵슬롯.
+ * 미니맵/현재 총기 표시는 제거됨.
  */
 UCLASS()
 class TOWERGAME_API UTGPlayerWidget : public UUserWidget
 {
 	GENERATED_BODY()
+
 protected:
 	UFUNCTION()
 	void HandlePauseClicked();
@@ -48,9 +44,6 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<ATGWaveManager> WaveManager;
-
-	UPROPERTY()
-	TObjectPtr<ATGGridBase> GridBase;
 
 	UPROPERTY()
 	TObjectPtr<ATGNavigationManager> NavigationManager;
@@ -78,9 +71,15 @@ private:
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UTextBlock> Txt_CurrentWave;
 
-	// TODO: UMG 블루프린트(WBP_PlayerWidget)에 TextBlock을 추가하고 이름을 "EnergyText"로 지정하면 자동 바인딩됩니다.
+	// 진행도(레벨/경험치) / 건설토큰
 	UPROPERTY(meta = (BindWidgetOptional))
-	TObjectPtr<UTextBlock> EnergyText;
+	TObjectPtr<UTextBlock> LevelText;
+
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UProgressBar> PB_Exp;
+
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UTextBlock> BuildTokenText;
 
 	// ProgressBar
 	UPROPERTY(meta = (BindWidgetOptional))
@@ -89,18 +88,15 @@ private:
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UProgressBar> PB_BossHP;
 
-	UPROPERTY(meta = (BindWidget))
+	// 상시 표시 — 플레이어 / 코어 체력 (위젯 재설계 자유도를 위해 Optional + null 가드)
+	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UProgressBar> HP_Bar;
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UProgressBar> CoreHP_Bar;
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UHorizontalBox> Evade_BarGroup;
 	UPROPERTY()
 	TArray<TObjectPtr<UProgressBar>> Evade_Bars;
-
-	//Image
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UImage> WeaponImage;
 
 private:
 	// Focused Enemy 변경 시 호출
@@ -118,10 +114,6 @@ private:
 	// Player 회피게이지 UI에 반영
 	UFUNCTION()
 	void UpdateEvadeBar(int32 CurrentEvadeCount, float CooldownRate);
-
-	// Player 무기 교체 시 UI에 반영
-	UFUNCTION()
-	void UpdateWeaponImage(UTGWeaponBase* Weapon);
 
 	// Enemy 제거 시 호출
 	UFUNCTION()
@@ -151,30 +143,30 @@ private:
 	UFUNCTION()
 	void HandleCoreHPChanged(float CurrentHP, float MaxHP);
 
-	// 자원 변경 시 호출
+	// 경험치/레벨 변경 시 호출
 	UFUNCTION()
-	void HandleEnergyChanged(int32 NewEnergy);
+	void HandleExpChanged(int32 CurrentExp, int32 ExpToNextLevel, int32 CurrentLevel);
+
+	// 건설 토큰 변경 시 호출
+	UFUNCTION()
+	void HandleBuildTokenChanged(int32 NewBuildTokens);
+
+	// 건설 퀵슬롯 변경 시 호출 → BP의 슬롯바 갱신
+	UFUNCTION()
+	void HandleBuildSlotChanged(int32 SelectedIndex, int32 SlotCount);
 
 	UFUNCTION()
 	void HideFocusedEnemyInfo();
 
-	UFUNCTION()
-	void HandleGridBuildingPlaced(FIntPoint GridPoint);
 	// UI에 연결된 enemy 관리
 	void BindFocusedEnemy(ATGEnemyBase* NewEnemy);
 	void UnbindFocusedEnemy();
 
 	// UI에 연결된 Boss 관리
 	void UnbindBoss();
-//미니맵 위젯
-public:
-	void SetGridBase(ATGGridBase* InGridBase);
-	void RegisterMonsterToMiniMap(AActor* MonsterActor);
-	void UnregisterMonsterFromMiniMap(AActor* MonsterActor);
-	// 타워 연결
-	UFUNCTION()
-	void HandleGridTowerPlaced(FIntPoint GridPoint, ETGTurretType TurretType);
+
 protected:
-	UPROPERTY(meta = (BindWidget))
-	UTGMiniMapWidget* MiniMapWidget;
+	// BP에서 구현 — 하단 퀵슬롯 바 갱신(1=미선택, 2=벽, 3+=타워) 및 선택 강조
+	UFUNCTION(BlueprintImplementableEvent, Category = "Build")
+	void OnBuildSlotUpdated(int32 SelectedIndex, int32 SlotCount);
 };

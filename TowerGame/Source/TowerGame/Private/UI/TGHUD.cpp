@@ -1,24 +1,17 @@
 #include "UI/TGHUD.h"
-#include "UI/TGMainMenuWidget.h"
 #include "UI/TGGameOverWidget.h"
 #include "UI/TGPlayerWidget.h"
-#include "UI/TGPlayingWidget.h"
 #include "UI/TGPauseWidget.h"
-#include "BaseTower/TGBuildWidget.h"
+#include "UI/TGPerkSelectWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "Core/GameFlow/TGGameMode.h"
-#include "Core/Grid/TGGridBase.h"
-#include "Enemies/TGWaveManager.h"
-#include "Enemies/TGEnemyBase.h"
-#include "Player/TGPlayer.h"
 
 ATGHUD::ATGHUD()
 	: CachedGameMode(nullptr),
 	PlayerWidget(nullptr),
 	PauseWidget(nullptr),
 	GameOverWidget(nullptr),
-	BuildWidget(nullptr),
-	CachedWaveManager(nullptr)
+	PerkWidget(nullptr)
 {
 }
 
@@ -33,11 +26,6 @@ void ATGHUD::BeginPlay()
 		CachedGameMode->OnHideWidgets.AddDynamic(this, &ATGHUD::HideAllWidgets);
 
 		UpdateUIByState(CachedGameMode->CurrentState);
-	}
-
-	if (ATGPlayer* Player = Cast<ATGPlayer>(GetOwningPawn()))
-	{
-		Player->OnTurretTypeSelected.AddDynamic(this, &ATGHUD::HandleTurretTypeSelected);
 	}
 }
 
@@ -57,15 +45,13 @@ void ATGHUD::HideAllWidgets()
 	{
 		PauseWidget->RemoveFromParent();
 	}
-
 	if (GameOverWidget && GameOverWidget->IsInViewport())
 	{
 		GameOverWidget->RemoveFromParent();
 	}
-
-	if (BuildWidget && BuildWidget->IsInViewport())
+	if (PerkWidget && PerkWidget->IsInViewport())
 	{
-		BuildWidget->RemoveFromParent();
+		PerkWidget->RemoveFromParent();
 	}
 }
 
@@ -77,27 +63,15 @@ void ATGHUD::UpdateUIByState(ETGGameFlowState NewState)
 		return;
 	}
 
-
-	if (NewState == ETGGameFlowState::Playing && OldState == ETGGameFlowState::BuildMode)
-	{
-		if (BuildWidget && BuildWidget->IsInViewport())
-		{
-			BuildWidget->RemoveFromParent();
-		}
-		OldState = NewState;
-		return;
-	}
-
 	HideAllWidgets();
 
-	if (NewState == ETGGameFlowState::BuildMode)
-	{
-		AddtoViewportBuildWidget(PC);
-	}
-
-	if (NewState == ETGGameFlowState::Playing || NewState == ETGGameFlowState::BuildMode)
+	if (NewState == ETGGameFlowState::Playing)
 	{
 		AddtoViewportPlayerWidget(PC);
+	}
+	else if (NewState == ETGGameFlowState::LevelUp)
+	{
+		AddtoViewportPerkWidget(PC);
 	}
 	else if (NewState == ETGGameFlowState::Paused)
 	{
@@ -113,8 +87,6 @@ void ATGHUD::UpdateUIByState(ETGGameFlowState NewState)
 
 void ATGHUD::AddtoViewportPlayerWidget(APlayerController* PC)
 {
-	const bool bCreatedNow = !PlayerWidget;
-
 	if (!PlayerWidget && PlayerWidgetClass)
 	{
 		PlayerWidget = CreateWidget<UTGPlayerWidget>(PC, PlayerWidgetClass);
@@ -126,63 +98,27 @@ void ATGHUD::AddtoViewportPlayerWidget(APlayerController* PC)
 		{
 			PlayerWidget->AddToViewport();
 		}
-
 		PlayerWidget->SetVisibility(ESlateVisibility::Visible);
-
-		if (bCreatedNow)
-		{
-			AActor* FoundActor = UGameplayStatics::GetActorOfClass(
-				GetWorld(),
-				ATGGridBase::StaticClass()
-			);
-
-			ATGGridBase* GridBase = Cast<ATGGridBase>(FoundActor);
-
-			if (GridBase)
-			{
-				PlayerWidget->SetGridBase(GridBase);
-			}
-			else
-			{
-				UE_LOG(LogTemp, Warning, TEXT("HUD: GridBase not found"));
-			}
-
-			BindWaveManager();
-		}
 	}
 
 	PC->bShowMouseCursor = false;
 	PC->SetInputMode(FInputModeGameOnly());
 }
 
-void ATGHUD::AddtoViewportBuildWidget(APlayerController* PC)
+void ATGHUD::AddtoViewportPerkWidget(APlayerController* PC)
 {
-	if (!BuildWidget && BuildWidgetClass)
+	if (!PerkWidget && PerkWidgetClass)
 	{
-		BuildWidget = CreateWidget<UTGBuildWidget>(PC, BuildWidgetClass);
+		PerkWidget = CreateWidget<UTGPerkSelectWidget>(PC, PerkWidgetClass);
 	}
 
-	if (BuildWidget)
+	if (PerkWidget && !PerkWidget->IsInViewport())
 	{
-		BuildWidget->AddToViewport();
-
-		// 빌드모드 진입 시 현재 선택 타입으로 즉시 강조 갱신
-		if (ATGPlayer* Player = Cast<ATGPlayer>(PC->GetPawn()))
-		{
-			BuildWidget->RefreshSlotHighlight(Player->GetSelectedTurretType());
-		}
+		PerkWidget->AddToViewport();
 	}
 
-	PC->bShowMouseCursor = false;
-	PC->SetInputMode(FInputModeGameOnly());
-}
-
-void ATGHUD::HandleTurretTypeSelected(ETGTurretType SelectedType)
-{
-	if (BuildWidget)
-	{
-		BuildWidget->RefreshSlotHighlight(SelectedType);
-	}
+	PC->bShowMouseCursor = true;
+	PC->SetInputMode(FInputModeGameAndUI());
 }
 
 void ATGHUD::AddtoViewportPausedWidget(APlayerController* PC)
@@ -215,62 +151,4 @@ void ATGHUD::AddtoViewportGameOverWidget(APlayerController* PC)
 
 	PC->bShowMouseCursor = true;
 	PC->SetInputMode(FInputModeUIOnly());
-}
-
-void ATGHUD::BindWaveManager()
-{
-	if (CachedWaveManager)
-	{
-		return;
-	}
-
-	CachedWaveManager = ATGWaveManager::Get(this);
-
-	if (!CachedWaveManager)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("HUD: WaveManager not found"));
-		return;
-	}
-
-	CachedWaveManager->OnEnemySpawned.AddUniqueDynamic(
-		this,
-		&ATGHUD::HandleEnemySpawned
-	);
-
-	CachedWaveManager->OnEnemyRemovedForMiniMap.AddUniqueDynamic(
-		this,
-		&ATGHUD::HandleEnemyRemovedForMiniMap
-	);
-
-	UE_LOG(LogTemp, Log, TEXT("HUD: WaveManager Bound"));
-}
-
-void ATGHUD::HandleEnemySpawned(ATGEnemyBase* SpawnedEnemy)
-{
-	if (!IsValid(SpawnedEnemy))
-	{
-		return;
-	}
-
-	if (!PlayerWidget)
-	{
-		return;
-	}
-
-	PlayerWidget->RegisterMonsterToMiniMap(SpawnedEnemy);
-}
-
-void ATGHUD::HandleEnemyRemovedForMiniMap(ATGEnemyBase* RemovedEnemy)
-{
-	if (!RemovedEnemy)
-	{
-		return;
-	}
-
-	if (!PlayerWidget)
-	{
-		return;
-	}
-
-	PlayerWidget->UnregisterMonsterFromMiniMap(RemovedEnemy);
 }

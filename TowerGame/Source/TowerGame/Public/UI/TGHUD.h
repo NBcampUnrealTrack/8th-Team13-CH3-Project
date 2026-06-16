@@ -3,17 +3,13 @@
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
 #include "Core/GameFlow/TGGameFlowState.h"
-#include "BaseTower/TGTurretType.h"
 #include "TGHUD.generated.h"
 
 class UTGGameOverWidget;
 class UTGPlayerWidget;
 class UTGPauseWidget;
-class UTGBuildWidget;
+class UTGPerkSelectWidget;
 class ATGGameMode;
-class ATGWaveManager;
-class ATGEnemyBase;
-class ATGPlayer;
 
 UCLASS()
 class TOWERGAME_API ATGHUD : public AHUD
@@ -28,21 +24,17 @@ protected:
 	void HandleFlowStateChanged(ETGGameFlowState NewState);
 
 	UFUNCTION()
-	void HandleTurretTypeSelected(ETGTurretType SelectedType);
-
-	UFUNCTION()
 	void HideAllWidgets();
 
 	void UpdateUIByState(ETGGameFlowState NewState);
 	void AddtoViewportPlayerWidget(APlayerController* PC);
-	void AddtoViewportBuildWidget(APlayerController* PC);
 	void AddtoViewportPausedWidget(APlayerController* PC);
 	void AddtoViewportGameOverWidget(APlayerController* PC);
+	void AddtoViewportPerkWidget(APlayerController* PC);
+
 protected:
 	UPROPERTY()
 	ATGGameMode* CachedGameMode;
-	UPROPERTY()
-	ATGWaveManager* CachedWaveManager;
 
 	ETGGameFlowState OldState;
 
@@ -53,7 +45,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UTGGameOverWidget> GameOverWidgetClass;
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	TSubclassOf<UTGBuildWidget> BuildWidgetClass;
+	TSubclassOf<UTGPerkSelectWidget> PerkWidgetClass;
+
 	UPROPERTY()
 	UTGPlayerWidget* PlayerWidget;
 	UPROPERTY()
@@ -61,17 +54,5 @@ protected:
 	UPROPERTY()
 	UTGGameOverWidget* GameOverWidget;
 	UPROPERTY()
-	UTGBuildWidget* BuildWidget;
-
-public:
-	UTGBuildWidget* GetBuildWidget() const { return BuildWidget; }
-
-private:
-	void BindWaveManager();
-
-	UFUNCTION()
-	void HandleEnemySpawned(ATGEnemyBase* SpawnedEnemy);
-
-	UFUNCTION()
-	void HandleEnemyRemovedForMiniMap(ATGEnemyBase* RemovedEnemy);
+	UTGPerkSelectWidget* PerkWidget;
 };

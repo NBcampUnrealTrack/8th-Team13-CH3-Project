@@ -12,7 +12,7 @@ ATGTankEnemy::ATGTankEnemy()
 	StructureAttackDamage = 2;
 	StructureAttackInterval = 0.9f;
 	StructureAttackRange = 200;
-	EnergyDropAmount = 50;
+	ExpDropAmount = 50;
 
 	GetCharacterMovement()->MaxWalkSpeed = 200;
 }

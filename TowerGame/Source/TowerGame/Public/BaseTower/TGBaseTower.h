@@ -44,8 +44,8 @@ public:
 	// 그리드에 미리 배치 후 대기 상태 (완전 투명 / 충돌 X / 네비 X)
 	void Disable();
 
-	// 마우스로 배치하는 동안의 미리보기 모드 (반투명, 충돌 없음)
-	void SetPreviewMode();
+	// 배치 미리보기 모드 (반투명, 충돌 없음). bValid로 설치 가능/불가 색을 구분.
+	void SetPreviewMode(bool bValid = true);
 
 	// 클릭 후 최종 배치 완료 처리 (활성화, 바디 활성화)
 	void FinalizeInstallation();
@@ -64,10 +64,6 @@ public:
 	virtual void OnInteract_Implementation(ATGPlayer* Player) override;
 
 protected:
-	// 타워 설치 비용 (에너지)
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Tower Settings")
-	int32 BuildCost = 50;
-
 	// 투명도 조정용 다이나믹 머티리얼 (미리보기 상태에서 사용)
 	UPROPERTY()
 	class UMaterialInstanceDynamic* PreviewMaterial;

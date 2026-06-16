@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "TGMountedTower.h"
-#include "Enemies/TGEnemyBase.h"
 #include "DebuffTower.generated.h"
 
 UCLASS()
@@ -28,9 +27,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tower Settings")
 	float SlowRate = 0.5f;
 
-	// 슬로우된 적과 원래 속도를 저장하는 맵 — 범위 벗어나면 복구에 사용
+	// 이 타워가 현재 슬로우를 적용 중인 대상 목록 — 범위 이탈/파괴 시 해제에 사용
 	UPROPERTY()
-	TMap<ATGEnemyBase*, float> SlowedEnemies;
+	TArray<TObjectPtr<AActor>> SlowedTargets;
 
 public:
 	// 슬로우 중지 및 모든 적 속도 복구 (타워 파괴 시 호출)

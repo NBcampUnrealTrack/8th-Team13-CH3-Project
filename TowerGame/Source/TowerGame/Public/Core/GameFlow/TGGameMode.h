@@ -9,8 +9,11 @@
 
 class USoundBase;
 class ATGMountedTower;
+class UTGPerkComponent;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTGFlowStateChanged, ETGGameFlowState, NewState);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEnergyChanged, int32, NewEnergy);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnExpChanged, int32, CurrentExp, int32, ExpToNextLevel, int32, CurrentLevel);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLevelUp, int32, NewLevel);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBuildTokenChanged, int32, NewBuildTokens);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHideWidgets);
 
 UCLASS()
@@ -46,6 +49,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TowerGame")
 	TMap<ETGTurretType, TSubclassOf<ATGMountedTower>> TowerMap;
 
+	// 레벨업 시 무작위 특성 선택을 담당하는 컴포넌트
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "TowerGame|Perk")
+	TObjectPtr<UTGPerkComponent> PerkComponent;
+
 	UPROPERTY(BlueprintReadOnly, Category = "Game Flow")
 	ETGGameFlowState OldState;
 public:
@@ -58,23 +65,69 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Game Flow")
 	FOnHideWidgets OnHideWidgets;
 
-	//	현재 자원량
-	UPROPERTY(BlueprintReadOnly, Category = "TowerGame|Economy")
-	int32 CurrentEnergy;
-	//	자원 정보 변경 델리게이트
-	UPROPERTY(BlueprintAssignable, Category = "TowerGame|Economy")
-	FOnEnergyChanged OnEnergyChanged;
+	// ───────── 경험치 / 레벨 (기존 자원경제 대체) ─────────
+	// 레벨 1→2에 필요한 기본 경험치
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "TowerGame|Progression")
+	int32 BaseExpToNextLevel = 100;
+	// 레벨이 오를 때마다 다음 레벨 요구치에 더해지는 증가량
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "TowerGame|Progression")
+	int32 ExpPerLevelGrowth = 50;
 
-	//	자원 관련
-	//	자원 사용, 실패시 사용 안됨
-	UFUNCTION(BlueprintCallable, Category = "TowerGame|Economy")
-	bool SpendEnergy(int32 Amount);
-	//	자원 추가
-	UFUNCTION(BlueprintCallable, Category = "TowerGame|Economy")
-	void AddEnergy(int32 Amount);
-	//	현재 자원량을 반환합니다
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "TowerGame|Economy")
-	int32 GetCurrentEnergy() const;
+	// 현재 레벨
+	UPROPERTY(BlueprintReadOnly, Category = "TowerGame|Progression")
+	int32 CurrentLevel = 1;
+	// 현재 레벨에서 누적한 경험치
+	UPROPERTY(BlueprintReadOnly, Category = "TowerGame|Progression")
+	int32 CurrentExp = 0;
+	// 다음 레벨까지 필요한 경험치
+	UPROPERTY(BlueprintReadOnly, Category = "TowerGame|Progression")
+	int32 ExpToNextLevel = 100;
+
+	// 경험치/레벨 변경 델리게이트 (UI 갱신용)
+	UPROPERTY(BlueprintAssignable, Category = "TowerGame|Progression")
+	FOnExpChanged OnExpChanged;
+	// 레벨업 발생 델리게이트 — 특성 선택 시스템(#3)이 이 이벤트를 구독한다
+	UPROPERTY(BlueprintAssignable, Category = "TowerGame|Progression")
+	FOnLevelUp OnLevelUp;
+
+	// 경험치 획득 (적 처치 등). 누적 후 필요량을 넘으면 자동 레벨업.
+	UFUNCTION(BlueprintCallable, Category = "TowerGame|Progression")
+	void AddExp(int32 Amount);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "TowerGame|Progression")
+	int32 GetCurrentLevel() const { return CurrentLevel; }
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "TowerGame|Progression")
+	int32 GetCurrentExp() const { return CurrentExp; }
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "TowerGame|Progression")
+	int32 GetExpToNextLevel() const { return ExpToNextLevel; }
+
+	// ───────── 건설 토큰 (타워 건설/업그레이드 게이팅) ─────────
+	// 게임 시작 시 보유 건설 토큰
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "TowerGame|BuildToken")
+	int32 StartingBuildTokens = 2;
+	// 레벨업 시 지급되는 건설 토큰 (특성 시스템(#3) 도입 전 임시 기본 보상)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "TowerGame|BuildToken")
+	int32 BuildTokensPerLevel = 1;
+
+	// 현재 보유 건설 토큰
+	UPROPERTY(BlueprintReadOnly, Category = "TowerGame|BuildToken")
+	int32 BuildTokens = 0;
+
+	// 건설 토큰 변경 델리게이트 (UI 갱신용)
+	UPROPERTY(BlueprintAssignable, Category = "TowerGame|BuildToken")
+	FOnBuildTokenChanged OnBuildTokenChanged;
+
+	// 건설 토큰 소모, 부족하면 false (건설/업그레이드 차단)
+	UFUNCTION(BlueprintCallable, Category = "TowerGame|BuildToken")
+	bool TryConsumeBuildToken(int32 Amount = 1);
+	// 건설 토큰 추가 (특성 보상, 환불 등)
+	UFUNCTION(BlueprintCallable, Category = "TowerGame|BuildToken")
+	void AddBuildToken(int32 Amount);
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "TowerGame|BuildToken")
+	int32 GetBuildTokens() const { return BuildTokens; }
+
+	// 레벨업 내부 처리 (경험치 임계치 도달 시 호출)
+	void LevelUp();
 
 	UFUNCTION(BlueprintCallable, Category = "TowerGame|Tower")
 	TSubclassOf<ATGMountedTower> GetTowerSubclass(ETGTurretType type);
@@ -90,6 +143,16 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Game Flow")
 	void ExitBuildMode();
+
+	// 특성 선택 진입/종료 (UTGPerkComponent가 호출, 진입 시 게임 일시정지)
+	UFUNCTION(BlueprintCallable, Category = "Game Flow")
+	void EnterLevelUp();
+
+	UFUNCTION(BlueprintCallable, Category = "Game Flow")
+	void ExitLevelUp();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "TowerGame|Perk")
+	UTGPerkComponent* GetPerkComponent() const { return PerkComponent; }
 
 	UFUNCTION(BlueprintCallable, Category = "Game Flow")
 	void PauseGameFlow();

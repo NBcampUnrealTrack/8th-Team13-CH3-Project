@@ -10,7 +10,7 @@ ATGDisruptorEnemy::ATGDisruptorEnemy()
 	StructureAttackDamage = 1;
 	StructureAttackInterval = 0.6f;
 	StructureAttackRange = 200;
-	EnergyDropAmount = 40;
+	ExpDropAmount = 40;
 
 	PlayerDetectRange = 400.f;
 	PlayerDetectInterval = 0.2f;

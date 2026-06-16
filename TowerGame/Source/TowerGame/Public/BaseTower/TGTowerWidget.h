@@ -21,9 +21,9 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* LevelText;
 
-	// 현재 자원량 텍스트
-	UPROPERTY(meta = (BindWidget))
-	UTextBlock* EnergyText;
+	// 현재 보유 건설 토큰 텍스트
+	UPROPERTY(meta = (BindWidgetOptional))
+	UTextBlock* BuildTokenText;
 
 	// 업그레이드 비용 텍스트
 	UPROPERTY(meta = (BindWidget))

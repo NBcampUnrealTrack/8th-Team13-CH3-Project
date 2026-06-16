@@ -112,6 +112,20 @@ void ATGNavigationManager::UnRegisterEnemy(ATGEnemyBase* Enemy)
 	AliveEnemies.Remove(Enemy);
 }
 
+void ATGNavigationManager::RegisterTargetable(AActor* Target)
+{
+	if (!Target) return;
+
+	Targetables.AddUnique(Target);
+}
+
+void ATGNavigationManager::UnRegisterTargetable(AActor* Target)
+{
+	if (!Target) return;
+
+	Targetables.Remove(Target);
+}
+
 FVector ATGNavigationManager::GetCoreLocation() const
 {
 	if (!CurrentCoreActor){

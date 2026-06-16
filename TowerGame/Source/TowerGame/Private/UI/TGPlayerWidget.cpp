@@ -7,15 +7,12 @@
 #include "Components/TextBlock.h"
 #include "Components/HorizontalBox.h"
 #include "Components/HorizontalBoxSlot.h"
-#include "Components/Image.h"
 #include "Player/TGPlayer.h"
 #include "Enemies/TGNavigationManager.h"
 #include "Enemies/TGCoreBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "Core/GameFlow/TGGameMode.h"
-#include "Core/Grid/TGGridBase.h"
 #include "Enemies/TGBossBase.h"
-#include "UI/TGMiniMapWidget.h"
 #include "Enemies/TGEnemyBase.h"
 #include "Enemies/TGWaveManager.h"
 
@@ -23,35 +20,41 @@ void UTGPlayerWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 	player = Cast<ATGPlayer>(GetWorld()->GetFirstPlayerController()->GetPawn());
-	// Focus Enemy 변경 이벤트 구독
+	// 플레이어 관련 이벤트 구독
 	if (player){
 		player->OnFocusedEnemyChanged.AddUniqueDynamic(this, &UTGPlayerWidget::HandleFocusedEnemyChanged);
 		player->OnPlayerHpChanged.AddUniqueDynamic(this, &UTGPlayerWidget::UpdatePlayerHPBar);
 		player->OnEvadeChanged.AddUniqueDynamic(this, &UTGPlayerWidget::UpdateEvadeBar);
-		player->OnWeaponChanged.AddDynamic(this, &UTGPlayerWidget::UpdateWeaponImage);
+		player->OnBuildSlotChanged.AddUniqueDynamic(this, &UTGPlayerWidget::HandleBuildSlotChanged);
 
-		// 회피 게이지 생성
-		for (int i = 0; i < player->GetMaxEvadeCount(); i++)
+		// 회피 게이지 생성 (Evade_BarGroup이 있을 때만)
+		if (Evade_BarGroup)
 		{
-			UProgressBar* EvadeItem = WidgetTree->ConstructWidget<UProgressBar>(UProgressBar::StaticClass());
-			FProgressBarStyle BarStyle;
-			BarStyle.SetBackgroundImage(FSlateBrush());
-			BarStyle.SetFillImage(FSlateBrush());
-			EvadeItem->SetFillColorAndOpacity(FLinearColor(0.f, 0.5f, 0.5f, 1.0f));
-			EvadeItem->SetWidgetStyle(BarStyle);
-			UHorizontalBoxSlot* EvadeSlot = Evade_BarGroup->AddChildToHorizontalBox(EvadeItem);
-			if (EvadeSlot)
+			for (int i = 0; i < player->GetMaxEvadeCount(); i++)
 			{
-				FSlateChildSize ChildSize;
-				ChildSize.Value = 1.0f;
-				EvadeSlot->SetSize(ChildSize);
-				EvadeSlot->SetHorizontalAlignment(EHorizontalAlignment::HAlign_Fill);
-				EvadeSlot->SetVerticalAlignment(EVerticalAlignment::VAlign_Fill);
-				EvadeSlot->SetPadding(FMargin(4.0f, 0.0f));
+				UProgressBar* EvadeItem = WidgetTree->ConstructWidget<UProgressBar>(UProgressBar::StaticClass());
+				FProgressBarStyle BarStyle;
+				BarStyle.SetBackgroundImage(FSlateBrush());
+				BarStyle.SetFillImage(FSlateBrush());
+				EvadeItem->SetFillColorAndOpacity(FLinearColor(0.f, 0.5f, 0.5f, 1.0f));
+				EvadeItem->SetWidgetStyle(BarStyle);
+				UHorizontalBoxSlot* EvadeSlot = Evade_BarGroup->AddChildToHorizontalBox(EvadeItem);
+				if (EvadeSlot)
+				{
+					FSlateChildSize ChildSize;
+					ChildSize.Value = 1.0f;
+					EvadeSlot->SetSize(ChildSize);
+					EvadeSlot->SetHorizontalAlignment(EHorizontalAlignment::HAlign_Fill);
+					EvadeSlot->SetVerticalAlignment(EVerticalAlignment::VAlign_Fill);
+					EvadeSlot->SetPadding(FMargin(4.0f, 0.0f));
+				}
+				Evade_Bars.Add(EvadeItem);
 			}
-			Evade_Bars.Add(EvadeItem);
+			UpdateEvadeBar(player->GetCurrentEvadeCount(), player->GetCurrentEvadeCooldown() / player->GetMaxEvadeCooldown());
 		}
-		UpdateEvadeBar(player->GetCurrentEvadeCount(), player->GetCurrentEvadeCooldown() / player->GetMaxEvadeCooldown());
+
+		// 건설 퀵슬롯 수동 초기화 1회
+		HandleBuildSlotChanged(player->GetCurrentBuildSlot(), player->GetBuildSlotCount());
 	}
 
 	// Wave 시작 이벤트, Boss Spawn 이벤트 구독
@@ -72,12 +75,14 @@ void UTGPlayerWidget::NativeConstruct()
 		UpdateCurrentCore(NavigationManager->GetCurrentCoreActor());
 	}
 
-	// 자원 변경 이벤트를 구독하고, 자원 수동 초기화 1회 진행
+	// 진행도(경험치/레벨) 및 건설 토큰 이벤트 구독 + 수동 초기화 1회
 	GameMode = Cast<ATGGameMode>(UGameplayStatics::GetGameMode(this));
 	if(GameMode){
-		GameMode->OnEnergyChanged.AddUniqueDynamic(this, &UTGPlayerWidget::HandleEnergyChanged);
+		GameMode->OnExpChanged.AddUniqueDynamic(this, &UTGPlayerWidget::HandleExpChanged);
+		GameMode->OnBuildTokenChanged.AddUniqueDynamic(this, &UTGPlayerWidget::HandleBuildTokenChanged);
 
-		HandleEnergyChanged(GameMode->GetCurrentEnergy());
+		HandleExpChanged(GameMode->GetCurrentExp(), GameMode->GetExpToNextLevel(), GameMode->GetCurrentLevel());
+		HandleBuildTokenChanged(GameMode->GetBuildTokens());
 	}
 }
 
@@ -89,14 +94,17 @@ void UTGPlayerWidget::NativeDestruct()
 	}
 
 	Evade_Bars.Empty();
-	Evade_BarGroup->ClearChildren();
+	if (Evade_BarGroup)
+	{
+		Evade_BarGroup->ClearChildren();
+	}
 
 	// 구독했던 델리게이트들 해제
 	if (player){
 		player->OnFocusedEnemyChanged.RemoveDynamic(this, &UTGPlayerWidget::HandleFocusedEnemyChanged);
 		player->OnPlayerHpChanged.RemoveDynamic(this, &UTGPlayerWidget::UpdatePlayerHPBar);
 		player->OnEvadeChanged.RemoveDynamic(this, &UTGPlayerWidget::UpdateEvadeBar);
-		player->OnWeaponChanged.RemoveDynamic(this, &UTGPlayerWidget::UpdateWeaponImage);
+		player->OnBuildSlotChanged.RemoveDynamic(this, &UTGPlayerWidget::HandleBuildSlotChanged);
 	}
 
 	if (WaveManager){
@@ -115,14 +123,8 @@ void UTGPlayerWidget::NativeDestruct()
 	}
 
 	if (GameMode){
-		GameMode->OnEnergyChanged.RemoveDynamic(this, &UTGPlayerWidget::HandleEnergyChanged);
-	}
-
-	if (GridBase)
-	{
-		GridBase->OnGridBuildingPlaced.RemoveDynamic(this, &UTGPlayerWidget::HandleGridBuildingPlaced);
-
-		GridBase->OnGridTowerPlaced.RemoveDynamic(this, &UTGPlayerWidget::HandleGridTowerPlaced);
+		GameMode->OnExpChanged.RemoveDynamic(this, &UTGPlayerWidget::HandleExpChanged);
+		GameMode->OnBuildTokenChanged.RemoveDynamic(this, &UTGPlayerWidget::HandleBuildTokenChanged);
 	}
 
 	UnbindFocusedEnemy();
@@ -203,12 +205,31 @@ void UTGPlayerWidget::HandleCoreHPChanged(float CurrentHP, float MaxHP)
 	CoreHP_Bar->SetPercent(FMath::Clamp(Percent, 0.0f, 1.0f));
 }
 
-void UTGPlayerWidget::HandleEnergyChanged(int32 NewEnergy)
+void UTGPlayerWidget::HandleExpChanged(int32 CurrentExp, int32 ExpToNextLevel, int32 CurrentLevel)
 {
-	if (!EnergyText) return;
+	if (LevelText)
+	{
+		LevelText->SetText(FText::FromString(FString::Printf(TEXT("Lv. %d"), CurrentLevel)));
+	}
 
-	EnergyText->SetText(FText::AsNumber(NewEnergy));
+	if (PB_Exp)
+	{
+		const float Ratio = (ExpToNextLevel > 0) ? static_cast<float>(CurrentExp) / ExpToNextLevel : 0.f;
+		PB_Exp->SetPercent(FMath::Clamp(Ratio, 0.0f, 1.0f));
+	}
+}
 
+void UTGPlayerWidget::HandleBuildTokenChanged(int32 NewBuildTokens)
+{
+	if (!BuildTokenText) return;
+
+	BuildTokenText->SetText(FText::AsNumber(NewBuildTokens));
+}
+
+void UTGPlayerWidget::HandleBuildSlotChanged(int32 SelectedIndex, int32 SlotCount)
+{
+	// 실제 슬롯 비주얼은 BP에서 구현 (1=미선택, 2=벽, 3+=타워)
+	OnBuildSlotUpdated(SelectedIndex, SlotCount);
 }
 
 void UTGPlayerWidget::HandleFocusedEnemyChanged(ATGEnemyBase* NewEnemy)
@@ -244,7 +265,6 @@ void UTGPlayerWidget::HandleFocusedEnemyChanged(ATGEnemyBase* NewEnemy)
 		UpdateFocusedEnemyHPBar(FocusedEnemy->GetCurrentHP(), FocusedEnemy->GetMaxHP());
 		PB_EnemyHP->SetVisibility(ESlateVisibility::Visible);
 	}
-
 }
 
 void UTGPlayerWidget::UpdateFocusedEnemyHPBar(float CurrentHP, float MaxHP)
@@ -257,7 +277,7 @@ void UTGPlayerWidget::UpdateFocusedEnemyHPBar(float CurrentHP, float MaxHP)
 
 void UTGPlayerWidget::UpdatePlayerHPBar(float CurrentHP, float MaxHP)
 {
-	if (!player) return;
+	if (!player || !HP_Bar) return;
 	HP_Bar->SetPercent(FMath::Clamp(CurrentHP / MaxHP, 0.0f, 1.0f));
 }
 
@@ -276,18 +296,6 @@ void UTGPlayerWidget::UpdateEvadeBar(int32 CurrentEvadeCount, float CooldownRate
 				Evade_Bars[idx]->SetPercent(0.f);
 		}
 	}
-}
-
-void UTGPlayerWidget::UpdateWeaponImage(UTGWeaponBase* Weapon)
-{
-	UMaterialInstanceDynamic* mat = WeaponImage->GetDynamicMaterial();
-	if (Weapon && Weapon->GetAsset()->WeaponImage)
-	{
-		WeaponImage->SetVisibility(ESlateVisibility::Visible);
-		mat->SetTextureParameterValue(TEXT("WeaponTex"), Weapon->GetAsset()->WeaponImage);
-	}
-	else
-		WeaponImage->SetVisibility(ESlateVisibility::Hidden);
 }
 
 void UTGPlayerWidget::HandleFocusedEnemyRemoved(ATGEnemyBase* RemovedEnemy)
@@ -314,16 +322,6 @@ void UTGPlayerWidget::HideFocusedEnemyInfo()
 	if (PB_EnemyHP){
 		PB_EnemyHP->SetVisibility(ESlateVisibility::Hidden);
 	}
-}
-
-void UTGPlayerWidget::HandleGridBuildingPlaced(FIntPoint GridPoint)
-{
-	if (!MiniMapWidget)
-	{
-		return;
-	}
-
-	MiniMapWidget->MarkWallAtGrid(GridPoint);
 }
 
 void UTGPlayerWidget::BindFocusedEnemy(ATGEnemyBase* NewEnemy)
@@ -391,74 +389,4 @@ void UTGPlayerWidget::HandlePauseClicked()
 	{
 		GM->PauseGameFlow();
 	}
-}
-
-void UTGPlayerWidget::SetGridBase(ATGGridBase* InGridBase)
-{
-	if (!MiniMapWidget)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayerWidget: MiniMapWidget is null"));
-		return;
-	}
-
-	if (!IsValid(InGridBase))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayerWidget: GridBase is invalid"));
-		return;
-	}
-
-	GridBase = InGridBase;
-
-	MiniMapWidget->SetGridBase(InGridBase);
-
-	GridBase->OnGridBuildingPlaced.AddUniqueDynamic(
-		this,
-		&UTGPlayerWidget::HandleGridBuildingPlaced
-	);
-
-	GridBase->OnGridTowerPlaced.AddUniqueDynamic(
-		this,
-		&UTGPlayerWidget::HandleGridTowerPlaced
-	);
-
-	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
-
-	if (PlayerPawn)
-	{
-		MiniMapWidget->SetPlayerActor(PlayerPawn);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayerWidget: PlayerPawn is null"));
-	}
-}
-
-void UTGPlayerWidget::RegisterMonsterToMiniMap(AActor* MonsterActor)
-{
-	if (!MiniMapWidget)
-	{
-		return;
-	}
-
-	MiniMapWidget->RegisterMonsterActor(MonsterActor);
-}
-
-void UTGPlayerWidget::UnregisterMonsterFromMiniMap(AActor* MonsterActor)
-{
-	if (!MiniMapWidget)
-	{
-		return;
-	}
-
-	MiniMapWidget->UnregisterMonsterActor(MonsterActor);
-}
-
-void UTGPlayerWidget::HandleGridTowerPlaced(FIntPoint GridPoint, ETGTurretType TurretType)
-{
-	if (!MiniMapWidget)
-	{
-		return;
-	}
-
-	MiniMapWidget->MarkTowerAtGrid(GridPoint, TurretType);
 }

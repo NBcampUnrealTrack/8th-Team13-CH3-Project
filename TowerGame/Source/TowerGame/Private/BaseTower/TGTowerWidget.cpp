@@ -7,8 +7,8 @@
 #include "Core/GameFlow/TGGameMode.h"
 #include "Kismet/GameplayStatics.h"
 
-// 업그레이드 비용
-#define UPGRADE_COST 20
+// 업그레이드에 필요한 건설 토큰 수
+#define UPGRADE_TOKEN_COST 1
 
 void UTGTowerWidget::NativeConstruct()
 {
@@ -34,23 +34,23 @@ void UTGTowerWidget::RefreshUI()
 		));
 	}
 
-	// 현재 자원량 표시
+	// 현재 보유 건설 토큰 표시
 	ATGGameMode* GM = Cast<ATGGameMode>(UGameplayStatics::GetGameMode(this));
 	if (GM)
 	{
-		// 현재 자원량 표시
-		if (EnergyText)
+		// 현재 보유 건설 토큰 표시
+		if (BuildTokenText)
 		{
-			EnergyText->SetText(FText::FromString(
-				FString::Printf(TEXT("Energy: %d"), GM->GetCurrentEnergy())
+			BuildTokenText->SetText(FText::FromString(
+				FString::Printf(TEXT("Tokens: %d"), GM->GetBuildTokens())
 			));
 		}
 
-		// 업그레이드 비용 표시
+		// 업그레이드 비용(토큰) 표시
 		if (UpgradeCostText)
 		{
 			UpgradeCostText->SetText(FText::FromString(
-				FString::Printf(TEXT("Cost: %d"), UPGRADE_COST)
+				FString::Printf(TEXT("Cost: %d Token"), UPGRADE_TOKEN_COST)
 			));
 		}
 	}

@@ -39,6 +39,11 @@ public:
 	// 생존 중인 적 목록 (타워 탐지 등에서 전체 액터 스캔 대신 사용)
 	const TArray<TObjectPtr<ATGEnemyBase>>& GetAliveEnemies() const { return AliveEnemies; }
 
+	// 타워 타겟 가능 대상(ITGTargetable 구현체) 등록/조회 — 적 구현 종류와 무관하게 타워가 사용
+	void RegisterTargetable(AActor* Target);
+	void UnRegisterTargetable(AActor* Target);
+	const TArray<TObjectPtr<AActor>>& GetTargetables() const { return Targetables; }
+
 	FVector GetCoreLocation() const;
 	ATGCoreBase* GetCurrentCoreActor() const;
 
@@ -68,6 +73,10 @@ private:
 	// 경로 재 탐색
 	UPROPERTY()
 	TArray<TObjectPtr<ATGEnemyBase>> AliveEnemies;
+
+	// 타워 타겟 가능 대상 목록 (ITGTargetable 구현 액터)
+	UPROPERTY()
+	TArray<TObjectPtr<AActor>> Targetables;
 
 	static TWeakObjectPtr<ATGNavigationManager> Instance;
 

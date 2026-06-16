@@ -12,7 +12,7 @@ ATGNormalEnemy::ATGNormalEnemy()
 	StructureAttackDamage = 1;
 	StructureAttackInterval = 0.5f;
 	StructureAttackRange = 200;
-	EnergyDropAmount = 30;
+	ExpDropAmount = 30;
 
 	GetCharacterMovement()->MaxWalkSpeed = 300;
 }

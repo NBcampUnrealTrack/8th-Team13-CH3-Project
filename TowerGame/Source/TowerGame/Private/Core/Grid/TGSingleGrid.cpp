@@ -6,6 +6,7 @@
 #include "Components/BoxComponent.h"
 #include "Core/GameFlow/TGGameMode.h"
 #include "Core/Grid/TGGridBase.h"
+#include "Player/TGPlayer.h"
 #include "Kismet/GameplayStatics.h"
 
 ATGSingleGrid::ATGSingleGrid()
@@ -68,11 +69,15 @@ void ATGSingleGrid::OnFocused_Implementation(ATGPlayer* Player)
 {
 	if (bIsPlacedTower)	return;
 	if (!PlacedTower)	return;
+	// 벽 슬롯을 든 상태에서만 벽 프리뷰를 보여준다 (타워 슬롯은 설치된 벽을 강조)
+	if (!Player || !Player->IsWallSlot())	return;
+
 	Super::OnFocused_Implementation(Player);
 	//	커스텀 뎁스 패스에 등록 -> 포스트 프로세싱 가능
 	Visualizer->SetRenderCustomDepth(true);
 
-	PlacedTower->SetPreviewMode();
+	const bool bValid = GridBase && GridBase->CanBePlacedBuilding(MyPoint);
+	PlacedTower->SetPreviewMode(bValid);
 }
 
 void ATGSingleGrid::OnUnfocused_Implementation(ATGPlayer* Player)
@@ -102,11 +107,12 @@ void ATGSingleGrid::OnInteract_Implementation(ATGPlayer* Player)
 	if (!PlacedTower)	return;
 
 	ATGGameMode* GM = Cast<ATGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
-	if (!GM || !GM->SpendEnergy(50)) return;
+	if (!GM || !GM->TryConsumeBuildToken()) return;
 
 	if (!GridBase->CanBePlacedBuilding(MyPoint))
 	{
-		GM->AddEnergy(50);
+		// 배치 불가 위치면 소모한 토큰 환불
+		GM->AddBuildToken(1);
 		return;
 	}
 

@@ -7,6 +7,7 @@
 #include "Camera/CameraComponent.h"
 #include "InputActionValue.h"
 #include "Core/Grid/TGGridBase.h"
+#include "Core/Grid/TGSingleGrid.h"
 #include "Core/GameFlow/TGGameMode.h"
 #include "TGInteractiveActor.h"
 #include "Engine/DataTable.h"
@@ -29,6 +30,10 @@ ATGPlayer::ATGPlayer() : MaxHP(100), SlowRate(0.5f), DefaultWalkSpeed(0)
 
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	// 건설 퀵슬롯 기본 타워 종류 (슬롯3번부터). 전체 슬롯 = [미선택, 벽, WeaponTower, DebuffTower, BuffTower]
+	TowerSlotTypes = { ETGTurretType::WeaponTower, ETGTurretType::DebuffTower, ETGTurretType::BuffTower };
+
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
 	Camera->SetupAttachment(RootComponent);
 	Camera->bUsePawnControlRotation = true;
@@ -81,7 +86,6 @@ void ATGPlayer::BeginPlay()
 
 	HP = MaxHP;
 	bMoving = false;
-	bBuildMode = false;
 	bCanSwitch = true;
 	CurrentEvadeCount = EvadeCount;
 	CurrentEvadeCooldown = 0.0f;
@@ -203,40 +207,27 @@ void ATGPlayer::Evade(const FInputActionValue& value)
 	LaunchCharacter(LaunchVel, true, true);
 }
 
-void ATGPlayer::Build(const FInputActionValue& InputValue)
+void ATGPlayer::CycleBuildSlot(const FInputActionValue& InputValue)
 {
-	bBuildMode = !bBuildMode;
+	// Tab을 누를 때마다 다음 슬롯으로 순환 (미선택 → 벽 → 타워들 → 다시 미선택)
+	const int32 SlotCount = GetBuildSlotCount();
+	CurrentBuildSlot = (CurrentBuildSlot + 1) % SlotCount;
 
-	// 빌드모드 GameMode 및 TGHUD에서 관리되게 변경함
-	if (ATGGameMode* GM = Cast<ATGGameMode>(GetWorld()->GetAuthGameMode()))
+	// 슬롯이 바뀌면 현재 포커스를 비워 다음 틱에 새 슬롯 기준으로 프리뷰가 갱신되게 함
+	if (CurrentFocusedActor)
 	{
-		if (bBuildMode)
-		{
-			GM->EnterBuildMode();
-		}
-		else
-		{
-			GM->ExitBuildMode();
-		}
+		CurrentFocusedActor->OnUnfocused(this);
+		CurrentFocusedActor = nullptr;
 	}
+
+	OnBuildSlotChanged.Broadcast(CurrentBuildSlot, SlotCount);
 }
 
-void ATGPlayer::SelectTower(const FInputActionValue& InputValue)
+ETGTurretType ATGPlayer::GetSlotTurretType() const
 {
-	// 빌드모드일 때만 타워 선택 가능
-	if (!bBuildMode) return;
-
-	int32 SlotIndex = FMath::RoundToInt(InputValue.Get<float>());
-	switch (SlotIndex)
-	{
-		//case 1: SelectedTurretType = ETGTurretType::BaseTower;   break;	// 1번 : BaseTower
-	case 2: SelectedTurretType = ETGTurretType::WeaponTower; break;	// 2번 : WeaponTower
-	case 3: SelectedTurretType = ETGTurretType::DebuffTower; break;	// 3번 : DebuffTower
-	case 4: SelectedTurretType = ETGTurretType::BuffTower;   break;	// 4번 : BuffTower
-	default: break;
-	}
-
-	OnTurretTypeSelected.Broadcast(SelectedTurretType);
+	// 슬롯 0=미선택, 1=벽, 2번부터 타워 종류
+	const int32 TowerIdx = CurrentBuildSlot - 2;
+	return TowerSlotTypes.IsValidIndex(TowerIdx) ? TowerSlotTypes[TowerIdx] : ETGTurretType::None;
 }
 
 void ATGPlayer::Shot(const FInputActionValue& InputValue)
@@ -267,21 +258,32 @@ void ATGPlayer::Shot(const FInputActionValue& InputValue)
 
 void ATGPlayer::Interact(const FInputActionValue& InputValue)
 {
-	// NPC 상호작용 (빌드모드와 무관)
+	// NPC 상호작용 (슬롯과 무관하게 상시)
 	if (CurrentFocusedNPC)
 	{
 		CurrentFocusedNPC->OnInteract(this);
 		return;
 	}
 
-	if (bBuildMode && CurrentFocusedActor)
+	// 미선택(슬롯1)이거나 포커스된 건설 대상이 없으면 건설하지 않음 (사격은 별도)
+	if (!IsBuildSlotActive() || !CurrentFocusedActor) return;
+
+	if (IsWallSlot())
 	{
-		// 선택된 타워 타입을 BaseTower에 전달 후 상호작용
+		// 벽 슬롯: 빈 그리드 칸에 벽(베이스) 설치
+		if (ATGSingleGrid* Grid = Cast<ATGSingleGrid>(CurrentFocusedActor))
+		{
+			Grid->OnInteract(this);
+		}
+	}
+	else
+	{
+		// 타워 슬롯: 설치된 벽(BaseTower)에 해당 터렛 장착
 		if (ABaseTower* BaseTower = Cast<ABaseTower>(CurrentFocusedActor))
 		{
-			BaseTower->SetSelectedTurretType(SelectedTurretType);
+			BaseTower->SetSelectedTurretType(GetSlotTurretType());
+			BaseTower->OnInteract(this);
 		}
-		CurrentFocusedActor->OnInteract(this);
 	}
 }
 
@@ -451,16 +453,14 @@ void ATGPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 				EnhancedInputComponent->BindAction(PlayerController->Action_Jump, ETriggerEvent::Triggered, this, &ATGPlayer::JumpAction);
 			if (PlayerController->Action_Evade)
 				EnhancedInputComponent->BindAction(PlayerController->Action_Evade, ETriggerEvent::Triggered, this, &ATGPlayer::Evade);
-			if (PlayerController->Action_Build)
-				EnhancedInputComponent->BindAction(PlayerController->Action_Build, ETriggerEvent::Triggered, this, &ATGPlayer::Build);
+			if (PlayerController->Action_CycleBuildSlot)
+				EnhancedInputComponent->BindAction(PlayerController->Action_CycleBuildSlot, ETriggerEvent::Triggered, this, &ATGPlayer::CycleBuildSlot);
 			if (PlayerController->Action_Shot)
 				EnhancedInputComponent->BindAction(PlayerController->Action_Shot, ETriggerEvent::Triggered, this, &ATGPlayer::Shot);
 			if (PlayerController->Action_Interact)
 				EnhancedInputComponent->BindAction(PlayerController->Action_Interact, ETriggerEvent::Triggered, this, &ATGPlayer::Interact);
 			if (PlayerController->Action_Switching)
 				EnhancedInputComponent->BindAction(PlayerController->Action_Switching, ETriggerEvent::Triggered, this, &ATGPlayer::SwitchingWeapon);
-			if (PlayerController->Action_SelectTower)
-				EnhancedInputComponent->BindAction(PlayerController->Action_SelectTower, ETriggerEvent::Triggered, this, &ATGPlayer::SelectTower);
 		}
 	}
 }
@@ -513,6 +513,51 @@ void ATGPlayer::ApplySlowDebuff(float Duration)
 		Duration,
 		false
 	);
+}
+
+void ATGPlayer::ApplyMaxHpDelta(int32 Delta)
+{
+	if (Delta == 0) return;
+
+	MaxHP = FMath::Max(1, MaxHP + Delta);
+	// 최대치 증가분만큼 현재 체력도 회복 (감소 시에는 클램프만)
+	if (Delta > 0)
+	{
+		HP += Delta;
+	}
+	HP = FMath::Clamp(HP, 0, MaxHP);
+	OnPlayerHpChanged.Broadcast(HP, MaxHP);
+}
+
+void ATGPlayer::ApplyMoveSpeedMultiplier(float Ratio)
+{
+	UCharacterMovementComponent* MovementComponent = GetCharacterMovement();
+	if (!MovementComponent) return;
+
+	if (DefaultWalkSpeed <= 0)
+	{
+		DefaultWalkSpeed = MovementComponent->MaxWalkSpeed;
+	}
+
+	DefaultWalkSpeed *= (1.f + Ratio);
+	// 슬로우 디버프 중이 아니면 즉시 반영 (디버프 해제 시 갱신된 기본속도로 복원됨)
+	MovementComponent->MaxWalkSpeed = DefaultWalkSpeed;
+}
+
+void ATGPlayer::AddEvadeCount(int32 Delta)
+{
+	if (Delta == 0) return;
+
+	EvadeCount = FMath::Max(0, EvadeCount + Delta);
+	CurrentEvadeCount = FMath::Clamp(CurrentEvadeCount + Delta, 0, EvadeCount);
+
+	const float CooldownRate = (EvadeCooldown > 0.f) ? (CurrentEvadeCooldown / EvadeCooldown) : 0.f;
+	OnEvadeChanged.Broadcast(CurrentEvadeCount, CooldownRate);
+}
+
+void ATGPlayer::AddWeaponDamageMultiplier(float Add)
+{
+	WeaponDamageMultiplier = FMath::Max(0.f, WeaponDamageMultiplier + Add);
 }
 
 UTGWeaponBase* ATGPlayer::GetCurrentWeapon()
@@ -651,8 +696,8 @@ void ATGPlayer::UpdateFocusTraces()
 	// NPC 포커스 갱신 (빌드모드와 무관하게 상시)
 	CurrentFocusedNPC = Cast<ATGNPCBase>(HitActor);
 
-	// Interactive 액터 포커스 갱신 (빌드모드에서만 유효)
-	ATGInteractiveActor* HitInteractive = bBuildMode ? Cast<ATGInteractiveActor>(HitActor) : nullptr;
+	// Interactive 액터 포커스 갱신 (건설 슬롯이 활성일 때만 — 미선택이면 그리드/벽 프리뷰 없음)
+	ATGInteractiveActor* HitInteractive = IsBuildSlotActive() ? Cast<ATGInteractiveActor>(HitActor) : nullptr;
 	if (HitInteractive != CurrentFocusedActor)
 	{
 		if (CurrentFocusedActor)
